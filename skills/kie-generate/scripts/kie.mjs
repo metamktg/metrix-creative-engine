@@ -108,9 +108,19 @@ const [cmd, a, b] = argv;
 if (cmd === "credits") {
   console.log(await call("/api/v1/chat/credit"));
 } else if (cmd === "start" || cmd === "run") {
-  if (!a || !b) die(`usage: node kie.mjs ${cmd} <model> '<input-json>'`);
+  // --input-file avoids shell quoting entirely. cmd.exe cannot pass a JSON
+  // literal without backslash-escaping every quote, which is the single most
+  // likely way a first run fails on Windows.
+  const inputFile = flag("--input-file", null);
+  if (!a) die(`usage: node kie.mjs ${cmd} <model> '<input-json>'  |  ${cmd} <model> --input-file spec.json`);
+  let raw = b;
+  if (inputFile) {
+    const { readFileSync } = await import("node:fs");
+    try { raw = readFileSync(inputFile, "utf8"); } catch (e) { die(`cannot read ${inputFile}: ${e.message}`); }
+  }
+  if (!raw) die(`no input. Pass JSON as the third argument, or --input-file <path>.`);
   let input;
-  try { input = JSON.parse(b); } catch { die(`input must be valid JSON, got: ${b}`); }
+  try { input = JSON.parse(raw); } catch { die(`input must be valid JSON, got: ${String(raw).slice(0, 120)}`); }
   const d = await call("/api/v1/jobs/createTask", { method: "POST", body: JSON.stringify({ model: a, input }) });
   const taskId = d?.taskId;
   if (!taskId) die("Kie accepted the task but returned no taskId.");
