@@ -8,10 +8,35 @@ description: Manage Kie.ai generation jobs at scale - fire a batch, poll it, res
 Job control for Kie.ai. `kie-generate` makes one thing; this makes many, or
 recovers one that did not finish.
 
-## Prerequisite
+## How to actually run a generation
 
-The `kie-ai` MCP server must be connected. Check `/mcp`. If it is not, the
-tools below do not exist and nothing here will work.
+Two paths. **Check which you have before doing anything else.**
+
+**1. The bundled script (default, no install).** Every skill ships
+`scripts/kie.mjs`. It needs nothing but Node, which Claude Code already runs on,
+and `KIE_AI_API_KEY` in the environment. Works on Windows, macOS and Linux.
+
+```
+node scripts/kie.mjs credits
+node scripts/kie.mjs run "google/nano-banana" '{"prompt":"...","aspect_ratio":"4:5"}'
+node scripts/kie.mjs run "veo-3-1" '{"prompt":"..."}' --timeout 900 --out ./out
+node scripts/kie.mjs start "kling/v2-1-master-image-to-video" '{...}'   # prints taskId, returns at once
+node scripts/kie.mjs poll <taskId> --timeout 900
+```
+
+It prints result URLs on stdout and progress on stderr, so `$(node scripts/kie.mjs run ...)`
+captures just the URLs. `--out DIR` downloads them. Exit 2 means the wait timed
+out and the task is still running: poll the same taskId, never re-create.
+
+On Windows the path is `scripts\kie.mjs`. Use the skill's own directory, which
+in an installed skill is under `.claude/skills/<skill>/`.
+
+**2. MCP tools, if `/mcp` lists `kie-ai`.** `kie_run_task`, `kie_create_task`,
+`kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_download_result`.
+Same API, typed arguments. Prefer these when present; they are not required.
+
+Never tell the user to install anything before generating. If the key is
+missing the script says so and names where to get one.
 
 ## Check credits before spending them
 

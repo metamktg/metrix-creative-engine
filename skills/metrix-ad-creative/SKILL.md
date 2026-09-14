@@ -8,11 +8,40 @@ description: Render Metrix IAP creative briefs into actual ad assets through Kie
 Bridges `metrix-brief-builder` (which produces briefs) and Kie.ai (which
 produces pixels). The brief is the specification; this skill is the execution.
 
-## Prerequisites
+## How to actually run a generation
 
-- The `kie-ai` MCP server is connected (`/mcp` lists it). See `docs/SETUP.md`.
-- A brief exists. If one does not, run `metrix-brief-builder` first. Do not
-  invent a brief in order to have something to render.
+Two paths. **Check which you have before doing anything else.**
+
+**1. The bundled script (default, no install).** Every skill ships
+`scripts/kie.mjs`. It needs nothing but Node, which Claude Code already runs on,
+and `KIE_AI_API_KEY` in the environment. Works on Windows, macOS and Linux.
+
+```
+node scripts/kie.mjs credits
+node scripts/kie.mjs run "google/nano-banana" '{"prompt":"...","aspect_ratio":"4:5"}'
+node scripts/kie.mjs run "veo-3-1" '{"prompt":"..."}' --timeout 900 --out ./out
+node scripts/kie.mjs start "kling/v2-1-master-image-to-video" '{...}'   # prints taskId, returns at once
+node scripts/kie.mjs poll <taskId> --timeout 900
+```
+
+It prints result URLs on stdout and progress on stderr, so `$(node scripts/kie.mjs run ...)`
+captures just the URLs. `--out DIR` downloads them. Exit 2 means the wait timed
+out and the task is still running: poll the same taskId, never re-create.
+
+On Windows the path is `scripts\kie.mjs`. Use the skill's own directory, which
+in an installed skill is under `.claude/skills/<skill>/`.
+
+**2. MCP tools, if `/mcp` lists `kie-ai`.** `kie_run_task`, `kie_create_task`,
+`kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_download_result`.
+Same API, typed arguments. Prefer these when present; they are not required.
+
+Never tell the user to install anything before generating. If the key is
+missing the script says so and names where to get one.
+
+## Prerequisite
+
+A brief must exist. If one does not, run `metrix-brief-builder` first. Do not
+invent a brief in order to have something to render.
 
 ## The rule that governs everything here
 
@@ -148,5 +177,7 @@ variation as a broken test.
 - `references/prompt-construction.md` — brief field to prompt clause, and the
   clause order.
 - `references/placement-specs.md` — Meta placement to aspect ratio and duration.
+- `references/formats.md` — static, carousel, video and UGC: the exact calls
+  and the failure mode specific to each.
 - `references/model-routing.md` — which model per asset type, the parameters
   that matter, and the 4:5 problem.

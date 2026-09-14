@@ -1,142 +1,121 @@
 # Setup
 
-Pick the environment you will actually use. The difference is not cosmetic: a
-server running in the cloud cannot write files to your PC, and one running on
-your PC cannot be reached from a browser session.
+Two steps. No build, no MCP server, no Node install beyond what Claude Code
+already needs.
 
-| You work in | Follow |
-| --- | --- |
-| Claude Code on the web (browser) | [Part A](#part-a--claude-code-on-the-web) |
-| Claude Code on Windows (desktop app or terminal) | [Part B](#part-b--claude-code-on-windows) |
+## 1. Put your Kie key in the environment
 
-Both need a Kie.ai API key from <https://kie.ai/api-key>, with credits on the
-account. Generations cost credits; `kie_get_credits` reports the balance.
+Get one at <https://kie.ai/api-key> and make sure the account has credits.
 
----
-
-# Part A — Claude Code on the web
-
-The repo builds itself here. `.claude/hooks/session-start.sh` runs
-`pnpm install && pnpm run build` when a web session starts, so `dist/index.js`
-exists before the MCP server is launched. You do not run anything by hand.
-
-**The one thing you must set: the API key**, as an environment variable on the
-Claude Code environment (the same place other secrets for the environment live),
-named `KIE_AI_API_KEY`. It cannot live in the repo. If it is missing the session
-still starts and the hook prints a warning, but every Kie tool call returns 401.
-
-Optionally also set `KIE_AI_DOWNLOAD_DIR` (for example `./out`) to enable
-`kie_download_result`. Files land inside the container, so download them from
-the session or commit them if you want to keep them; the container is discarded
-when the session ends.
-
-Then open a session on this repo and check `/mcp` lists `kie-ai` as connected.
-The skills in `skills/` are picked up from the repo automatically.
-
-**Caveat worth knowing.** The hook only takes effect for sessions started from a
-branch that contains it. Once it is on `main`, every future session has it.
-
----
-
-# Part B — Claude Code on Windows
-
-## 1. Prerequisites
-
-Open Command Prompt and check:
+**Windows (permanent, all future terminals):**
 
 ```
-node -v
+setx KIE_AI_API_KEY "your-key-here"
 ```
 
-If that errors, install Node.js LTS from <https://nodejs.org> and reopen the
-terminal. Then enable pnpm, which ships with Node:
+Close and reopen the terminal afterwards. `setx` does not affect the window you
+typed it in.
+
+**macOS / Linux:** add to `~/.zshrc` or `~/.bashrc`:
+
+```bash
+export KIE_AI_API_KEY="your-key-here"
+```
+
+**Claude Code on the web:** set `KIE_AI_API_KEY` as an environment variable on
+the Claude Code environment, where the environment's other secrets live. It
+cannot live in the repo.
+
+Optional: `KIE_AI_DOWNLOAD_DIR` sets a default folder for downloaded results.
+
+## 2. Install the skills
+
+**Windows:**
 
 ```
-corepack enable
-```
-
-## 2. Get the repo
-
-```
-cd /d %USERPROFILE%
 git clone https://github.com/metamktg/metrix-creative-engine.git
-cd metrix-creative-engine
-```
-
-## 3. Build
-
-```
-pnpm install
-pnpm run build
-```
-
-This creates `dist\index.js`. Nothing works until it exists, because the MCP
-config points straight at it. Verify the whole thing:
-
-```
-pnpm run verify
-```
-
-Typecheck, 62 tests, build. All three should pass.
-
-## 4. Register the MCP server
-
-Use an absolute path, and pick a real folder for generated files:
-
-```
-claude mcp add kie-ai --scope user --env KIE_AI_API_KEY=your-key-here --env KIE_AI_DOWNLOAD_DIR=%USERPROFILE%\kie-out -- node %USERPROFILE%\metrix-creative-engine\dist\index.js
-```
-
-`--scope user` makes it available in every project, which is what you want if
-you plan to generate creative while working inside `metrix-iap`.
-
-Check it with `/mcp` inside Claude Code. You want `kie-ai` listed as connected.
-
-## 5. Install the skills
-
-Windows has no easy symlink, so copy them:
-
-```
 mkdir "%USERPROFILE%\.claude\skills" 2>nul
-xcopy /E /I /Y skills "%USERPROFILE%\.claude\skills"
+xcopy /E /I /Y metrix-creative-engine\skills "%USERPROFILE%\.claude\skills"
 ```
 
-Check with `/skills`. You should see `kie-generate`, `kie-tasks` and
-`metrix-ad-creative`.
+**macOS / Linux:**
 
-Re-run that `xcopy` after any `git pull`, since copies do not update themselves.
+```bash
+git clone https://github.com/metamktg/metrix-creative-engine.git
+mkdir -p ~/.claude/skills
+ln -s "$(pwd)/metrix-creative-engine/skills/"* ~/.claude/skills/
+```
 
-## 6. Smoke test
+The symlink form updates itself on `git pull`. The Windows copy does not, so
+re-run the `xcopy` after pulling.
 
-In Claude Code, ask for something cheap before trusting it with a matrix:
+**Claude Code on the web:** nothing to install. Open a session on this repo and
+the skills in `skills/` are picked up from the checkout.
+
+## 3. Check it works
+
+In Claude Code:
+
+```
+how many Kie credits do I have?
+```
+
+Then something cheap:
 
 ```
 generate a 4:5 photo of a red bicycle against a white wall
 ```
 
-A result URL means the whole chain works.
+A result URL means the whole chain works. That is one image, a few credits.
 
----
+## If you prefer the MCP server
 
-# Troubleshooting
+Optional. It gives typed tool arguments instead of a shell call; it does not
+unlock anything the script cannot do. It needs a build step, which is why it is
+no longer the default.
+
+```
+cd metrix-creative-engine
+corepack enable
+pnpm install
+pnpm run build
+claude mcp add kie-ai --scope user --env KIE_AI_API_KEY=your-key -- node <absolute-path>/dist/index.js
+```
+
+Skills prefer MCP tools when `/mcp` lists `kie-ai`, and fall back to the script
+otherwise. Either way they work.
+
+## Troubleshooting
 
 | Symptom | Cause |
 | --- | --- |
+| "KIE_AI_API_KEY is not set" | Key missing from the environment. On Windows, reopen the terminal after `setx` |
 | Skill not listed by `/skills` | Not copied into `.claude/skills`, or Claude Code needs a restart |
-| `kie-ai` not listed by `/mcp` | Server not registered, or the path in the config is wrong |
-| "KIE_AI_API_KEY is not set" | Key missing from the environment (web) or the `claude mcp add` command (Windows) |
-| `Cannot find module ...dist\index.js` | `pnpm run build` was never run, or the path is wrong |
-| "Unauthorized" | Key is wrong or revoked. Check <https://kie.ai/api-key> |
-| "Rate limited" | Kie allows 20 new generations per 10 seconds. Pace the batch |
-| "Validation error" | The model rejected `input`. Check `docs/MODEL_CATALOG.md` |
-| Insufficient credits | Run `kie_get_credits` and top up |
+| "Kie error … code 401" | Key wrong or revoked. Check <https://kie.ai/api-key> |
+| "Kie error … code 402" | Out of credits |
+| "Kie error … code 429" | 20 new generations per 10 seconds. Pace the batch |
+| "Kie error … code 422" | The model rejected `input`. Check `docs/MODEL_CATALOG.md` |
+| Exit code 2, "still running" | Not a failure. Poll the same taskId; never re-create |
+| Video looks hung | Video takes minutes. Use `start` + `poll`, raise `--timeout` |
+
+## What the script does
+
+`scripts/kie.mjs`, bundled inside every skill:
+
+```
+node scripts/kie.mjs credits
+node scripts/kie.mjs run   <model> '<input-json>' [--timeout N] [--out DIR]
+node scripts/kie.mjs start <model> '<input-json>'
+node scripts/kie.mjs poll  <taskId>
+```
+
+Result URLs on stdout, progress on stderr. No dependencies beyond Node.
 
 ## Where generated files go
 
-`KIE_AI_DOWNLOAD_DIR` fixes the one directory `kie_download_result` may write
-to, and both the result URL and any filename passed are reduced to a single path
-segment, so neither can escape it. When the variable is unset the download tool
-is not registered at all and you get URLs only.
+`--out DIR` downloads results. Both the remote URL and any filename it carries
+are reduced to a single path segment, so a hostile name cannot write outside the
+directory you chose.
 
-Kie deletes generated media after about 14 days. Treat a result URL as
-temporary: download anything you intend to keep or hand to a client.
+Kie deletes generated media after about **14 days**. A result URL is not
+storage. Download anything you intend to keep or hand to a client.

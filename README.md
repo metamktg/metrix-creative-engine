@@ -2,38 +2,35 @@
 
 Generate ad creative through [Kie.ai](https://kie.ai) from inside Claude Code.
 
-Two halves:
+**Skills** that know how to prompt each model family, and how to turn a Metrix
+IAP creative brief into launch-ready Meta ad assets across static, carousel,
+video and UGC, without breaking the test the brief was designed around.
 
-- **An MCP server** over the Kie.ai API, so Claude can create generations, poll
-  them, and download results as tool calls.
-- **Skills** that know how to drive it — how to prompt each model family, and
-  how to turn a Metrix IAP creative brief into launch-ready Meta ad assets
-  without breaking the test the brief was designed around.
+Each skill carries `scripts/kie.mjs`, a zero-dependency Node client for the
+Kie.ai API, so generating needs nothing but an API key. An optional MCP server
+is in `src/` for typed tool arguments; it unlocks nothing extra.
 
 ## Quick start
 
-Setup differs by where you work, and the difference matters: a server running in
-the cloud cannot write files to your PC, and one on your PC cannot be reached
-from a browser session.
+Two steps. No build step, nothing to compile.
 
-**Claude Code on the web.** Nothing to install. A SessionStart hook builds the
-server when a session opens. Set `KIE_AI_API_KEY` as an environment variable on
-the Claude Code environment, then open a session on this repo.
+**1. Set your key** (get one at <https://kie.ai/api-key>):
 
-**Claude Code on your machine.** Needs Node.js.
+```
+setx KIE_AI_API_KEY "your-key-here"          REM Windows, then reopen the terminal
+export KIE_AI_API_KEY="your-key-here"        # macOS / Linux
+```
+
+**2. Install the skills:**
 
 ```
 git clone https://github.com/metamktg/metrix-creative-engine.git
-cd metrix-creative-engine
-corepack enable
-pnpm install
-pnpm run build
+xcopy /E /I /Y metrix-creative-engine\skills "%USERPROFILE%\.claude\skills"   REM Windows
+ln -s "$(pwd)/metrix-creative-engine/skills/"* ~/.claude/skills/                  # macOS / Linux
 ```
 
-Then register the server and copy the skills into `.claude/skills`.
-
-Exact commands for both, including Windows, are in
-**[`docs/SETUP.md`](docs/SETUP.md)**.
+Then ask Claude Code to generate something. Full detail, including the web
+setup: **[`docs/SETUP.md`](docs/SETUP.md)**.
 
 ## Skills
 
