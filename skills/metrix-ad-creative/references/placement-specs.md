@@ -53,6 +53,6 @@ isolated variable, it is a test of the ratio.
 
 Take it from `creative_specifications.duration`. Where the brief does not state
 one, most Kie video models offer a small fixed set of lengths rather than an
-arbitrary number — check `docs/MODEL_CATALOG.md` for the model's allowed values
+arbitrary number — check `model-routing.md` for the model's allowed values
 and pick the shortest that carries the idea. Longer costs more credits and
 rarely improves a hook test, which is decided in the first seconds.

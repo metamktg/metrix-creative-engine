@@ -74,7 +74,7 @@ locked. Say explicitly in the output that you took the exception and why.
 
 4. **Apply the avoid list.** `visual_direction.avoid_list` becomes negative
    phrasing in the prompt, or a `negative_prompt` field where the model has one.
-   Check `docs/MODEL_CATALOG.md` for whether the chosen model supports one; if
+   Check `references/model-routing.md` for whether the chosen model supports one; if
    it does not, phrase the avoidance positively (say what to show, not what to
    omit) because most image models handle negations poorly.
 
@@ -84,7 +84,7 @@ locked. Say explicitly in the output that you took the exception and why.
    ratio from the prompt text.
 
 6. **Pick the model.** Route by `asset_type` using the table in
-   `docs/MODEL_CATALOG.md`. Lock the model for the whole matrix — switching
+   `references/model-routing.md`. Lock the model for the whole matrix — switching
    models mid-matrix is the largest uncontrolled variable available.
 
 7. **Generate.** One `kie_run_task` per cell. For a row, hold the base constant
@@ -148,4 +148,5 @@ variation as a broken test.
 - `references/prompt-construction.md` — brief field to prompt clause, and the
   clause order.
 - `references/placement-specs.md` — Meta placement to aspect ratio and duration.
-- `docs/MODEL_CATALOG.md` — model ids, parameters and routing.
+- `references/model-routing.md` — which model per asset type, the parameters
+  that matter, and the 4:5 problem.

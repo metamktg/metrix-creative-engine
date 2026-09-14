@@ -50,7 +50,7 @@ exact translation for the whole matrix.
 **Negations are unreliable.** "No text, no watermark, no people" often produces
 text, watermarks and people, because many models have no true negation. Prefer
 the `negative_prompt` field where the model has one — check
-`docs/MODEL_CATALOG.md`. Where it does not, state the positive: instead of "no
+`model-routing.md`. Where it does not, state the positive: instead of "no
 background clutter", write "plain seamless backdrop".
 
 ## Describing people
