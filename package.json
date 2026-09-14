@@ -1,0 +1,36 @@
+{
+  "name": "metrix-creative-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server and Claude Code skills for generating ad creative through Kie.ai",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "bin": {
+    "kie-ai-mcp-server": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node ./build.mjs",
+    "start": "node ./dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config vitest.config.ts",
+    "verify": "npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.21.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.27.3",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.10"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

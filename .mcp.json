@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "kie-ai": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {
+        "KIE_AI_API_KEY": "${KIE_AI_API_KEY}",
+        "KIE_AI_DOWNLOAD_DIR": "${KIE_AI_DOWNLOAD_DIR:-./out}"
+      }
+    }
+  }
+}
