@@ -93,7 +93,8 @@ locked. Say explicitly in the output that you took the exception and why.
    logo method, style references). A product-led brief listing product
    references under `brand_assets.missing` is blocked until they are supplied.
 
-2. **Check credits before a batch.** Call `kie_get_credits`. A matrix row is
+2. **Check credits before a batch.** `node scripts/kie.mjs credits`, or the
+   `kie_get_credits` tool where MCP is connected. A matrix row is
    several generations and a full matrix is many; running out halfway leaves a
    partial row, which is an unusable test. Report the balance and stop if it
    will not cover the run.

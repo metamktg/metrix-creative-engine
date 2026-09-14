@@ -54,6 +54,17 @@ the skills in `skills/` are picked up from the checkout.
 
 ## 3. Check it works
 
+One command proves the whole chain and tells you pass or fail:
+
+```
+node scripts/smoke-live.mjs
+```
+
+It reads your balance, generates one 4:5 static, downloads it, and says which
+step failed if any does. Costs a few credits.
+
+### Or step by step
+
 In Claude Code:
 
 ```
