@@ -69,7 +69,9 @@ directional context, not rules.
    `{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`. An asset with the
    wrong name cannot be scanned and cannot be attributed.
 9. **Never substitute silently.** If the brief names a model, format or asset
-   you cannot deliver, say so and offer the nearest real option.
+   you cannot deliver, say so and offer the nearest real option. This binds
+   hardest on `asset_type`: the format is the brief's, and swapping it quietly
+   turns a failed render into a plausible-looking asset that tests nothing.
 
 ## Defaults
 
@@ -111,7 +113,34 @@ type in the brief.
 | Intake: brand assets, product imagery, website | `01-brand-intake.md` |
 | Build: brief to render spec to generation | `02-render-bridge.md` |
 | Handoff: presenting files and rationale | `03-handoff.md` |
-| Formats | `formats/static.md`, `formats/ugc.md`, `formats/video.md`, `formats/carousel.md` |
+| Formats | one per `asset_type`, routed by the table below |
+
+### Format routing
+
+**The brief's `asset_type` decides the render.** It is a declaration of the
+medium the idea was designed for, not a preference to be traded against what a
+model does well. A carousel brief is not satisfied by a static, because the idea
+was built to unfold across cards.
+
+| `asset_type` | Module |
+| --- | --- |
+| `static` | `formats/static.md` |
+| `carousel` | `formats/carousel.md` |
+| `video` | `formats/video.md` |
+| `ugc`, `ai_ugc` | `formats/ugc.md` |
+| `motion_graphic` | `formats/motion-graphic.md` |
+| `claymation`, stop-motion, paper craft | `formats/claymation.md` |
+| anything else | **stop, per rule 9** |
+
+An `asset_type` with no module is a stop, not a fallback to the nearest one.
+Rendering a static for a brief that asked for motion produces an asset that
+looks finished, survives a casual review, and fails the thing the brief was
+testing. Name the type, say there is no route, and propose the nearest mapped
+type as a question.
+
+Which model serves a format, and the parameters it needs, are in
+`references/format-routing.md`. That file is dated and changes; this table does
+not.
 
 ## What you do not do
 

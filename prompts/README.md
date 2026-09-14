@@ -34,6 +34,8 @@ before credits are spent.
 | `formats/ugc.md` | UGC and AI-UGC, including disclosure |
 | `formats/video.md` | Video, still-first workflow |
 | `formats/carousel.md` | Carousels as one system |
+| `formats/motion-graphic.md` | Designed elements in motion, and why type is composited |
+| `formats/claymation.md` | Handmade and stop-motion looks, prompted not routed |
 
 ## Assembly
 
@@ -49,7 +51,9 @@ In a single long session, load all three stages at once and let the core's
 stage table route between them. In a pipeline, load one stage per call.
 
 Relative `references/...` paths in the prompts resolve to
-`skills/metrix-ad-creative/references/`.
+`skills/metrix-ad-creative/references/`. The brief's `asset_type` routes to a
+format module through the table in `00-core.md`; an unmapped type stops rather
+than falling back.
 
 ## Variables to inject
 

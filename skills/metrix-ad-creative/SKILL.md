@@ -112,9 +112,12 @@ locked. Say explicitly in the output that you took the exception and why.
    mapping table is in `references/placement-specs.md`. Never guess an aspect
    ratio from the prompt text.
 
-6. **Pick the model.** Route by `asset_type` using the table in
-   `references/model-routing.md`. Lock the model for the whole matrix — switching
-   models mid-matrix is the largest uncontrolled variable available.
+6. **Pick the model from what the brief's `asset_type` allows.** The format is
+   declared by the brief, not chosen here: route through
+   `references/format-routing.md`, pick within the eligible set, and state why.
+   An `asset_type` with no route is a stop, never a fallback to the nearest one.
+   Lock the model for the whole matrix — switching mid-matrix is the largest
+   uncontrolled variable available.
 
 7. **Generate.** One `kie_run_task` per cell. For a row, hold the base constant
    and vary only the slot. If a cell fails, re-run **that cell only**; do not
@@ -177,7 +180,7 @@ variation as a broken test.
 - `references/prompt-construction.md` — brief field to prompt clause, and the
   clause order.
 - `references/placement-specs.md` — Meta placement to aspect ratio and duration.
-- `references/formats.md` — static, carousel, video and UGC: the exact calls
-  and the failure mode specific to each.
+- `references/format-routing.md` — the brief's `asset_type` to eligible models
+  and required parameters. The handoff contract; an unmapped type stops.
 - `references/model-routing.md` — which model per asset type, the parameters
   that matter, and the 4:5 problem.
