@@ -8,6 +8,8 @@ dist/
 out/
 renders/
 
-# Never commit a key.
+# Never commit a key. The .example template is the exception and must ship,
+# otherwise nobody knows which variables exist.
 .env
 .env.*
+!.env.example
