@@ -10,6 +10,24 @@ Two halves:
   how to turn a Metrix IAP creative brief into launch-ready Meta ad assets
   without breaking the test the brief was designed around.
 
+## Publishing this repo to GitHub
+
+This repo was built inside a Claude Code session whose GitHub access is
+restricted to repository-scoped API calls against repositories it is already
+bound to. Creating a *new* repository is blocked there regardless of
+permissions, so the publish step runs from your machine:
+
+```bash
+./scripts/publish-to-github.sh
+```
+
+It creates `metamktg/metrix-creative-engine` as a private repo and pushes.
+Needs either `gh auth login`, or a `GITHUB_TOKEN` holding a classic PAT with
+the `repo` scope. It refuses to run on a dirty tree and will not push over a
+repository that already has commits unless you pass `--force-existing`.
+
+Delete this section once the repo is published.
+
 ## Quick start
 
 ```bash
