@@ -59,8 +59,10 @@ locked. Say explicitly in the output that you took the exception and why.
 1. **Read the brief.** Take `creative_briefs.json`, or a single brief object.
    Identify per brief: `brief_metadata.asset_type`, `brief_metadata.mode`
    (`matrix` or `general`), `testing_framework.matrix_position`,
-   `testing_framework.isolated_variable`, `creative_specifications`, and
-   `visual_direction`.
+   `testing_framework.isolated_variable`, `creative_specifications`,
+   `visual_direction`, and `brand_assets` where present (product references,
+   logo method, style references). A product-led brief listing product
+   references under `brand_assets.missing` is blocked until they are supplied.
 
 2. **Check credits before a batch.** Call `kie_get_credits`. A matrix row is
    several generations and a full matrix is many; running out halfway leaves a
