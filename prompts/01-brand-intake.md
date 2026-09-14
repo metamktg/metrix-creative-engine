@@ -11,6 +11,12 @@ reusing them word for word. This stage produces those inputs.
 - Brand kit files: `{{brand_kit_files}}` (guidelines, logo, product photography)
 - Website context: `{{website_url_or_capture}}`
 
+If the brief has a `brand_assets` block, start there. It already lists the
+product references, logo method, style references, website context and design
+system code, and `missing` names the gaps. Treat the separate brand kit and
+website inputs as supplements, and flag any asset that appears in one place but
+not the other.
+
 Any of the last three may be missing. Missing is not fatal; unacknowledged is.
 
 ## Step 1: Inventory

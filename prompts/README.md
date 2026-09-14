@@ -75,24 +75,27 @@ than falling back.
 | `assets/` | Render bridge | MST-named outputs |
 | Handoff message | Handoff | Verdict, rationale, test logic, QA, next step |
 
-## Recommended brief addition
+## Brand assets in the brief
 
-The current `metrix-brief-builder` schema has no place for brand assets, so the
-intake stage has to collect them separately. Adding an optional block to each
-brief removes that step and makes the brief self-contained:
+From `metrix-brief-builder` v1.0.2, each brief can carry an optional
+`brand_assets` block, so the brief is self-contained. When it is present, the
+intake stage reads it first and asks only for what is listed in `missing`.
 
 ```json
 "brand_assets": {
   "design_system_code": "DS_02",
   "product_references": [
-    { "file": "bottle_front.png", "view": "front", "role": "product" },
-    { "file": "bottle_label.png", "view": "label detail", "role": "product" }
+    { "file": "bottle_front.png", "url": "", "view": "front", "role": "product" },
+    { "file": "bottle_label.png", "url": "", "view": "label detail", "role": "product" }
   ],
   "logo": { "file": "logo.svg", "method": "composite_in_post", "clear_space": "upper right" },
-  "style_references": [],
-  "website_context": { "url": "", "captured_on": "" }
+  "style_references": [
+    { "file": "q2_winner_C2B.jpg", "url": "", "what_to_take": "light and palette" }
+  ],
+  "website_context": { "url": "", "captured_on": "" },
+  "missing": []
 }
 ```
 
-This is a proposal. It changes the brief-builder's output contract, so update
-`references/io-schema.json` in that skill in the same change.
+Briefs from earlier versions have no block. The intake stage falls back to
+`{{brand_kit_files}}` and `{{website_url_or_capture}}` for those.
