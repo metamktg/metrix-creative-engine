@@ -10,46 +10,30 @@ Two halves:
   how to turn a Metrix IAP creative brief into launch-ready Meta ad assets
   without breaking the test the brief was designed around.
 
-## Publishing this repo to GitHub
-
-This repo was built inside a Claude Code session whose GitHub access is
-restricted to repository-scoped API calls against repositories it is already
-bound to. Creating a *new* repository is blocked there regardless of
-permissions, so the publish step runs from your machine:
-
-```bash
-./scripts/publish-to-github.sh
-```
-
-It creates `metamktg/metrix-creative-engine` as a private repo and pushes.
-Needs either `gh auth login`, or a `GITHUB_TOKEN` holding a classic PAT with
-the `repo` scope. It refuses to run on a dirty tree and will not push over a
-repository that already has commits unless you pass `--force-existing`.
-
-Delete this section once the repo is published.
-
 ## Quick start
 
-```bash
+Setup differs by where you work, and the difference matters: a server running in
+the cloud cannot write files to your PC, and one on your PC cannot be reached
+from a browser session.
+
+**Claude Code on the web.** Nothing to install. A SessionStart hook builds the
+server when a session opens. Set `KIE_AI_API_KEY` as an environment variable on
+the Claude Code environment, then open a session on this repo.
+
+**Claude Code on your machine.** Needs Node.js.
+
+```
 git clone https://github.com/metamktg/metrix-creative-engine.git
 cd metrix-creative-engine
-pnpm install && pnpm run build
-
-cp .env.example .env        # add your key from https://kie.ai/api-key
-set -a && source .env && set +a
-
-mkdir -p ~/.claude/skills && ln -s "$(pwd)/skills/"* ~/.claude/skills/
-claude
+corepack enable
+pnpm install
+pnpm run build
 ```
 
-Then, in Claude Code:
+Then register the server and copy the skills into `.claude/skills`.
 
-```
-generate a 4:5 product shot of a matte black water bottle on a concrete ledge
-```
-
-Full walkthrough, including the global MCP registration you want if you plan to
-generate from inside `metrix-iap`: **[`docs/SETUP.md`](docs/SETUP.md)**.
+Exact commands for both, including Windows, are in
+**[`docs/SETUP.md`](docs/SETUP.md)**.
 
 ## Skills
 
