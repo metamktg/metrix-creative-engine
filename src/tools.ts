@@ -9,9 +9,18 @@
  */
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type { ServerNotification, ServerRequest } from "@modelcontextprotocol/sdk/types.js";
 
-import type { KieClient } from "./client.js";
+import type { KieClient, PollUpdate } from "./client.js";
 import { RESULT_RETENTION_NOTE, summarizeTask, type TaskRecord } from "./protocol.js";
+import {
+  createOutputShape,
+  creditsOutputShape,
+  downloadOutputShape,
+  taskOutputShape,
+  waitOutputShape,
+} from "./schemas.js";
 
 export interface ToolDeps {
   client: KieClient;
@@ -22,13 +31,28 @@ export interface ToolDeps {
 
 type ToolResult = {
   content: Array<{ type: "text"; text: string }>;
+  structuredContent?: Record<string, unknown>;
   isError?: boolean;
 };
 
-function text(...blocks: string[]): ToolResult {
-  return { content: blocks.map((block) => ({ type: "text" as const, text: block })) };
+/**
+ * Every result carries BOTH halves: `structuredContent` for a client that reads
+ * the tool's `outputSchema`, and a human summary in `content` for one that does
+ * not. The text is a summary, not the record restated, so the two channels do
+ * not duplicate a payload that can hold a hundred result URLs.
+ */
+function text(blocks: string[], structured?: Record<string, unknown>): ToolResult {
+  const result: ToolResult = { content: blocks.map((block) => ({ type: "text" as const, text: block })) };
+  if (structured) result.structuredContent = structured;
+  return result;
 }
 
+/**
+ * An error result has no `structuredContent`, and that is deliberate: the SDK
+ * validates structured output against the schema, and a failure has no record
+ * to put there. `isError` plus a readable reason is what the model needs to
+ * correct the call itself.
+ */
 function failure(message: string): ToolResult {
   return { content: [{ type: "text", text: message }], isError: true };
 }
@@ -46,9 +70,44 @@ async function guarded(run: () => Promise<ToolResult>): Promise<ToolResult> {
   }
 }
 
-function taskResult(record: TaskRecord, prefix?: string): ToolResult {
+function taskResult(
+  record: TaskRecord,
+  structured: Record<string, unknown>,
+  prefix?: string,
+): ToolResult {
   const summary = prefix ? `${prefix}\n${summarizeTask(record)}` : summarizeTask(record);
-  return text(summary, JSON.stringify(record, null, 2));
+  return text([summary], structured);
+}
+
+/**
+ * Report a wait's progress to the client, when the client asked for it.
+ *
+ * MCP progress must not go backwards, and Kie's own `progress` field is only
+ * populated for sora2, so it cannot be the number: a run that gains a
+ * percentage part way through would jump. Elapsed time against the wait's own
+ * budget is monotonic by construction and means something to a reader ("four
+ * minutes into a ten minute budget"). Kie's percentage, where it exists, and
+ * the task state go in the message, which is where a varying fact belongs.
+ */
+function progressReporter(
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
+): ((update: PollUpdate) => Promise<void>) | undefined {
+  const progressToken = extra._meta?.progressToken;
+  if (progressToken === undefined) return undefined;
+
+  return async ({ record, elapsedMs, timeoutMs }: PollUpdate) => {
+    const parts = [record.state === "unknown" && record.rawState ? record.rawState : record.state];
+    if (record.progress !== null) parts.push(`${record.progress}%`);
+    await extra.sendNotification({
+      method: "notifications/progress",
+      params: {
+        progressToken,
+        progress: Math.round(elapsedMs / 1000),
+        total: Math.round(timeoutMs / 1000),
+        message: parts.join(" "),
+      },
+    });
+  };
 }
 
 const modelArg = z
@@ -82,12 +141,13 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
       description:
         "Read the remaining credit balance on the configured Kie.ai account. Use before a large batch to confirm there is headroom.",
       inputSchema: {},
+      outputSchema: creditsOutputShape,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async () =>
       guarded(async () => {
         const credits = await client.getCredits();
-        return text(`Remaining Kie.ai credits: ${credits}`);
+        return text([`Remaining Kie.ai credits: ${credits}`], { credits });
       }),
   );
 
@@ -106,13 +166,15 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
           .optional()
           .describe("Optional webhook URL Kie.ai calls when the task completes."),
       },
+      outputSchema: createOutputShape,
       annotations: { readOnlyHint: false, openWorldHint: true },
     },
     async ({ model, input, callBackUrl }) =>
       guarded(async () => {
         const taskId = await client.createTask({ model, input, callBackUrl });
         return text(
-          `Task created: ${taskId}\nModel: ${model}\nThe task is queued, not finished. Poll it with kie_get_task or kie_wait_for_task.`,
+          [`Task created: ${taskId}\nModel: ${model}\nThe task is queued, not finished. Poll it with kie_get_task or kie_wait_for_task.`],
+          { taskId, model },
         );
       }),
   );
@@ -124,10 +186,14 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
       description:
         "Read a task's current state in one call, without waiting. States are waiting, queuing, generating, success and fail; result URLs appear only on success.",
       inputSchema: { taskId: z.string().min(1).describe("Task id returned by kie_create_task.") },
+      outputSchema: taskOutputShape,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async ({ taskId }) =>
-      guarded(async () => taskResult(await client.getTask(taskId))),
+      guarded(async () => {
+        const record = await client.getTask(taskId);
+        return taskResult(record, { task: record });
+      }),
   );
 
   server.registerTool(
@@ -140,17 +206,20 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
         taskId: z.string().min(1).describe("Task id returned by kie_create_task."),
         timeoutSeconds: waitArg,
       },
+      outputSchema: waitOutputShape,
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
-    async ({ taskId, timeoutSeconds }) =>
+    async ({ taskId, timeoutSeconds }, extra) =>
       guarded(async () => {
         const { record, timedOut, polls } = await client.waitForTask(taskId, {
           timeoutMs: (timeoutSeconds ?? defaultWaitSeconds) * 1000,
+          onPoll: progressReporter(extra),
+          signal: extra.signal,
         });
         const prefix = timedOut
           ? `Still running after ${polls} polls — the timeout passed, not the task. Wait again with the same taskId.`
           : `Settled after ${polls} polls.`;
-        return taskResult(record, prefix);
+        return taskResult(record, { task: record, timedOut, polls }, prefix);
       }),
   );
 
@@ -165,18 +234,21 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
         input: inputArg,
         timeoutSeconds: waitArg,
       },
+      outputSchema: waitOutputShape,
       annotations: { readOnlyHint: false, openWorldHint: true },
     },
-    async ({ model, input, timeoutSeconds }) =>
+    async ({ model, input, timeoutSeconds }, extra) =>
       guarded(async () => {
         const taskId = await client.createTask({ model, input });
         const { record, timedOut, polls } = await client.waitForTask(taskId, {
           timeoutMs: (timeoutSeconds ?? defaultWaitSeconds) * 1000,
+          onPoll: progressReporter(extra),
+          signal: extra.signal,
         });
         const prefix = timedOut
           ? `Created ${taskId} but it was still running after ${polls} polls. Resume with kie_wait_for_task on that taskId.`
           : `Created ${taskId} and it settled after ${polls} polls.`;
-        return taskResult(record, prefix);
+        return taskResult(record, { task: record, timedOut, polls }, prefix);
       }),
   );
 
@@ -193,7 +265,8 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
             .optional()
             .describe("Optional name to save under. Sanitized; the directory is fixed by configuration."),
         },
-        annotations: { readOnlyHint: false, openWorldHint: true },
+        outputSchema: downloadOutputShape,
+        annotations: { readOnlyHint: false, openWorldHint: true, destructiveHint: false },
       },
       async ({ url, filename }) =>
         guarded(async () => {
@@ -201,7 +274,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
             preferredName: filename?.trim(),
             fallbackName: `kie-result-${Date.now()}`,
           });
-          return text(`Saved ${bytes} bytes to ${filePath}`);
+          return text([`Saved ${bytes} bytes to ${filePath}`], { filePath, bytes });
         }),
     );
   }

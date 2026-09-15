@@ -19,6 +19,11 @@ await esbuild({
   format: "esm",
   bundle: true,
   sourcemap: true,
+  // Resources and prompts serve markdown that lives in the repository. The
+  // bundle is launched directly by an MCP client, with an arbitrary working
+  // directory and usually no repository beside it, so reading these at runtime
+  // would find nothing. Inlined here instead.
+  loader: { ".md": "text" },
   banner: { js: "#!/usr/bin/env node" },
   logLevel: "info",
 });

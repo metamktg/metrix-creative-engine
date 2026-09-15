@@ -124,6 +124,12 @@ Result URLs on stdout, progress on stderr. No dependencies beyond Node.
 
 ## Where generated files go
 
+To check the server end to end without spending a credit, run
+`pnpm run check:mcp-surface` after a build: it drives the built bundle over a
+real stdio MCP session against a stubbed Kie and asserts the handshake, the
+advertised capabilities, every tool's output schema, both resources, the prompts
+and the progress notifications.
+
 `--out DIR` downloads results and `--name ID` names them; `--name` without `--out`
 writes to `./out` and says so, rather than being dropped after the credits are
 spent. The extension always comes off the delivered file, so a `--name` that

@@ -44,10 +44,28 @@ export interface CreateTaskInput {
   callBackUrl?: string;
 }
 
+export interface PollUpdate {
+  record: TaskRecord;
+  /** How many reads have happened, including this one. */
+  polls: number;
+  /** Milliseconds since the wait began. */
+  elapsedMs: number;
+  /** The wait's whole budget, so a reporter can express elapsed as a fraction. */
+  timeoutMs: number;
+}
+
 export interface WaitOptions {
   timeoutMs: number;
   pacing?: PollPacing;
   signal?: AbortSignal;
+  /**
+   * Called after every read, including the first and the last. A generation
+   * runs for minutes, so a caller that can report progress needs the reads as
+   * they happen rather than only the outcome. Never allowed to fail the wait:
+   * a reporter that throws is ignored, because a broken progress channel must
+   * not lose a task the caller has already paid for.
+   */
+  onPoll?: (update: PollUpdate) => void | Promise<void>;
 }
 
 export interface WaitResult {
@@ -194,10 +212,27 @@ export class KieClient {
    */
   async waitForTask(taskId: string, options: WaitOptions): Promise<WaitResult> {
     const pacing = options.pacing ?? DEFAULT_POLL_PACING;
-    const deadline = Date.now() + options.timeoutMs;
+    const startedAt = Date.now();
+    const deadline = startedAt + options.timeoutMs;
     let polls = 0;
+
+    const report = async (record: TaskRecord): Promise<void> => {
+      if (!options.onPoll) return;
+      try {
+        await options.onPoll({
+          record,
+          polls,
+          elapsedMs: Date.now() - startedAt,
+          timeoutMs: options.timeoutMs,
+        });
+      } catch {
+        // A progress channel that fails is not a reason to lose the task.
+      }
+    };
+
     let record = await this.getTask(taskId);
     polls += 1;
+    await report(record);
 
     while (!isTerminalState(record.state)) {
       const delay = pollDelayMs(polls - 1, pacing);
@@ -207,6 +242,7 @@ export class KieClient {
       await sleep(delay, options.signal);
       record = await this.getTask(taskId);
       polls += 1;
+      await report(record);
     }
 
     return { record, timedOut: false, polls };

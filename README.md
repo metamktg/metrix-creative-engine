@@ -7,8 +7,14 @@ IAP creative brief into launch-ready Meta ad assets across static, carousel,
 video and UGC, without breaking the test the brief was designed around.
 
 Each skill carries `scripts/kie.mjs`, a zero-dependency Node client for the
-Kie.ai API, so generating needs nothing but an API key. An optional MCP server
-is in `src/` for typed tool arguments; it unlocks nothing extra.
+Kie.ai API, so generating needs nothing but an API key. That path is complete on
+its own and needs no build.
+
+An optional **MCP server** in `src/` adds what a CLI cannot: typed tool results
+the model reads instead of parsing, live progress while a generation runs, the
+model catalog and routing table as resources the client reads at the moment it
+needs them, and the render workflow as selectable prompts. See
+[`docs/MCP_TOOLS.md`](docs/MCP_TOOLS.md).
 
 ## Quick start
 

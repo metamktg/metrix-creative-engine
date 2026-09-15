@@ -10,6 +10,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { KieClient } from "./client.js";
 import { loadConfig } from "./config.js";
+import { registerKiePrompts } from "./prompts.js";
+import { registerKieResources } from "./resources.js";
 import { registerKieTools } from "./tools.js";
 
 export async function main(): Promise<void> {
@@ -31,6 +33,11 @@ export async function main(): Promise<void> {
     defaultWaitSeconds: config.defaultWaitSeconds,
     downloadDir: config.downloadDir,
   });
+  // Capabilities are inferred from what is registered, so a server that only
+  // registered tools advertised only tools. Reference documents and the render
+  // workflow are what the other two primitives are for.
+  registerKieResources(server);
+  registerKiePrompts(server);
 
   await server.connect(new StdioServerTransport());
   process.stderr.write(
