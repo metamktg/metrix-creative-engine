@@ -195,7 +195,8 @@ Take **`downloadUrl`** from the response. Also available:
 
 Two caveats from Kie's own docs, which contradict themselves: the host is given
 as both `kieai.redpandaai.co` (all prose examples) and `api.kie.ai` (the spec),
-and the expiry as both 24 hours and 3 days. If one host 404s, try the other.
+and used to give two expiries. The expiry is settled: uploaded files are deleted
+after **3 days**. If one host 404s, try the other.
 Upload immediately before the generation that consumes the URL, not at the start
 of a long batch.
 
@@ -205,5 +206,6 @@ No per-model price table exists. Published bands: images roughly 10–50 credits
 video roughly 100–500. The real figure comes back per task as
 `creditsConsumed`.
 
-Generated media is deleted after about **14 days**. Download anything worth
+Result URLs expire after about **24 hours** (Kie's own Best Practices block).
+Download anything worth
 keeping.

@@ -105,9 +105,13 @@ parameters instead, where being out of date is visible rather than fatal.
   the `taskId` back to resume on.
 - **HTTP 200 can still be an error.** Kie puts its own `code` in the response
   body. The server checks both.
-- **Results expire after about 14 days.** Download anything you intend to keep.
-- **20 new generations per 10 seconds.** A large matrix has to be paced;
-  `kie-tasks` does that.
+- **Results expire after about 24 hours.** Kie's own Best Practices block says
+  "Download results immediately: Generated content URLs typically expire after
+  24 hours" (https://docs.kie.ai/market/common/get-task-detail). Save anything you intend to keep, the
+  same day.
+- **Pace a large matrix.** Kie answers 429 when a request limit is exceeded, and
+  publishes no figure for that limit. Ramp a batch up rather than firing it all
+  at once; `kie-tasks` does that.
 - **Credits are real money.** Check the balance before a batch, not after.
 
 ## Development

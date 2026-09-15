@@ -4,6 +4,7 @@ import {
   DEFAULT_POLL_PACING,
   KieApiError,
   assertOk,
+  extractFrameUrls,
   extractResultUrls,
   isTerminalState,
   normalizeState,
@@ -233,12 +234,114 @@ describe("summarizeTask", () => {
       toTaskRecord({ taskId: "t", state: "success", resultJson: '{"resultUrls":["https://a/b.png"]}' }, "t"),
     );
     expect(summary).toMatch(/https:\/\/a\/b.png/);
-    expect(summary).toMatch(/14 days/);
+    expect(summary).toMatch(/24 hours/);
   });
 
   it("says what an unknown state actually reported", () => {
     expect(summarizeTask(toTaskRecord({ taskId: "t", state: "throttled" }, "t"))).toMatch(
       /reported "throttled"/,
     );
+  });
+});
+
+describe("fields the recordInfo spec documents and an earlier cut dropped", () => {
+  it("keeps `param`, the only server-side record of what produced an asset", () => {
+    const record = toTaskRecord(
+      {
+        taskId: "t",
+        state: "success",
+        param: '{"model":"google/nano-banana","input":{"prompt":"a bottle","aspect_ratio":"4:5"}}',
+      },
+      "t",
+    );
+    expect(record.param).toEqual({
+      model: "google/nano-banana",
+      input: { prompt: "a bottle", aspect_ratio: "4:5" },
+    });
+  });
+
+  it("hands back an unparseable `param` rather than dropping it", () => {
+    expect(toTaskRecord({ taskId: "t", param: "not json" }, "t").param).toBe("not json");
+  });
+
+  it("reads updateTime", () => {
+    expect(toTaskRecord({ taskId: "t", updateTime: 1698765432000 }, "t").updateTime).toBe(
+      1698765432000,
+    );
+  });
+
+  it("separates frame URLs from result URLs", () => {
+    const record = toTaskRecord(
+      {
+        taskId: "t",
+        state: "success",
+        resultJson: JSON.stringify({
+          resultUrls: ["https://a/clip.mp4"],
+          firstFrameUrl: ["https://a/first.png"],
+          lastFrameUrl: ["https://a/last.png"],
+        }),
+      },
+      "t",
+    );
+    // A frame is not the asset: a caller that downloaded every URL would file
+    // two stills as though they were renders.
+    expect(record.resultUrls).toEqual(["https://a/clip.mp4"]);
+    expect(record.frameUrls).toEqual(["https://a/first.png", "https://a/last.png"]);
+  });
+
+  it("ignores a frame field that is not an array, same rule as resultUrls", () => {
+    expect(extractFrameUrls({ firstFrameUrl: "https://a/first.png" })).toEqual([]);
+  });
+
+  it("names frame URLs as not the asset in the summary", () => {
+    const summary = summarizeTask(
+      toTaskRecord(
+        {
+          taskId: "t",
+          state: "success",
+          resultJson: JSON.stringify({ resultUrls: [], lastFrameUrl: ["https://a/last.png"] }),
+        },
+        "t",
+      ),
+    );
+    expect(summary).toMatch(/not the asset/);
+  });
+});
+
+describe("documented envelope codes", () => {
+  // Transcribed from the `code` enum at
+  // https://docs.kie.ai/market/common/get-task-detail. 402 and 501 are the two
+  // that decide a batch: out of credits, and a generation that failed.
+  const cases: Array<[number, RegExp]> = [
+    [401, /missing, wrong, or revoked/i],
+    [402, /insufficient credits/i],
+    [404, /no task exists/i],
+    [408, /over 10 minutes/i],
+    [422, /validation error/i],
+    [429, /rate limited/i],
+    [455, /maintenance/i],
+    [500, /server error/i],
+    [501, /generation failed/i],
+    [505, /feature disabled/i],
+  ];
+
+  for (const [code, expected] of cases) {
+    it(`explains code ${code}`, () => {
+      try {
+        assertOk({ code, msg: "x" }, 200);
+        throw new Error("should have thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(KieApiError);
+        expect((error as KieApiError).message).toMatch(expected);
+      }
+    });
+  }
+
+  it("quotes no rate-limit figure Kie does not publish", () => {
+    try {
+      assertOk({ code: 429, msg: "x" }, 200);
+    } catch (error) {
+      expect((error as KieApiError).message).not.toMatch(/\d+\s+new generation/i);
+    }
   });
 });

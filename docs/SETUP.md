@@ -104,7 +104,7 @@ otherwise. Either way they work.
 | Skill not listed by `/skills` | Not copied into `.claude/skills`, or Claude Code needs a restart |
 | "Kie error … code 401" | Key wrong or revoked. Check <https://kie.ai/api-key> |
 | "Kie error … code 402" | Out of credits |
-| "Kie error … code 429" | 20 new generations per 10 seconds. Pace the batch |
+| "Kie error … code 429" | Request limit exceeded. Pace the batch and retry |
 | "Kie error … code 422" | The model rejected `input`. Check `docs/MODEL_CATALOG.md` |
 | Exit code 2, "still running" | Not a failure. Poll the same taskId; never re-create |
 | Video looks hung | Video takes minutes. Use `start` + `poll`, raise `--timeout` |
@@ -115,18 +115,23 @@ otherwise. Either way they work.
 
 ```
 node scripts/kie.mjs credits
-node scripts/kie.mjs run   <model> '<input-json>' [--timeout N] [--out DIR]
+node scripts/kie.mjs run   <model> '<input-json>' [--timeout N] [--out DIR] [--name ID]
 node scripts/kie.mjs start <model> '<input-json>'
-node scripts/kie.mjs poll  <taskId>
+node scripts/kie.mjs poll  <taskId> [--timeout N] [--out DIR] [--name ID]
 ```
 
 Result URLs on stdout, progress on stderr. No dependencies beyond Node.
 
 ## Where generated files go
 
-`--out DIR` downloads results. Both the remote URL and any filename it carries
+`--out DIR` downloads results and `--name ID` names them; `--name` without `--out`
+writes to `./out` and says so, rather than being dropped after the credits are
+spent. The extension always comes off the delivered file, so a `--name` that
+already ends in one does not produce `name.png.jpg`.
+
+Both the remote URL and any filename it carries
 are reduced to a single path segment, so a hostile name cannot write outside the
 directory you chose.
 
-Kie deletes generated media after about **14 days**. A result URL is not
+Kie documents result URLs as expiring after about **24 hours**. A result URL is not
 storage. Download anything you intend to keep or hand to a client.

@@ -53,7 +53,7 @@ console.error("\n=== 3/3  check a file actually landed ===");
 const files = existsSync(out) ? readdirSync(out).filter((f) => statSync(path.join(out, f)).size > 1024) : [];
 if (!files.length) {
   console.error("PARTIAL: generation succeeded and returned a URL, but nothing downloaded.");
-  console.error("The URL above is valid for about 14 days. Open it in a browser.");
+  console.error("The URL above is valid for about 24 hours. Open it in a browser.");
   process.exit(1);
 }
 for (const f of files) console.error(`    ${path.join(out, f)}  (${statSync(path.join(out, f)).size} bytes)`);

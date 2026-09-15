@@ -1,0 +1,49 @@
+# The repo had no CI until 2026-09-15: every check it quotes in its history ran
+# because someone chose to run it. This runs them on every push and PR instead.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      # Includes the drift guard over the three skill-bundled copies of
+      # kie.mjs, which nothing else would reveal.
+      - name: Test
+        run: pnpm run test
+
+      - name: Build
+        run: pnpm run build
+
+      # The skills ship as zip uploads, and a SKILL.md nested deeper than the
+      # top level is rejected on upload with no other signal. Cheap to check
+      # here; expensive to discover in the uploader.
+      - name: Every skill has a top-level SKILL.md
+        run: |
+          set -euo pipefail
+          status=0
+          for dir in skills/*/; do
+            if [ ! -f "${dir}SKILL.md" ]; then
+              echo "::error::${dir} has no top-level SKILL.md"
+              status=1
+            fi
+          done
+          exit $status

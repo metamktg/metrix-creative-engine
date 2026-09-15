@@ -19,13 +19,15 @@ and `KIE_AI_API_KEY` in the environment. Works on Windows, macOS and Linux.
 ```
 node scripts/kie.mjs credits
 node scripts/kie.mjs run "google/nano-banana" '{"prompt":"...","aspect_ratio":"4:5"}'
-node scripts/kie.mjs run "veo-3-1" '{"prompt":"..."}' --timeout 900 --out ./out
+node scripts/kie.mjs run "veo-3-1" '{"prompt":"..."}' --timeout 900 --out ./out --name my-concept-id
 node scripts/kie.mjs start "kling/v2-1-master-image-to-video" '{...}'   # prints taskId, returns at once
 node scripts/kie.mjs poll <taskId> --timeout 900
 ```
 
 It prints result URLs on stdout and progress on stderr, so `$(node scripts/kie.mjs run ...)`
-captures just the URLs. `--out DIR` downloads them. Exit 2 means the wait timed
+captures just the URLs. `--out DIR` downloads them, and `--name ID` files each one
+under a name you choose instead of whatever the CDN called it (an asset named for
+its concept is the point; `--name` on its own writes to `./out`). Exit 2 means the wait timed
 out and the task is still running: poll the same taskId, never re-create.
 
 On Windows the path is `scripts\kie.mjs`. Use the skill's own directory, which
@@ -50,7 +52,9 @@ not, say so and stop rather than starting and hoping.
 
 ## Batching
 
-**The limit is 20 new generation requests per 10 seconds.** Past it Kie returns
+**Kie publishes no rate-limit figure**, only that 429 means a request limit was
+exceeded. An earlier version of this file said 20 per 10 seconds; that number is
+not in the docs. Ramp a batch up rather than firing it all at once. Kie returns
 429 and those creations are lost, not queued.
 
 For a batch of N:
@@ -95,13 +99,13 @@ their reasons and what each needs.
 ## Resuming from a taskId
 
 Given an id from an earlier session, `kie_get_task` reads its current state in
-one call. Results stay retrievable for roughly 14 days, so an id from last week
+one call. Result URLs expire after about 24 hours, so an id from last week
 is likely still good; an id from last month is likely not.
 
 ## Downloading
 
 `kie_download_result` exists only when `KIE_AI_DOWNLOAD_DIR` is set. Without it,
-report the URLs and say they expire in about 14 days.
+report the URLs and say they expire in about 24 hours.
 
 Pass a meaningful `filename`. For Metrix work that is the MST name, so the asset
 lands ready for `metrix-mst-creative-scan`. The directory is fixed by
