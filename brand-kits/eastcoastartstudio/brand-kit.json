@@ -1,8 +1,8 @@
 {
   "_contract": "brand_assets plugs into the brief contract checked by kie_validate_brief. Every other field carries its own provenance.",
-  "kit_version": "1.0.0",
+  "kit_version": "2.0.0",
   "built_at": "2026-09-15",
-  "built_from": "public sources only. No client-supplied assets were provided.",
+  "built_from": "Public site audit, PLUS the client's own local_client_library.json and the 16 MST Sprint 1 briefs. ECAS is East Coast Art Studio: the brief package and this brand are the same account.",
   "identity": {
     "canonical_name": "EastCoastArtStudio",
     "canonical_name_evidence": "VERIFIED. 229 occurrences on the homepage, og:site_name, and the logo artwork itself.",
@@ -195,15 +195,21 @@
       "Any rating, star count or review quantity. No review data could be verified from public sources.",
       "Any named customer testimonial. None was obtained.",
       "'200+ cities' as a stated fact. It is the client's own marketing claim and 149 places were counted.",
-      "The SEO keyword tail that ends every product description. It is stuffing, not copy, and must never reach an asset."
+      "The SEO keyword tail that ends every product description. It is stuffing, not copy, and must never reach an asset.",
+      "3,000+ cities, until the client evidences it. The site claims 200+ and 149 were counted.",
+      "Map prints. The catalogue is street-sign and city-scene art, not cartography.",
+      "Any emoji, any row. Client rule.",
+      "The phrase \"Read why\". Banned account-wide by the client.",
+      "The 25% offer anywhere but a Row D final line in small type."
     ]
   },
   "social_proof": {
-    "status": "NOT_ESTABLISHED",
-    "review_platform_detected": "Judge.me, VERIFIED present as a Shopify theme extension on the storefront.",
-    "what_was_attempted": "Judge.me public store page (404), product-page JSON-LD and widget markup (rate limited at 429 before a rating could be read), homepage JSON-LD (none present).",
-    "honest_position": "No rating, review count or testimonial text was verified. The engine must not render social proof for this brand until a number is confirmed.",
-    "how_to_close_it": "Ask the client for the Judge.me public API token, or read the rating from a product page once rate limiting allows. A single verified figure unlocks the entire proof pillar."
+    "status": "NONE EXISTS TO INCORPORATE",
+    "evidence": "VERIFIED on a full 195KB product page load, 2026-09-15: no ratingValue, no data-average-rating, no aggregateRating JSON-LD, and the Judge.me widget renders no reviews. Judge.me is installed but empty. The Judge.me public store page 404s. Trustpilot returns 403, which is inconclusive rather than negative.",
+    "consistent_with": "MST Sprint 1 spent $57.97 of a ~$1,000 budget between 2026-07-14 and 2026-07-24 with ZERO conversions. A store with no conversions has no buyers to review it.",
+    "ruling": "The kit does not incorporate social proof because there is none. This matches the client's own rule, which already anticipated it: ship [VERIFIED COUNT] as a placeholder, NEEDS-VALIDATION, never invent a number.",
+    "the_slot_is_built": "Every prompt carries the placeholder convention, so a real figure drops in without a re-render the day one exists.",
+    "how_to_close_it": "The Judge.me admin shows the true count even when the storefront shows none. One number from the client closes this."
   },
   "channels": {
     "instagram": "https://www.instagram.com/theeastcoastartstudios/",
@@ -230,5 +236,110 @@
       "url": "https://eastcoastartstudio.com/cdn/shop/files/079ccba8-cc03-4195-8bfd-f9da34e6f76c-copy.jpg",
       "note": "Shared across products. Ratio diagrams over a warm living room."
     }
-  ]
+  ],
+  "client_account_rules": {
+    "source": "VERIFIED. local_client_library.json v1.4.0, account_rules block. These are the CLIENT's rules and they outrank anything inferred from the public site.",
+    "offer": {
+      "value": "25% off",
+      "rule": "Row D final line only, small type. NEVER in a hook or a headline, any row.",
+      "why": "A documented $40.54 cost per add-to-cart when this rule was broken historically. This is the single most expensive rule in the account."
+    },
+    "cta": {
+      "copy": "SHOP NOW",
+      "button": "solid black",
+      "standardised": "2026-07-12",
+      "banned_phrase": "\"Read why\" is banned account-wide."
+    },
+    "emoji": "None. Any row. No exceptions.",
+    "testimonials": "Unattributed only, maximum 12 words, no fabricated named attribution.",
+    "social_proof_counts": "Ship as a [VERIFIED COUNT] placeholder with evidence status NEEDS-VALIDATION. Never invent a number."
+  },
+  "conflicts_to_resolve": [
+    {
+      "severity": "BLOCKS_RENDER",
+      "field": "product identity",
+      "client_library_says": "Made-to-order, real-wood-framed street/city MAP prints across 3,000+ cities",
+      "live_catalogue_says": "1 of 250 products is a map. 162 are street sign, 139 oil painting, 8 cubism. The product is a painted city scene with a real street nameplate inside it.",
+      "consequence": "A model told 'map prints' renders maps. That is 16 wrong creatives and a wasted sprint.",
+      "ruling": "Render what the catalogue sells, not what the library says. Ask the client to correct the library."
+    },
+    {
+      "severity": "COMPLIANCE_AND_CVR",
+      "field": "3,000+ cities",
+      "appears_in": "copy_architecture.product_solution and PR_DataStat on the briefs",
+      "live_evidence": "The site's own meta description claims 200+ cities. 149 distinct places were counted across the 250 returned products.",
+      "consequence": "An ad claiming 3,000+ against a site claiming 200+ is an overclaim the landing page contradicts, which costs trust at exactly the moment the click is paid for.",
+      "ruling": "Do not render 3,000+ until the client evidences it. Substitute a claim that holds, or drop the count."
+    },
+    {
+      "severity": "VERIFIED_SAFE",
+      "field": "real wood frame, real matte paper",
+      "live_evidence": "228 of 250 descriptions state pine wood or metal framing and museum-grade 200gsm fine art paper.",
+      "ruling": "This claim holds. It is the strongest verified differentiator the account has."
+    }
+  ],
+  "icps": {
+    "source": "VERIFIED. local_client_library.json local_concepts. This corrects v1.0.0 of this kit, which recorded the CN_Design_* codes as defined nowhere: they are defined here, in the client's library, which the public audit could not see.",
+    "concepts": [
+      {
+        "code": "C1",
+        "icp": "ICP-ECAS-01 GiftGiver45",
+        "design_system": "CN_Design_SinglePrintLifestyle",
+        "lands_on": "/collections/best-sellers"
+      },
+      {
+        "code": "C2",
+        "icp": "ICP-ECAS-02 Milestone2534",
+        "design_system": "CN_Design_RoomContext",
+        "lands_on": "/collections/best-sellers"
+      },
+      {
+        "code": "C3",
+        "icp": "ICP-ECAS-03 HometownSelf",
+        "design_system": "CN_Design_CityDetail",
+        "lands_on": "a city collection page, never a single PDP for cold traffic"
+      },
+      {
+        "code": "C4",
+        "icp": "ICP-ECAS-04 MemoryKeeperCouple",
+        "design_system": "CN_Design_MultiPrintGallery",
+        "lands_on": "/collections/best-sellers"
+      }
+    ],
+    "evidence_grade": "hypothesis_only. Every ICP is reverse-engineered from a pre-pilot audit. None is a proven winner."
+  },
+  "cvr_architecture": {
+    "premise": "This account has zero validated conversions. Nothing below is a proven lift: it is the set of things that remove friction, applied because the alternatives are worse, and each one is falsifiable by the sprint.",
+    "rules": [
+      {
+        "rule": "The product must be unmistakable in the first frame",
+        "why": "A painted street scene with a legible nameplate reads instantly as a specific place. A generic art print reads as a poster, which is the exact objection the hook is fighting."
+      },
+      {
+        "rule": "Legibility at thumbnail beats detail",
+        "why": "The nameplate is the whole proposition and it is the first thing lost at feed size. If the street name cannot be read on a phone, the ad has no product in it."
+      },
+      {
+        "rule": "Show the frame, not just the art",
+        "why": "Real wood framing is the verified differentiator and the price justification. An unframed crop competes on price with a poster."
+      },
+      {
+        "rule": "Scale must be legible",
+        "why": "The single most common unstated objection to wall art is 'how big is it'. Scene D and the size guide answer it without a word."
+      },
+      {
+        "rule": "One claim per asset",
+        "why": "Made to order, real wood, real paper, free shipping and a discount in one frame reads as a clearance. Pick the one that serves the row's isolated variable."
+      },
+      {
+        "rule": "The offer goes last and small, or not at all",
+        "why": "The client's own rule, with a documented $40.54 per add-to-cart when it was broken. Discount in a hook prices the product as cheap, against a brand whose entire argument is that it is not."
+      },
+      {
+        "rule": "Land cold traffic on a collection, never a single product",
+        "why": "Client rule for C3, and it generalises: a buyer wants their city, and one PDP is a dead end if it is the wrong one."
+      }
+    ],
+    "proof_when_it_exists": "The moment a real review count lands, it belongs in the same position across every cell, so the sprint measures the creative rather than the proof."
+  }
 }
