@@ -45,16 +45,41 @@ invent a brief in order to have something to render.
 
 ## The rule that governs everything here
 
-**A Matrix Sprint Test isolates one variable. The prompt must isolate the same
-one.**
+**Render what the brief specifies, in the medium it declares, and name it for
+what it is.**
 
-If a matrix row tests hook (`HK_`), then across every cell in that row the
-generation prompt must be byte-identical except for the clause expressing the
-hook. Any other drift — a different lighting word, a reordered sentence, a
-re-roll on a different seed — is a second uncontrolled variable, and the test no
-longer attributes its result to anything.
+That is the whole default. Most creative is not a test. It is an asset built
+from a brief to run, and the job is fidelity to that brief: the format it
+declares, the visual direction it sets, the product it names, the brand it
+belongs to.
 
-So build prompts as **base + one slot**, never as freehand text per cell:
+**Name assets descriptively.** The filename is what a strategist reads in a
+folder six weeks later, so it carries the creative concept, not a coordinate:
+
+```
+bottle-hero-concrete-ledge-4x5
+busy-parents-morning-kitchen-9x16
+```
+
+A grid position means nothing outside a running test, and reading one back tells
+you nothing about what the creative was.
+
+## When a Matrix Sprint Test is running
+
+A Matrix Sprint Test is an **optional** sprint you run deliberately to validate a
+hypothesis. It is not a stage of the loop and most accounts will not have one in
+flight. `prompts/05-mst.md` covers when to run one and how to build it.
+
+If, and only if, the brief carries `brief_metadata.mode: "matrix"` with a live
+matrix, one extra discipline applies on top of everything above:
+
+**The test isolates one variable, so the prompt must isolate the same one.** If
+the row tests hook (`HK_`), then across every cell the prompt is byte-identical
+except the clause expressing the hook. A different lighting word, a reordered
+sentence, a re-roll on another seed: each is a second uncontrolled variable, and
+the result stops attributing to anything.
+
+Build such prompts as **base plus one slot**:
 
 ```
 BASE (locked, identical across the row)
@@ -64,9 +89,12 @@ SLOT (the isolated variable, the only thing that changes)
   the clause carrying HK_ / FW_ / TN_ / ST_ / AW_ / HP_ / PR_ / CTA_
 ```
 
-Write the base once. Substitute the slot per cell. If you cannot express the
-isolated variable as a single substitutable clause, say so and stop — that is a
-brief problem, not a prompting problem.
+If the isolated variable cannot be expressed as a single substitutable clause,
+say so and stop. That is a brief problem, not a prompting problem.
+
+Inside a live MST, and only there, assets also carry the MST naming convention,
+because `metrix-mst-creative-scan` parses it to attribute results. Everywhere
+else, descriptive names.
 
 ## Do not render ad copy into the image
 
@@ -143,31 +171,28 @@ locked. Say explicitly in the output that you took the exception and why.
    regenerate the row, because a re-roll changes the cells that already
    succeeded.
 
-9. **Name every output with the MST convention**, exactly as
-   `testing_framework.matrix_naming_convention` states:
+9. **Name every output for what it is.** Default to a descriptive name built
+   from the creative concept, so the file is readable on its own:
+   `bottle-hero-concrete-ledge-4x5`. Pass it with `--name`.
 
-   `{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`
-
-   for example `C1A_CN_ICP_BusyParents_CN_Design_UGC_FW_PAS_HK_Problem_ST_TOFU_001`.
-   Pass it as `filename` to `kie_download_result`. This is what lets
-   `metrix-mst-creative-scan` validate the set before launch — an asset with a
-   wrong name is an asset that cannot be scanned, and therefore cannot be
-   attributed.
+   Only inside a live Matrix Sprint Test, use the MST convention instead,
+   exactly as `testing_framework.matrix_naming_convention` states
+   (`{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`), because
+   `metrix-mst-creative-scan` parses that form to attribute results and an asset
+   it cannot parse cannot be attributed.
 
 10. **QA before handing over.** Walk `qa_requirements` and the avoid list against
    what was actually generated — look at the image, do not assume the prompt was
-   obeyed. Then hand to `metrix-mst-creative-scan` for the matrix-level check
-   (row/column/diagonal consistency). Flag any cell where the model ignored a
-   locked element; that cell is not usable as a test.
+   obeyed. If an MST is running, then hand to `metrix-mst-creative-scan` for the
+   matrix-level check and flag any cell where the model ignored a locked
+   element, since that cell is not usable as a test. Outside an MST there is no
+   matrix to scan and this step is judging the asset against the brief.
 
 11. **Run the confidence gate, then finish.** After the last render, and without
-    stopping to ask: check each cell for variable identity, absolutely and
-    against its siblings. Revise a failure (bounded, at most two cycles), polish
-    only what passed, and name the file by the MST convention in matrix mode or
-    the creative concept id in general mode, via `--name`. The full rules are
-    `prompts/04-self-validation.md`.
-
-    A row with an unresolved cell is not a valid test, and the report says so.
+    stopping to ask: check the asset expresses what the brief specified. Inside
+    a running MST, also check each cell against its siblings. Revise a failure
+    (bounded, at most two cycles), polish only what passed, and name it via
+    `--name`. The full rules are `prompts/04-self-validation.md`.
 
 12. **Report** as the output contract below.
 
@@ -175,26 +200,30 @@ locked. Say explicitly in the output that you took the exception and why.
 
 Per brief rendered:
 
-- `brief_id` and `matrix_position`
-- the model used, and the **exact base prompt** (once per row, not per cell)
-- the slot text per cell, so the isolation is auditable
-- result URL and the local path under its MST name
+- `brief_id`, and the creative concept the asset expresses
+- the model used and the exact prompt
+- result URL and the local path under its descriptive name
 - QA verdict per `qa_requirements` item: PASS / FAIL with the reason
-- identity verdicts: absolute and comparative, per cell, with revisions used
+- whether the asset expresses what the brief specified, with revisions used
 - anything the model failed to obey
+
+Inside a running MST, additionally: the matrix position, the base prompt once
+per row rather than per cell, the slot text per cell so the isolation is
+auditable, and the comparative verdict per cell.
 
 Per run: credits before and after, and any cell that needs regenerating.
 
 State plainly when something did not work. A cell that silently drifted is worse
 than a cell that failed, because it still looks like a valid test.
 
-## General mode
+## A note on the two modes
 
-Outside `matrix` mode the isolation rule relaxes: you are scaling a proven
-pattern, not testing one. Keep the brief's visual direction and avoid list, and
-keep the naming convention, but prompt variation between assets is allowed and
-useful. Say in the report that you were in general mode, so nobody reads the
-variation as a broken test.
+Default work is not a test. Variation between assets is allowed and useful,
+because you are building creative from a brief rather than measuring one
+variable against another.
+
+The isolation discipline exists only to protect a running Matrix Sprint Test,
+and applying it where no test exists costs you range for nothing.
 
 ## What this skill will not do
 
