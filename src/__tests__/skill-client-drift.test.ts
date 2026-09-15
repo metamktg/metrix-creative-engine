@@ -32,12 +32,14 @@ function skillClients(): Array<{ skill: string; file: string; source: string }> 
 }
 
 describe("skill-bundled kie.mjs copies", () => {
-  it("ships one in every skill", () => {
-    const clients = skillClients();
-    const skills = readdirSync(skillsDir, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name);
-    expect(clients.map((c) => c.skill).sort()).toEqual(skills.sort());
+  it("ships one in every skill that generates", () => {
+    // Not every skill talks to Kie. `brand-kit-builder` audits a public site and
+    // spends nothing, so requiring a client of it was the guard over-reaching.
+    // What must hold is that a skill with a scripts/ directory either bundles the
+    // client or deliberately does not, and the ones that do never drift apart.
+    const generating = ["kie-generate", "kie-tasks", "metrix-ad-creative"];
+    const shipped = skillClients().map((c) => c.skill).sort();
+    expect(shipped).toEqual([...generating].sort());
   });
 
   it("are byte-identical across skills", () => {

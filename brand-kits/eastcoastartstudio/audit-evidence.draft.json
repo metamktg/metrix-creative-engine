@@ -1,0 +1,238 @@
+{
+  "built_at": "2026-09-15",
+  "site": "https://eastcoastartstudio.com",
+  "generator": "audit-brand.mjs",
+  "platform": "Shopify",
+  "identity": {
+    "og_site_name": "EastCoastArtStudio",
+    "title": "\r\n      EastCoastArtStudio | Premium City Travel Art\r",
+    "description": "Your favorite places, on your wall. Museum-grade prints of NYC, Chicago, Barcelona, Greece &amp; 200+ cities. Free shipping.",
+    "evidence": "VERIFIED from served HTML meta tags."
+  },
+  "logo": {
+    "files": [
+      {
+        "role": "primary",
+        "url": "https://eastcoastartstudio.com/cdn/shop/files/EastCoastArtStudio_Logo.png",
+        "px": "1040x585",
+        "bytes": 128980,
+        "alt": "EastCoastArtStudio"
+      },
+      {
+        "role": "alt_or_reverse",
+        "url": "https://eastcoastartstudio.com/cdn/shop/files/EastCoastArtStudio_Reverse_Logo.png",
+        "px": "1200x487",
+        "bytes": 176642,
+        "alt": ""
+      }
+    ],
+    "icon_mark_exists": "NEEDS_HUMAN_CHECK: look at the file. A wordmark-only brand must never be given an invented mark."
+  },
+  "icons": {
+    "declared": [],
+    "favicon_ico": "ABSENT (HTTP 404)"
+  },
+  "palette": {
+    "census": [
+      {
+        "hex": "#fff",
+        "n": 22
+      },
+      {
+        "hex": "#a0a0a0",
+        "n": 17
+      },
+      {
+        "hex": "#ffffff",
+        "n": 12
+      },
+      {
+        "hex": "#333333",
+        "n": 8
+      },
+      {
+        "hex": "#000000",
+        "n": 7
+      },
+      {
+        "hex": "#000",
+        "n": 6
+      },
+      {
+        "hex": "#b9b9b9",
+        "n": 4
+      },
+      {
+        "hex": "#121212",
+        "n": 2
+      },
+      {
+        "hex": "#dedede",
+        "n": 2
+      },
+      {
+        "hex": "#a9a9a9",
+        "n": 2
+      },
+      {
+        "hex": "#047bd5",
+        "n": 2
+      },
+      {
+        "hex": "#3eb2a2",
+        "n": 2
+      },
+      {
+        "hex": "#7b7b7b",
+        "n": 2
+      },
+      {
+        "hex": "#e0e0e0",
+        "n": 2
+      }
+    ],
+    "evidence": "VERIFIED by frequency census over 8 stylesheets and the page.",
+    "interpretation": "NEEDS_HUMAN_CHECK: a near-achromatic result is often correct, not a miss. Decide whether the product supplies the colour."
+  },
+  "typography": {
+    "declared_families": [
+      "Poppins (17)",
+      "Playfair Display (4)"
+    ],
+    "wordmark_rule": "NEEDS_HUMAN_CHECK: if the wordmark's font is unidentified, the wordmark is PLACED as artwork, never re-typeset."
+  },
+  "catalogue": {
+    "status": "VERIFIED",
+    "count": 250,
+    "note": "250 is the endpoint cap. The real catalogue may be larger.",
+    "images_total": 1489,
+    "price_usd": {
+      "min": 18,
+      "median": 32,
+      "max": 396,
+      "variants": 2720
+    },
+    "top_tags": [
+      [
+        "Street sign art",
+        102
+      ],
+      [
+        "City sign print",
+        99
+      ],
+      [
+        "European wall art",
+        34
+      ],
+      [
+        "street sign art",
+        22
+      ],
+      [
+        "city street art",
+        20
+      ],
+      [
+        "Europe wall decor",
+        20
+      ],
+      [
+        "Nordic wall decor",
+        20
+      ],
+      [
+        "Norway gift idea",
+        20
+      ],
+      [
+        "Norway travel art",
+        20
+      ],
+      [
+        "Norway wall art",
+        20
+      ],
+      [
+        "Scandinavian art",
+        20
+      ],
+      [
+        "Travel poster Norway",
+        20
+      ]
+    ],
+    "claim_frequency": [
+      {
+        "phrase": "gift",
+        "n": 247,
+        "of": 249
+      },
+      {
+        "phrase": "museum-grade",
+        "n": 228,
+        "of": 249
+      },
+      {
+        "phrase": "archival",
+        "n": 228,
+        "of": 249
+      },
+      {
+        "phrase": "gsm",
+        "n": 228,
+        "of": 249
+      }
+    ],
+    "sample_images": [
+      {
+        "title": "Annie Custom Piece",
+        "images": [
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/AFrameOptions_LE_upscale_balanced_x4_1__LE_upscale_balanced_x4_6b938eac-c8a6-4a4a-b826-3e351b9038aa.jpg"
+        ]
+      },
+      {
+        "title": "Berry Street Oil Painting Art Print: Williamsburg Brooklyn NYC Travel Poster",
+        "images": [
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/f7568062-fb62-4b7a-98ee-4fa42fd799fb-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/c0529780-f55a-4d3f-8458-dece40a4566c-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/994aacf1-e212-488c-afc9-6d85bfe2f2a4-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/ef3cdedb-4383-45fb-95a5-71d3f744c636-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/488321cd-2119-4ad4-8ca5-685e25b07637-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/d83d8697-9cfe-4795-a26a-b6d1e71d52aa-copy.jpg"
+        ]
+      },
+      {
+        "title": "Alameda Oil Painting Art Print: Santiago Chile Street Sign Travel Poster",
+        "images": [
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/d8d5fdee-3064-4af8-9b43-dd54b647d521-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/d0731590-3598-4423-b28e-b6e7341f9650-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/90ff7425-c24d-4a4b-a981-62c36db98a87-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/9b8e3c2b-fe90-4fe0-a2f2-394f97dabaca-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/46ccb07c-878a-440a-9cbf-79fde8614a46-copy.jpg",
+          "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/3bfd9013-10be-4361-b198-c9183e106e4b-copy.jpg"
+        ]
+      }
+    ],
+    "shared_asset_hint": "Download several products' full image sets and md5 them. Files repeating across products are the brand's own size guides, material and packaging shots. Composite those, never regenerate them."
+  },
+  "channels": [
+    "https://www.facebook.com/profile.php?id=61575209887923",
+    "https://www.instagram.com/theeastcoastartstudios/",
+    "https://www.pinterest.com/theeastcoastartstudios/"
+  ],
+  "social_proof": {
+    "platform_detected": [
+      "Judge.me"
+    ],
+    "rating": "NOT_ESTABLISHED",
+    "rule": "Render NO proof until a rating or a real testimonial is verified. A fabricated review is a legal and trust failure, and it is the field an eager process invents because it knows what one sounds like. Record what was attempted so the next pass resumes."
+  },
+  "human_required": [
+    "Confirm the canonical brand name, and reconcile any variant between the site, the vendor field and the copy.",
+    "Look at the product images and write the mockup grammar: surface, props, light, camera height, palette.",
+    "Decide the one non-negotiable product rule, the thing that makes an asset this brand's rather than generic.",
+    "Verify or abandon social proof. Do not let it default to plausible.",
+    "Confirm whether a missing favicon or icon mark is genuinely absent, and report it rather than generating one."
+  ]
+}
