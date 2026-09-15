@@ -117,6 +117,9 @@ stopped.
 
 ## Step 7: emit
 
+The full four-artifact pipeline, including building the visual kit and the checks
+that stop a broken one shipping, is **`SOP.md`** beside this file.
+
 Two files per account, in `brand-kits/<account>/`:
 
 - **`brand-kit.json`** — the structured kit. Its `brand_assets` array plugs
