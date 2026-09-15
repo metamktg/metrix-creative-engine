@@ -123,6 +123,12 @@ visual instructions:
 will get, at what ratio, from which model, what is locked, what varies, the
 likely limits, and the credit estimate. In matrix mode, wait for a yes.
 
+**That yes is the only interruption.** Once it is given the run goes through to
+completion without stopping again: generate, validate against the confidence
+gate, revise if it must, polish, name, report. See `04-self-validation.md`.
+Stopping mid-row to ask leaves a half-rendered matrix, which is not a test and
+still cost credits.
+
 **After generating,** judge each output against the spec, not against memory
 of the prompt. Record PASS or FAIL per `qa_checks` item, with the reason.
 

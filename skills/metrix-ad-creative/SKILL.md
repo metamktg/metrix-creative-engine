@@ -160,7 +160,16 @@ locked. Say explicitly in the output that you took the exception and why.
    (row/column/diagonal consistency). Flag any cell where the model ignored a
    locked element; that cell is not usable as a test.
 
-11. **Report** as the output contract below.
+11. **Run the confidence gate, then finish.** After the last render, and without
+    stopping to ask: check each cell for variable identity, absolutely and
+    against its siblings. Revise a failure (bounded, at most two cycles), polish
+    only what passed, and name the file by the MST convention in matrix mode or
+    the creative concept id in general mode, via `--name`. The full rules are
+    `prompts/04-self-validation.md`.
+
+    A row with an unresolved cell is not a valid test, and the report says so.
+
+12. **Report** as the output contract below.
 
 ## Output contract
 
@@ -171,6 +180,7 @@ Per brief rendered:
 - the slot text per cell, so the isolation is auditable
 - result URL and the local path under its MST name
 - QA verdict per `qa_requirements` item: PASS / FAIL with the reason
+- identity verdicts: absolute and comparative, per cell, with revisions used
 - anything the model failed to obey
 
 Per run: credits before and after, and any cell that needs regenerating.

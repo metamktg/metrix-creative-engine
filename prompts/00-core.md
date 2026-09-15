@@ -113,6 +113,7 @@ type in the brief.
 | Intake: brand assets, product imagery, website | `01-brand-intake.md` |
 | Build: brief to render spec to generation | `02-render-bridge.md` |
 | Handoff: presenting files and rationale | `03-handoff.md` |
+| Finish: confidence gate, revision, polish, naming | `04-self-validation.md` |
 | Formats | one per `asset_type`, routed by the table below |
 
 ### Format routing

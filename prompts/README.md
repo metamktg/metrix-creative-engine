@@ -30,6 +30,7 @@ before credits are spent.
 | `01-brand-intake.md` | **Q2:** how brand kits, logos, product imagery and website context get incorporated |
 | `02-render-bridge.md` | **Q3:** how the brief becomes platform-optimised prompts through the render spec |
 | `03-handoff.md` | **Q1:** how files and rationale are presented so the user understands the why |
+| `04-self-validation.md` | The final pass: variable identity confidence gate, bounded revision, polish, naming |
 | `formats/static.md` | Single-image statics |
 | `formats/ugc.md` | UGC and AI-UGC, including disclosure |
 | `formats/video.md` | Video, still-first workflow |
@@ -43,7 +44,7 @@ System prompt = core + stage + one format module per `asset_type` in the brief.
 
 ```
 00-core.md
-+ 01-brand-intake.md | 02-render-bridge.md | 03-handoff.md
++ 01-brand-intake.md | 02-render-bridge.md | 04-self-validation.md | 03-handoff.md
 + formats/<asset_type>.md
 ```
 
@@ -73,6 +74,7 @@ than falling back.
 | `brand_translation.json` | Intake | Brand turned into prompt language once, reused everywhere |
 | `render_spec.json` | Render bridge | Exact model, parameters, prompts and references. Reproducible |
 | `assets/` | Render bridge | MST-named outputs |
+| `validation_report.json` | Self-validation | Per cell: identity verdicts, revisions, final name |
 | Handoff message | Handoff | Verdict, rationale, test logic, QA, next step |
 
 ## Brand assets in the brief

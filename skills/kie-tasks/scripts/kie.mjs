@@ -69,7 +69,7 @@ async function poll(taskId, timeoutSec, outDir) {
       const urls = resultUrls(d);
       console.error(`done in ${d.costTime ? (d.costTime / 1000).toFixed(1) + "s" : "?"}, credits: ${d.creditsConsumed ?? "?"}`);
       urls.forEach((u) => console.log(u));
-      if (outDir) await download(urls, outDir, taskId);
+      if (outDir) await download(urls, outDir, taskId, flag("--name", null));
       if (!urls.length) console.error("WARNING: succeeded but carried no resultUrls. Raw:\n" + JSON.stringify(d.resultJson));
       return;
     }
@@ -82,7 +82,7 @@ async function poll(taskId, timeoutSec, outDir) {
   }
 }
 
-async function download(urls, dir, taskId) {
+async function download(urls, dir, taskId, preferredName) {
   const { mkdir, writeFile } = await import("node:fs/promises");
   const path = await import("node:path");
   await mkdir(dir, { recursive: true });
@@ -91,6 +91,14 @@ async function download(urls, dir, taskId) {
     let name = "";
     try { name = decodeURIComponent(new URL(url).pathname.split("/").pop() || ""); } catch {}
     name = name.replace(/[^A-Za-z0-9._-]/g, "_").replace(/^[._]+/, "").slice(0, 120) || `${taskId}-${i}`;
+    // A caller-supplied name wins, so an asset can be filed under its concept
+    // or MST id rather than whatever the CDN called it. Sanitized the same way:
+    // it is still untrusted input and must stay one path segment.
+    if (preferredName) {
+      const ext = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
+      const stem = preferredName.replace(/[^A-Za-z0-9._-]/g, "_").replace(/^[._]+/, "").slice(0, 160);
+      if (stem) name = urls.length > 1 ? `${stem}-${i + 1}${ext}` : `${stem}${stem.endsWith(ext) ? "" : ext}`;
+    }
     const res = await fetch(url);
     if (!res.ok) { console.error(`  download failed (HTTP ${res.status}): ${url}`); continue; }
     const file = path.join(dir, name);
@@ -192,5 +200,5 @@ if (cmd === "credits") {
   if (!a) die("usage: node kie.mjs poll <taskId>");
   await poll(a, timeout, outDir);
 } else {
-  die("usage: node kie.mjs credits | upload <file> | run <model> '<json>' | start <model> '<json>' | poll <taskId>   [--timeout N] [--out DIR]");
+  die("usage: node kie.mjs credits | upload <file> | run <model> '<json>' | start <model> '<json>' | poll <taskId>   [--timeout N] [--out DIR] [--name NAME]");
 }
