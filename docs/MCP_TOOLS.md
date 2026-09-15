@@ -1,7 +1,43 @@
 # MCP tools
 
-Six tools over Kie's job API. Reference for what each takes and when to reach
-for it.
+Six tools over Kie's job API, two reference resources, and eight prompts.
+Reference for what each takes and when to reach for it.
+
+## What the server advertises
+
+Kie publishes no MCP server and no MCP documentation, so there is nothing to
+conform to: this server is measured against the MCP specification itself. It
+negotiates protocol **2025-11-25**, the latest its SDK implements, and offers
+all three server primitives.
+
+| Primitive | What it carries |
+| --- | --- |
+| **Tools** | The six below. Every one declares an `outputSchema` and returns `structuredContent` |
+| **Resources** | The model catalog and the format routing table, inlined at build time |
+| **Prompts** | One per media format, plus brand intake and the optional MST |
+
+**Structured output.** A tool that declares an `outputSchema` must return
+`structuredContent`, and the SDK validates it against the schema before it
+leaves the process. That is why `resultUrls` arrives as an array rather than as
+prose inside a text block to be re-parsed, and why `timedOut` is a boolean: a
+timeout and a failure are different outcomes, and telling them apart should not
+require reading English. A human summary still ships in `content` for a client
+that reads no schema.
+
+**Progress.** Pass a `progressToken` in a call's `_meta` and the two waiting
+tools emit `notifications/progress` on every read. MCP progress must not go
+backwards and Kie populates its own `progress` field only for sora2, so the
+number is elapsed seconds against the wait's own budget, which is monotonic by
+construction. Kie's percentage and the task state go in the message, where a
+varying fact belongs.
+
+**Not yet adopted, deliberately.** The 2026-07-28 specification added a
+[Tasks extension](https://modelcontextprotocol.io/extensions/tasks/overview) for
+exactly this shape of work, and its own documentation names our case: a server
+wrapping an API that already has job ids. It is not adopted here because no
+client in the official support matrix implements it yet, and a server no client
+can drive is worse infrastructure, not better. Revisit when the matrix moves.
+The hand-rolled create/get/wait trio is the right shape today.
 
 ## Which one to use
 
@@ -149,6 +185,42 @@ Two more come from this server rather than from Kie:
 
 An HTTP 200 can still be a failure. The server checks the status and the code and
 tells you which one failed.
+
+## Resources
+
+Reference the client can read directly, inlined into the bundle at build time so
+they resolve wherever the server is launched from.
+
+| URI | What it is |
+| --- | --- |
+| `kie://model-catalog` | Every model id read from Kie's embedded OpenAPI specs, with the per-model aspect-ratio and image-input field names, the known docs bugs, and what is not on the platform |
+| `kie://format-routing` | The handoff contract: which model set each brief `asset_type` routes to, the required parameters per format, and the rule that an unmapped type stops rather than falling back |
+
+Both are dated reference, not truth. Kie renames models often; each document
+says when it was read. A validation error on a model id means check the live
+page, not that the call was malformed.
+
+## Prompts
+
+The render workflow, assembled in the order it has to be applied.
+
+| Prompt | What it loads |
+| --- | --- |
+| `kie_render_static`, `_carousel`, `_video`, `_ugc`, `_motion_graphic`, `_claymation` | The core rules, the render bridge, that format's module and the final pass |
+| `kie_brand_intake` | Establishing and uploading the product references a render needs. Run it BEFORE generating |
+| `kie_mst_sprint` | Building a Matrix Sprint Test. Optional, and not a stage every run passes through |
+
+Each takes an optional `brief` argument, the brief as JSON, which is carried
+into the message.
+
+There is one prompt per format and no general "render anything" prompt, on
+purpose: the format is the brief's to declare and the engine's to obey, so the
+medium is never chosen at render time.
+
+`kie_brand_intake` exists because of a specific failure. The first live render
+produced a generic unbranded bottle, not because a model was wrong but because
+nothing carried the client's product reference to it. A file is only useful to
+whoever remembers to open it; a prompt is selectable.
 
 ## Configuration
 

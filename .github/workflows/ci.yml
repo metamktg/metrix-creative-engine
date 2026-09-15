@@ -33,6 +33,13 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      # Drives the built bundle over a real stdio MCP session against a stubbed
+      # Kie. Catches what unit tests cannot see: a capability never advertised,
+      # or an outputSchema that disagrees with the structuredContent the tool
+      # actually returns, which the SDK rejects at call time in front of a user.
+      - name: MCP surface
+        run: pnpm run check:mcp-surface
+
       # The skills ship as zip uploads, and a SKILL.md nested deeper than the
       # top level is rejected on upload with no other signal. Cheap to check
       # here; expensive to discover in the uploader.
