@@ -29,12 +29,20 @@ export const RECORD_INFO_PATH = "/api/v1/jobs/recordInfo";
 export const CREDIT_PATH = "/api/v1/chat/credit";
 
 /**
- * Kie retains generated media for roughly 14 days
- * (https://docs.kie.ai/market/quickstart), so a result URL is not durable
- * storage. Surfaced in tool output rather than left for the caller to discover.
+ * How long a result URL lasts.
+ *
+ * The figure is the one Kie documents, quoted from the `recordInfo` spec's own
+ * Best Practices block (https://docs.kie.ai/market/common/get-task-detail):
+ * "Download results immediately: Generated content URLs typically expire after
+ * 24 hours." An earlier version of this file said 14 days, which is fourteen
+ * times too generous and is exactly the error that loses a batch left
+ * overnight. Where a model documents a shorter life (OmniHuman 1.5 subject
+ * detection returns mask URLs valid for one hour), the model's own figure wins.
+ *
+ * Surfaced in tool output rather than left for the caller to discover.
  */
 export const RESULT_RETENTION_NOTE =
-  "Kie.ai retains generated media for about 14 days. Download anything you need to keep.";
+  "Kie.ai documents result URLs as expiring after about 24 hours. Download anything you need to keep, now.";
 
 /** The five task states `recordInfo` documents for `data.state`. */
 export const TASK_STATES = ["waiting", "queuing", "generating", "success", "fail"] as const;
@@ -63,8 +71,23 @@ export interface TaskRecord {
   rawState: string | null;
   /** URLs read out of `resultJson.resultUrls`; empty until the task succeeds. */
   resultUrls: string[];
+  /**
+   * `resultJson.firstFrameUrl` / `.lastFrameUrl`, which Seedance 2 returns
+   * beside `resultUrls` when `return_last_frame` is on. Documented in the
+   * `recordInfo` spec and kept separate from `resultUrls`, because a frame is
+   * not the asset: a caller that downloads every URL indiscriminately would
+   * file two stills as though they were renders.
+   */
+  frameUrls: string[];
   /** `resultJson` parsed when it was valid JSON, else the raw value, else null. */
   resultJson: unknown;
+  /**
+   * `param`, the JSON string of the request that created this task, parsed when
+   * it is valid JSON. It is the only server-side record of the prompt and
+   * parameters behind an asset, so an asset's provenance can be recovered from
+   * Kie rather than only from whatever the caller happened to keep.
+   */
+  param: unknown;
   failCode: string | null;
   failMsg: string | null;
   costTimeMs: number | null;
@@ -73,6 +96,7 @@ export interface TaskRecord {
   progress: number | null;
   createTime: number | null;
   completeTime: number | null;
+  updateTime: number | null;
 }
 
 /**
@@ -92,17 +116,32 @@ export class KieApiError extends Error {
 }
 
 /**
- * Hints for the status codes documented at
- * https://docs.kie.ai/market/common/get-task-detail. Codes outside this table
- * fall through to whatever `msg` the API sent rather than being guessed at.
+ * Hints for the envelope `code` values Kie documents, transcribed from the
+ * `code` enum in https://docs.kie.ai/market/common/get-task-detail. Every entry
+ * below is a code that spec names; codes outside this table fall through to
+ * whatever `msg` the API sent rather than being guessed at.
+ *
+ * 400 is kept although it is not in that enum: the same spec's `responses`
+ * block documents HTTP 400 for a missing or invalid taskId, and `assertOk`
+ * falls back to the HTTP status when the envelope carries no code.
+ *
+ * No rate-limit figure is quoted here. A previous version said "20 new
+ * generation requests per 10 seconds"; that number appears nowhere in the
+ * current docs, and an error hint asserting a limit Kie does not publish sends
+ * the reader to tune the wrong thing.
  */
 const CODE_HINTS: Record<number, string> = {
   400: "Bad request: a required parameter is missing or invalid.",
   401: "Unauthorized: KIE_AI_API_KEY is missing, wrong, or revoked.",
+  402: "Insufficient credits: the account cannot pay for this operation. Check kie_get_credits and top up.",
   404: "Not found: no task exists with that taskId.",
+  408: "Upstream produced no result for over 10 minutes.",
   422: "Validation error: the request parameters were rejected. Check the model's own input schema.",
-  429: "Rate limited: Kie.ai allows 20 new generation requests per 10 seconds.",
+  429: "Rate limited: the request limit for this resource was exceeded. Pace the batch and retry.",
+  455: "Service unavailable: Kie.ai is under maintenance.",
   500: "Kie.ai server error.",
+  501: "Generation failed: the task itself failed, not the request. Check failMsg on the task record.",
+  505: "Feature disabled: the requested feature is currently switched off on Kie.ai.",
 };
 
 function asFiniteNumber(value: unknown): number | null {
@@ -175,15 +214,34 @@ export function parseResultJson(resultJson: unknown): unknown {
 }
 
 /**
+ * Read one URL-bearing field out of a parsed `resultJson`. The spec types
+ * `resultUrls`, `firstFrameUrl` and `lastFrameUrl` all as arrays, so a value
+ * that is not one is ignored rather than coerced: a shape we did not expect is
+ * still preserved whole in `TaskRecord.resultJson`, where it is visible as
+ * itself instead of being half-read into a list.
+ */
+function urlsAt(source: unknown, field: string): string[] {
+  if (source === null || typeof source !== "object") return [];
+  const value = (source as Record<string, unknown>)[field];
+  if (!Array.isArray(value)) return [];
+  return value.filter((url): url is string => typeof url === "string" && url.trim() !== "");
+}
+
+/**
  * Read the documented `resultUrls` array out of a parsed `resultJson`.
  * Anything else in there is left to the caller via `TaskRecord.resultJson`;
  * this never guesses at an undocumented field.
  */
 export function extractResultUrls(parsedResultJson: unknown): string[] {
-  if (parsedResultJson === null || typeof parsedResultJson !== "object") return [];
-  const urls = (parsedResultJson as { resultUrls?: unknown }).resultUrls;
-  if (!Array.isArray(urls)) return [];
-  return urls.filter((url): url is string => typeof url === "string" && url.trim() !== "");
+  return urlsAt(parsedResultJson, "resultUrls");
+}
+
+/**
+ * Read `firstFrameUrl` / `lastFrameUrl`, the two other URL-bearing fields the
+ * `recordInfo` spec documents (Seedance 2 with `return_last_frame`).
+ */
+export function extractFrameUrls(parsedResultJson: unknown): string[] {
+  return [...urlsAt(parsedResultJson, "firstFrameUrl"), ...urlsAt(parsedResultJson, "lastFrameUrl")];
 }
 
 /** Normalize a raw `recordInfo` `data` object into a `TaskRecord`. */
@@ -196,7 +254,9 @@ export function toTaskRecord(data: unknown, fallbackTaskId: string): TaskRecord 
     state: normalizeState(row.state),
     rawState: asNonEmptyString(row.state),
     resultUrls: extractResultUrls(parsed),
+    frameUrls: extractFrameUrls(parsed),
     resultJson: parsed,
+    param: parseResultJson(row.param),
     failCode: asNonEmptyString(row.failCode),
     failMsg: asNonEmptyString(row.failMsg),
     costTimeMs: asFiniteNumber(row.costTime),
@@ -204,6 +264,7 @@ export function toTaskRecord(data: unknown, fallbackTaskId: string): TaskRecord 
     progress: asFiniteNumber(row.progress),
     createTime: asFiniteNumber(row.createTime),
     completeTime: asFiniteNumber(row.completeTime),
+    updateTime: asFiniteNumber(row.updateTime),
   };
 }
 
@@ -214,10 +275,12 @@ export interface PollPacing {
 }
 
 /**
- * Kie documents a limit on new generation requests (20 per 10 s) but none for
- * `recordInfo`. These are a deliberately unhurried default rather than a
- * documented figure: a generation takes seconds to minutes, so polling faster
- * buys nothing and risks a 429 on a shared key.
+ * These match the pacing Kie's own `recordInfo` spec recommends under Best
+ * Practices: "Implement exponential backoff: Start with 2-3 second intervals,
+ * increase gradually." The 15 s ceiling is ours. Kie names no numeric rate
+ * limit anywhere in the docs, for `recordInfo` or for new generations, so
+ * nothing here is tuned against one: a generation takes seconds to minutes, so
+ * polling faster buys nothing and risks a 429 on a shared key.
  */
 export const DEFAULT_POLL_PACING: PollPacing = {
   initialDelayMs: 2_000,
@@ -284,7 +347,13 @@ export function summarizeTask(record: TaskRecord): string {
   if (record.costTimeMs !== null) lines.push(`Took: ${(record.costTimeMs / 1000).toFixed(1)}s`);
   if (record.creditsConsumed !== null) lines.push(`Credits consumed: ${record.creditsConsumed}`);
   if (record.resultUrls.length > 0) {
-    lines.push(`Result URLs:`, ...record.resultUrls.map((url) => `  ${url}`), RESULT_RETENTION_NOTE);
+    lines.push(`Result URLs:`, ...record.resultUrls.map((url) => `  ${url}`));
+  }
+  if (record.frameUrls.length > 0) {
+    lines.push(`Frame URLs (first/last frame, not the asset):`, ...record.frameUrls.map((url) => `  ${url}`));
+  }
+  if (record.resultUrls.length > 0 || record.frameUrls.length > 0) {
+    lines.push(RESULT_RETENTION_NOTE);
   }
   return lines.join("\n");
 }

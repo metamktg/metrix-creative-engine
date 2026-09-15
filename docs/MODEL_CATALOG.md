@@ -327,12 +327,17 @@ examples are right and the OpenAPI `servers` block is wrong.
 `scripts/kie.mjs upload` tries redpandaai first and falls back, so it keeps
 working if Kie moves it. Override with `KIE_AI_UPLOAD_BASE_URL`.
 
-**Two things remain contradictory in Kie's docs:**
-- **Response shape.** The spec returns `{fileName, filePath, downloadUrl,
-  fileSize, mimeType, uploadedAt}`; the prose example returns `{fileId,
-  originalName, uploadPath, fileUrl, downloadUrl, uploadTime, expiresAt}`.
-- **Expiry.** Stated as both 24 hours and 3 days on the same page. Treat it as
-  24 hours and upload late.
+**Both contradictions this file used to record have since been resolved
+upstream** (re-read 2026-09-15,
+https://docs.kie.ai/file-upload-api/upload-file-stream):
+- **Response shape.** One shape now, required fields `fileName`, `filePath`,
+  `downloadUrl`, `fileSize`, `mimeType`, `uploadedAt`. The second prose shape
+  with `fileUrl` is gone; `fileUrl` no longer appears on the page at all.
+  `kie.mjs` still reads `downloadUrl || fileUrl` as a harmless superset.
+- **Expiry.** One figure now: "Uploaded files are temporary and will be
+  automatically deleted after **3 days**." The 24-hour claim is gone.
+
+Upload late anyway. Three days is the file's life, not the batch's budget.
 
 Because uploaded URLs expire, upload as late as possible — right before the
 generation that consumes the URL, not at the start of a long batch.
@@ -347,10 +352,14 @@ disagree on which exists.
 
 Do not offer these; they are not on the platform.
 
-- **Sora 2 / Sora 2 Pro.** Referenced indirectly (`recordInfo`'s `progress`
-  field mentions sora2), but every Sora docs page 404s and it is absent from the
-  sitemap. Search engines surface plausible-looking ids for it — they are not
-  from a live page and must not be used.
+- **Sora 2 / Sora 2 Pro.** The conclusion holds and the reason this file gave
+  for it was wrong, so read this one instead (re-checked 2026-09-15). Sora2 is
+  **advertised on the Market index** with its own card linking to
+  `/market/sora2/sora-2-pro-text-to-video`, and **that link 404s**. So does the
+  `.md` spec behind it. `recordInfo`'s `progress` field still mentions sora2.
+  Everything points at a model whose pages are not published. Expect to be told
+  it is available; it is not callable, and the ids search engines surface for it
+  are not from a live page.
 - **Midjourney.** No occurrence anywhere in the docs.
 - **Mmaudio.** No occurrence anywhere in the docs.
 
@@ -381,5 +390,16 @@ Read it there. Check `kie_get_credits` before a batch.
 
 ## Retention
 
-Generated media is deleted after about **14 days**; logs and metadata after two
-months. A result URL is not storage.
+Kie's `recordInfo` spec (https://docs.kie.ai/market/common/get-task-detail) says under Best Practices:
+"Download results immediately: Generated content URLs typically expire after **24
+hours**." Treat that as the figure. Some models are shorter still: OmniHuman 1.5
+subject detection returns mask URLs valid for **one hour**.
+
+Separately, `POST /api/v1/common/download-url`
+(https://docs.kie.ai/common-api/download-url) converts a Kie result URL into a
+temporary download link valid for **20 minutes**, and rejects an external URL
+with a 422. Neither client uses it, because fetching the result URL directly
+works; it is recorded here so the 20-minute figure is not mistaken for the
+result's own life.
+
+A result URL is not storage.

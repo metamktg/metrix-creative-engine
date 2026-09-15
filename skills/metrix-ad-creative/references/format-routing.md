@@ -105,10 +105,11 @@ Prints a URL on stdout. Pass it into the model's image-input field.
 | `bytedance/seedance-2*`, `minimax-h3/*` | `first_frame_url`, `reference_image_urls` |
 | `veo-3-1` | `image_urls` |
 
-**Upload late.** The URL expires in about 24 hours (Kie's docs also say 3 days;
-assume the shorter). Upload immediately before the generation that consumes it,
-never at the start of a long batch, or the last cells of a matrix will fail on
-dead URLs.
+**Upload late.** Kie deletes an uploaded file after 3 days. Upload immediately
+before the generation that consumes it, never at the start of a long batch, or
+the last cells of a matrix will fail on dead URLs. A *result* URL is shorter
+still, about 24 hours, so a still you plan to animate is re-uploaded rather than
+reused the next day.
 
 **Reference count caps matter when choosing a model.** `nano-banana-2` takes 14,
 `seedream/4.5-edit` 14, `google/nano-banana-edit` 10, `nano-banana-pro` 8,

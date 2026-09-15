@@ -90,7 +90,8 @@ family `duration` is the **string** `"5"` or `"10"`, not a number.
 ## Uploading an approved still
 
 To animate a still you generated, the video model needs a URL. A Kie result URL
-works directly for about 14 days, so pass it straight through — no re-upload.
+works directly for about 24 hours, so pass it straight through if the animation
+follows the still the same day, and re-upload it if it does not.
 
 For a local file (a client asset, a shot photograph), upload first:
 
@@ -101,8 +102,9 @@ curl -X POST https://kieai.redpandaai.co/api/file-stream-upload \
 ```
 
 Take `downloadUrl` from the response. Kie's docs give the host as both
-`kieai.redpandaai.co` and `api.kie.ai`, and the expiry as both 24 hours and 3
-days — if one 404s, try the other, and upload late rather than early.
+`kieai.redpandaai.co` and `api.kie.ai`; the example uses the first and a live
+probe agreed, so if one 404s try the other. The expiry is settled: uploaded
+files are deleted after 3 days. Upload late rather than early anyway.
 
 ## Cost planning
 

@@ -19,13 +19,15 @@ and `KIE_AI_API_KEY` in the environment. Works on Windows, macOS and Linux.
 ```
 node scripts/kie.mjs credits
 node scripts/kie.mjs run "google/nano-banana" '{"prompt":"...","aspect_ratio":"4:5"}'
-node scripts/kie.mjs run "veo-3-1" '{"prompt":"..."}' --timeout 900 --out ./out
+node scripts/kie.mjs run "veo-3-1" '{"prompt":"..."}' --timeout 900 --out ./out --name my-concept-id
 node scripts/kie.mjs start "kling/v2-1-master-image-to-video" '{...}'   # prints taskId, returns at once
 node scripts/kie.mjs poll <taskId> --timeout 900
 ```
 
 It prints result URLs on stdout and progress on stderr, so `$(node scripts/kie.mjs run ...)`
-captures just the URLs. `--out DIR` downloads them. Exit 2 means the wait timed
+captures just the URLs. `--out DIR` downloads them, and `--name ID` files each one
+under a name you choose instead of whatever the CDN called it (an asset named for
+its concept is the point; `--name` on its own writes to `./out`). Exit 2 means the wait timed
 out and the task is still running: poll the same taskId, never re-create.
 
 On Windows the path is `scripts\kie.mjs`. Use the skill's own directory, which

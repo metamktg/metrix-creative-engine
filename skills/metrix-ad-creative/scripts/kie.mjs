@@ -5,9 +5,9 @@
  * which is why this is Node rather than curl+jq (Windows has no jq).
  *
  *   node kie.mjs credits
- *   node kie.mjs run   <model> '<input-json>' [--timeout 600] [--out DIR]
+ *   node kie.mjs run   <model> '<input-json>' [--timeout 600] [--out DIR] [--name ID]
  *   node kie.mjs start <model> '<input-json>'
- *   node kie.mjs poll  <taskId> [--timeout 600] [--out DIR]
+ *   node kie.mjs poll  <taskId> [--timeout 600] [--out DIR] [--name ID]
  *
  * Needs KIE_AI_API_KEY in the environment. Get one at https://kie.ai/api-key
  */
@@ -17,14 +17,27 @@ const KEY = process.env.KIE_AI_API_KEY;
 const die = (msg, code = 1) => { console.error(msg); process.exit(code); };
 if (!KEY) die("KIE_AI_API_KEY is not set. Get a key at https://kie.ai/api-key and set it in your environment.");
 
+// Transcribed from the `code` enum in
+// https://docs.kie.ai/market/common/get-task-detail. No rate-limit figure is
+// quoted: Kie documents that 429 means the limit was exceeded, but publishes no
+// number, and a hint that invents one sends you to tune the wrong thing.
 const HINTS = {
+  400: "A required parameter is missing or invalid.",
   401: "Key is missing, wrong or revoked.",
   402: "Insufficient credits. Top up at https://kie.ai",
   404: "No task with that id.",
-  422: "The model rejected these parameters. Check the model's page on docs.kie.ai.",
-  429: "Rate limited. Kie allows 20 new generations per 10 seconds.",
   408: "Upstream produced no result for over 10 minutes.",
+  422: "The model rejected these parameters. Check the model's page on docs.kie.ai.",
+  429: "Rate limited. Pace the batch and retry.",
+  455: "Kie is under maintenance.",
+  500: "Kie server error.",
+  501: "Generation failed: the task failed, not the request.",
+  505: "That feature is currently disabled on Kie.",
 };
+
+// https://docs.kie.ai/market/common/get-task-detail, Best Practices:
+// "Generated content URLs typically expire after 24 hours."
+const RETENTION = "NOTE: Kie documents result URLs as expiring after about 24 hours. Save anything you need to keep.";
 
 async function call(path, init = {}) {
   let res;
@@ -49,11 +62,28 @@ async function call(path, init = {}) {
 }
 
 /** resultJson is a JSON *string* whose shape is model-specific. */
-function resultUrls(data) {
+function parseResultJson(data) {
   let parsed = data?.resultJson ?? null;
-  if (typeof parsed === "string") { try { parsed = JSON.parse(parsed); } catch { return []; } }
-  const urls = parsed?.resultUrls;
-  return Array.isArray(urls) ? urls.filter((u) => typeof u === "string" && u.trim()) : [];
+  if (typeof parsed === "string") { try { parsed = JSON.parse(parsed); } catch { return null; } }
+  return parsed;
+}
+
+// The spec types resultUrls, firstFrameUrl and lastFrameUrl all as arrays.
+// Anything else is left alone rather than coerced; the raw resultJson is
+// printed by the no-results warning, where an unexpected shape shows as itself.
+function urlsAt(parsed, field) {
+  const v = parsed?.[field];
+  return Array.isArray(v) ? v.filter((u) => typeof u === "string" && u.trim()) : [];
+}
+
+function resultUrls(data) {
+  return urlsAt(parseResultJson(data), "resultUrls");
+}
+
+/** The two other URL-bearing fields the recordInfo spec documents. */
+function frameUrls(data) {
+  const parsed = parseResultJson(data);
+  return [...urlsAt(parsed, "firstFrameUrl"), ...urlsAt(parsed, "lastFrameUrl")];
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -69,7 +99,13 @@ async function poll(taskId, timeoutSec, outDir) {
       const urls = resultUrls(d);
       console.error(`done in ${d.costTime ? (d.costTime / 1000).toFixed(1) + "s" : "?"}, credits: ${d.creditsConsumed ?? "?"}`);
       urls.forEach((u) => console.log(u));
-      if (outDir) await download(urls, outDir, taskId, flag("--name", null));
+      // firstFrameUrl / lastFrameUrl are documented beside resultUrls (Seedance 2
+      // with return_last_frame). Reported, never downloaded as if they were the
+      // asset, and never printed to stdout where they would be read as results.
+      const frames = frameUrls(d);
+      if (frames.length) console.error(`  frames (not the asset): ${frames.join(" ")}`);
+      if (urls.length) console.error("  " + RETENTION);
+      if (outDir) await download(urls, outDir, taskId, wantedName);
       if (!urls.length) console.error("WARNING: succeeded but carried no resultUrls. Raw:\n" + JSON.stringify(d.resultJson));
       return;
     }
@@ -95,9 +131,14 @@ async function download(urls, dir, taskId, preferredName) {
     // or MST id rather than whatever the CDN called it. Sanitized the same way:
     // it is still untrusted input and must stay one path segment.
     if (preferredName) {
+      // The extension comes off the delivered file, never off the requested
+      // name: a brief that asks for "..._4x5.png" from a model that returns jpg
+      // used to produce "..._4x5.png.jpg", and with several URLs
+      // "..._4x5.png-1.jpg". The stem is the caller's, the suffix is the file's.
       const ext = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
-      const stem = preferredName.replace(/[^A-Za-z0-9._-]/g, "_").replace(/^[._]+/, "").slice(0, 160);
-      if (stem) name = urls.length > 1 ? `${stem}-${i + 1}${ext}` : `${stem}${stem.endsWith(ext) ? "" : ext}`;
+      let stem = preferredName.replace(/[^A-Za-z0-9._-]/g, "_").replace(/^[._]+/, "").slice(0, 160);
+      stem = stem.replace(/\.(png|jpe?g|webp|gif|mp4|mov|webm|m4a|mp3|wav)$/i, "");
+      if (stem) name = urls.length > 1 ? `${stem}-${i + 1}${ext}` : `${stem}${ext}`;
     }
     const res = await fetch(url);
     if (!res.ok) { console.error(`  download failed (HTTP ${res.status}): ${url}`); continue; }
@@ -111,11 +152,17 @@ async function download(urls, dir, taskId, preferredName) {
 /**
  * Upload a local file so a reference-capable model can consume it.
  *
- * Kie's docs contradict themselves on the host: every prose example uses
- * kieai.redpandaai.co, the OpenAPI servers block says api.kie.ai. Rather than
- * pick one and be wrong half the time, try both and report which answered.
- * They also disagree on the response shape, so read downloadUrl OR fileUrl,
- * the only two URL fields either shape documents.
+ * Kie's own docs disagree on the host, and the disagreement is settled:
+ * https://docs.kie.ai/file-upload-api/upload-file-stream shows
+ * `curl -X POST https://kieai.redpandaai.co/api/file-stream-upload` in its
+ * example while its OpenAPI `servers` block says api.kie.ai. A live probe
+ * matched the example: redpandaai answers (401 to a bad key), api.kie.ai
+ * returns 404. The servers block is the wrong half. Both are still tried, in
+ * that order, so the day Kie fixes the block nothing here breaks.
+ *
+ * The documented response carries `fileName`, `filePath` and `downloadUrl`.
+ * `fileUrl` is read too, as a superset, because an older documented shape used
+ * that name and reading both costs nothing.
  */
 const UPLOAD_HOSTS = [
   process.env.KIE_AI_UPLOAD_BASE_URL,
@@ -158,8 +205,10 @@ async function upload(filePath, uploadPath) {
     const url = d.downloadUrl || d.fileUrl;
     if (!url) { problems.push(`${host}: succeeded but returned no downloadUrl or fileUrl`); continue; }
     console.error(`uploaded via ${host}${d.expiresAt ? `, expires ${d.expiresAt}` : ""}`);
-    console.error("NOTE: Kie documents this URL as lasting 24 hours in one place and 3 days in");
-    console.error("      another. Upload immediately before the generation that consumes it.");
+    // https://docs.kie.ai/file-upload-api/upload-file-stream: "Uploaded files
+    // are temporary and will be automatically deleted after 3 days."
+    console.error("NOTE: Kie deletes uploaded files after 3 days. Re-upload brand assets per batch,");
+    console.error("      rather than reusing a URL from a previous sprint.");
     return url;
   }
   die(`upload failed on every documented host:\n  ${problems.join("\n  ")}`);
@@ -168,8 +217,18 @@ async function upload(filePath, uploadPath) {
 const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf(n); return i === -1 ? d : argv[i + 1]; };
 const timeout = Number(flag("--timeout", 300));
-const outDir = flag("--out", process.env.KIE_AI_DOWNLOAD_DIR || null);
+const wantedName = flag("--name", null);
+// --name only ever reached a file when --out was also passed, so the documented
+// `run` example (which omits --out) named nothing and the asset kept whatever
+// the CDN called it. Naming the file after its concept id is the point, so a
+// --name with nowhere to go now picks the default directory and says so, rather
+// than being silently dropped after the credits are spent.
+let outDir = flag("--out", process.env.KIE_AI_DOWNLOAD_DIR || null);
 const [cmd, a, b] = argv;
+if (wantedName && !outDir && (cmd === "run" || cmd === "poll")) {
+  outDir = "out";
+  console.error(`NOTE: --name needs somewhere to write. Saving to ./${outDir} (pass --out DIR to choose).`);
+}
 
 if (cmd === "credits") {
   console.log(await call("/api/v1/chat/credit"));
