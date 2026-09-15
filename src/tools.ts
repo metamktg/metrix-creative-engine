@@ -12,12 +12,14 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { ServerNotification, ServerRequest } from "@modelcontextprotocol/sdk/types.js";
 
+import { ASSET_TYPES, formatVerdict, validateBrief } from "./brief.js";
 import type { KieClient, PollUpdate } from "./client.js";
 import { RESULT_RETENTION_NOTE, summarizeTask, type TaskRecord } from "./protocol.js";
 import {
   createOutputShape,
   creditsOutputShape,
   downloadOutputShape,
+  briefVerdictShape,
   taskOutputShape,
   waitOutputShape,
 } from "./schemas.js";
@@ -133,6 +135,39 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
     .max(1800)
     .optional()
     .describe(`How long to wait before giving up, in seconds (default ${defaultWaitSeconds}).`);
+
+  server.registerTool(
+    "kie_validate_brief",
+    {
+      title: "Check a brief before spending anything",
+      description:
+        `Validate a creative brief against the engine's input contract, offline and for free. Run it BEFORE generating. Errors block the render; warnings mean it will render but worse, and say why. Mapped asset types are ${ASSET_TYPES.join(", ")}; an unmapped one stops rather than being routed to the nearest neighbour.`,
+      inputSchema: {
+        brief: z
+          .union([z.record(z.unknown()), z.string()])
+          .describe("The brief, as an object or as a JSON string."),
+      },
+      outputSchema: briefVerdictShape,
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    async ({ brief }) =>
+      guarded(async () => {
+        let candidate: unknown = brief;
+        if (typeof brief === "string") {
+          try {
+            candidate = JSON.parse(brief);
+          } catch (error) {
+            return failure(`The brief is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        }
+        const verdict = validateBrief(candidate);
+        return text([formatVerdict(verdict)], {
+          ok: verdict.ok,
+          errors: verdict.errors,
+          warnings: verdict.warnings,
+        });
+      }),
+  );
 
   server.registerTool(
     "kie_get_credits",

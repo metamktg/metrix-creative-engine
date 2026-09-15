@@ -144,7 +144,7 @@ try {
 
   console.log("\n== Tools ==");
   const tools = (await rpc("tools/list", {})).result?.tools ?? [];
-  check("all six tools listed", tools.length === 6, `${tools.length} listed`);
+  check("all seven tools listed", tools.length === 7, `${tools.length} listed`);
   const typed = tools.filter((tool) => tool.outputSchema);
   check("every tool declares an outputSchema", typed.length === tools.length, `${typed.length}/${tools.length}`);
 
@@ -169,6 +169,17 @@ try {
   const promptText = rendered.result?.messages?.[0]?.content?.text ?? "";
   check("a render prompt assembles the whole workflow", promptText.length > 15_000, `${promptText.length} chars`);
   check("the supplied brief reaches the prompt", promptText.includes('"asset_type":"static"'));
+
+  console.log("\n== Brief gate ==");
+  // The gate that protects spend. Exercised through the JSON-string path,
+  // which is how a caller pasting a brief actually reaches it.
+  const gate = await rpc("tools/call", {
+    name: "kie_validate_brief",
+    arguments: { brief: JSON.stringify({ brief_metadata: { brief_id: "x", asset_type: "static_4x5", confidence: "medium" } }) },
+  });
+  const verdict = gate.result?.structuredContent;
+  check("an unmapped asset_type is refused", verdict?.ok === false);
+  check("the refusal names the closed set", (verdict?.errors ?? []).join(" ").includes("static, carousel, video"));
 
   console.log("\n== Structured output and progress ==");
   const call = await rpc("tools/call", {

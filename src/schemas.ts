@@ -65,3 +65,14 @@ export const downloadOutputShape = {
   filePath: z.string(),
   bytes: z.number().int(),
 } as const;
+
+/**
+ * A brief verdict. `errors` block the render; `warnings` mean it will render
+ * but worse. They are separate arrays rather than one severity-tagged list
+ * because the caller's decision differs: stop, versus proceed knowingly.
+ */
+export const briefVerdictShape = {
+  ok: z.boolean().describe("True when nothing blocks the render. Warnings do not affect this."),
+  errors: z.array(z.string()).describe("Blocking problems. The render must not start."),
+  warnings: z.array(z.string()).describe("Renderable, but the asset will be worse. Proceed knowingly."),
+} as const;
