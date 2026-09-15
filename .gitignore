@@ -13,3 +13,8 @@ renders/
 .env
 .env.*
 !.env.example
+
+# Built brand kits: the JSON and PROMPTS.md are the source of truth, and an
+# inlined kit runs past 3MB of base64 that git cannot diff. Rebuild, do not store.
+brand-kits/**/*.source.html
+brand-kits/**/*.pdf
