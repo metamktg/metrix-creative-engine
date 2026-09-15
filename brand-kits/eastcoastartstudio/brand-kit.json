@@ -1,0 +1,234 @@
+{
+  "_contract": "brand_assets plugs into the brief contract checked by kie_validate_brief. Every other field carries its own provenance.",
+  "kit_version": "1.0.0",
+  "built_at": "2026-09-15",
+  "built_from": "public sources only. No client-supplied assets were provided.",
+  "identity": {
+    "canonical_name": "EastCoastArtStudio",
+    "canonical_name_evidence": "VERIFIED. 229 occurrences on the homepage, og:site_name, and the logo artwork itself.",
+    "name_conflict": {
+      "severity": "flag_to_client",
+      "variants_found": [
+        "EastCoastArtStudio",
+        "East Coast Art Studios",
+        "EastCoastArtStudios"
+      ],
+      "where": "site copy uses the singular; the Shopify vendor field on 249 of 250 products reads 'East Coast Art Studios'; product descriptions sign off 'Products by EastCoastArtStudios'",
+      "creative_rule": "Ad copy uses EastCoastArtStudio, singular, no spaces. Never render a plural on an asset."
+    },
+    "domain": "eastcoastartstudio.com",
+    "platform": "Shopify",
+    "positioning_line": "Your favorite places, on your wall.",
+    "positioning_evidence": "VERIFIED. meta description, verbatim.",
+    "category": "Fine art prints of named streets and places, sold as gifts and home decor"
+  },
+  "logo": {
+    "type": "wordmark_only",
+    "icon_mark_exists": false,
+    "icon_mark_note": "VERIFIED ABSENT. There is no symbol, monogram or icon anywhere on the site. Never invent one, and never render the brand as a badge or emblem.",
+    "construction": "Two tiers, centred. 'East Coast Art' in a high-contrast serif with fine hairlines and sharp bracketed serifs, sentence case. 'STUDIO' beneath in letter-spaced caps, roughly 0.3em tracking, at about a third the cap height of the line above.",
+    "files": [
+      {
+        "role": "primary",
+        "url": "https://eastcoastartstudio.com/cdn/shop/files/EastCoastArtStudio_Logo.png",
+        "px": "1040x585",
+        "artwork_colour": "#101010",
+        "use_on": "light grounds"
+      },
+      {
+        "role": "reverse",
+        "url": "https://eastcoastartstudio.com/cdn/shop/files/EastCoastArtStudio_Reverse_Logo.png",
+        "px": "1200x487",
+        "artwork_colour": "#f0f0f0",
+        "use_on": "dark grounds and over imagery"
+      }
+    ],
+    "defect_zero_padding": {
+      "severity": "blocks_naive_compositing",
+      "measured": "Primary: opaque artwork runs to x=0 and x=1040, the full canvas width. Reverse: runs edge to edge horizontally, with 27% padding above and 17% below.",
+      "consequence": "Dropping either file into a layout with no added margin reads as clipped, and any auto-fit crop will cut the serifs.",
+      "creative_rule": "Add clear space equal to the cap height of 'E' on every side, in the layout. Never rely on the file's own padding, and never scale the two files to the same height: their canvases differ."
+    },
+    "favicon": {
+      "status": "ABSENT",
+      "evidence": "VERIFIED. https://eastcoastartstudio.com/favicon.ico returns 404 and no icon link tag is present in the served HTML.",
+      "creative_rule": "Do not source a favicon from a third party or generate one. If an ad surface requires a square brand mark, crop the reverse wordmark to the 'E' or use a plain type lockup, and tell the client the favicon is missing."
+    }
+  },
+  "palette": {
+    "philosophy": "VERIFIED by census of the theme CSS and the product photography. The brand is deliberately achromatic: white, near-black and warm neutrals. The artwork supplies every saturated colour. This is correct for the category and must be preserved.",
+    "colours": [
+      {
+        "hex": "#FFFFFF",
+        "name": "Gallery White",
+        "role": "Default ground for product-led creative. The mockups are shot on it."
+      },
+      {
+        "hex": "#121212",
+        "name": "Ink",
+        "role": "Type on light, and the dark ground for reverse lockups."
+      },
+      {
+        "hex": "#333333",
+        "name": "Body Grey",
+        "role": "Secondary copy."
+      },
+      {
+        "hex": "#A0A0A0",
+        "name": "Rule Grey",
+        "role": "Hairlines, borders, disabled."
+      },
+      {
+        "hex": "#F0EBE3",
+        "name": "Warm Linen",
+        "role": "The warm neutral running through the lifestyle photography: linen, rattan, cream upholstery."
+      },
+      {
+        "hex": "#047BD5",
+        "name": "Link Blue",
+        "role": "Interface only. NEVER a creative accent, never a fill on an asset."
+      }
+    ],
+    "creative_rule": "An ad frame carries at most two of these plus the artwork. If a layout needs colour, it takes it from the print, not from a palette swatch."
+  },
+  "typography": {
+    "heading_font": {
+      "family": "Playfair Display",
+      "weight": 400,
+      "evidence": "VERIFIED. The theme loads playfairdisplay_n4 as a webfont and declares it on h1 through h6, on .header-logo__text and on .how-step__number.",
+      "use": "Every headline on an ad. It is the brand's voice in type and it matches the wordmark's high-contrast serif."
+    },
+    "body_font": {
+      "family": "Poppins",
+      "evidence": "VERIFIED. Declared 17 times across the theme CSS, against Playfair's 4.",
+      "use": "Body copy, labels, prices, disclaimers."
+    },
+    "pairing_rule": "Playfair Display for the headline, Poppins for everything a reader has to work through. Never set body copy in Playfair: its hairlines disappear at ad sizes and on a phone.",
+    "wordmark_rule": "The logo is still PLACED as the supplied PNG, never re-typeset. Playfair is the heading face and closely resembles the wordmark, which makes a hand-set lookalike tempting and still wrong: the spacing and the STUDIO tracking are not reproducible by typing.",
+    "correction_note": "An earlier draft of this kit recorded the heading face as unidentified. That was a miss by a too-narrow search, not an absence. Corrected 2026-09-15 after the audit script's font census surfaced it."
+  },
+  "product_truth": {
+    "catalogue_size": {
+      "value": "250 returned by the public endpoint, capped",
+      "note": "The meta description claims 200+ cities; 149 distinct places were counted in the returned titles. Treat '200+ cities' as the client's claim, not a verified count."
+    },
+    "styles": [
+      {
+        "name": "Oil Painting",
+        "share": "139 of 250",
+        "look": "Heavy impasto, visible directional brushwork, warm saturated palette, painterly light bloom on windows and signage."
+      },
+      {
+        "name": "Street Sign Print",
+        "share": "31 of 250",
+        "look": "The street nameplate is the hero, large in frame, with the scene receding behind it."
+      },
+      {
+        "name": "Cubism",
+        "share": "8 of 250",
+        "look": "Fractured planes, jewel and neon palette, wet-street reflections, night scenes."
+      }
+    ],
+    "the_constant": "VERIFIED across every print examined: a real, legible street nameplate is rendered inside the artwork. Green NYC-style blades for Brooklyn, white or cream plates for European streets. This is the product concept and must appear in any generated artwork.",
+    "sizes_inches": [
+      "5x7",
+      "6x8",
+      "8x10",
+      "11x14",
+      "12x16",
+      "12x18",
+      "16x20",
+      "18x24",
+      "20x28",
+      "24x32",
+      "24x36"
+    ],
+    "price_usd": {
+      "min": 18.0,
+      "median": 32.0,
+      "max": 396.0,
+      "evidence": "VERIFIED across 2,720 variants."
+    },
+    "frames": {
+      "materials": [
+        "pine wood",
+        "metal"
+      ],
+      "pine_colours": [
+        "Black",
+        "White",
+        "Natural Wood",
+        "Dark Brown Wood"
+      ],
+      "evidence": "VERIFIED. Stated in 228 of 249 product descriptions and visible in the shared frame-detail photograph."
+    }
+  },
+  "claims": {
+    "approved": [
+      {
+        "claim": "Museum-grade 200gsm fine art paper",
+        "frequency": "228 of 249 descriptions",
+        "status": "VERIFIED_BRAND_CLAIM"
+      },
+      {
+        "claim": "Pigmented archival inks",
+        "frequency": "228 of 249",
+        "status": "VERIFIED_BRAND_CLAIM"
+      },
+      {
+        "claim": "Framed and unframed options",
+        "frequency": "228 of 249",
+        "status": "VERIFIED_BRAND_CLAIM"
+      },
+      {
+        "claim": "Free shipping",
+        "frequency": "meta description",
+        "status": "VERIFIED_BRAND_CLAIM"
+      },
+      {
+        "claim": "Custom destinations on request",
+        "frequency": "228 of 249",
+        "status": "VERIFIED_BRAND_CLAIM"
+      }
+    ],
+    "forbidden": [
+      "Any rating, star count or review quantity. No review data could be verified from public sources.",
+      "Any named customer testimonial. None was obtained.",
+      "'200+ cities' as a stated fact. It is the client's own marketing claim and 149 places were counted.",
+      "The SEO keyword tail that ends every product description. It is stuffing, not copy, and must never reach an asset."
+    ]
+  },
+  "social_proof": {
+    "status": "NOT_ESTABLISHED",
+    "review_platform_detected": "Judge.me, VERIFIED present as a Shopify theme extension on the storefront.",
+    "what_was_attempted": "Judge.me public store page (404), product-page JSON-LD and widget markup (rate limited at 429 before a rating could be read), homepage JSON-LD (none present).",
+    "honest_position": "No rating, review count or testimonial text was verified. The engine must not render social proof for this brand until a number is confirmed.",
+    "how_to_close_it": "Ask the client for the Judge.me public API token, or read the rating from a product page once rate limiting allows. A single verified figure unlocks the entire proof pillar."
+  },
+  "channels": {
+    "instagram": "https://www.instagram.com/theeastcoastartstudios/",
+    "facebook": "https://www.facebook.com/profile.php?id=61575209887923",
+    "pinterest": "https://www.pinterest.com/theeastcoastartstudios/",
+    "note": "VERIFIED as links in the site footer. Handles use the PLURAL 'theeastcoastartstudios'. Channel content was not audited: the handles are recorded for a later pass, not treated as evidence."
+  },
+  "brand_assets": [
+    {
+      "role": "logo_primary",
+      "url": "https://eastcoastartstudio.com/cdn/shop/files/EastCoastArtStudio_Logo.png"
+    },
+    {
+      "role": "logo_reverse",
+      "url": "https://eastcoastartstudio.com/cdn/shop/files/EastCoastArtStudio_Reverse_Logo.png"
+    },
+    {
+      "role": "frame_detail",
+      "url": "https://eastcoastartstudio.com/cdn/shop/files/017cb6c1-9c85-4299-a5f9-ba26eae74353-copy.jpg",
+      "note": "Shared across products. Stacked frame corners in walnut, white, black and oak."
+    },
+    {
+      "role": "size_guide",
+      "url": "https://eastcoastartstudio.com/cdn/shop/files/079ccba8-cc03-4195-8bfd-f9da34e6f76c-copy.jpg",
+      "note": "Shared across products. Ratio diagrams over a warm living room."
+    }
+  ]
+}
