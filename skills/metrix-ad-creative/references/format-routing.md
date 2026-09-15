@@ -78,6 +78,47 @@ is how a whole matrix renders at the wrong ratio without anyone noticing.
 `sora`, `sora-2`, `midjourney`, `mmaudio`. If a brief names one, say so and
 route to an eligible model as a stated substitution, per rule 9.
 
+## Brand kit to generation
+
+The brief's `brand_assets` block is only worth carrying if it reaches the model.
+Every reference-capable Kie model takes an image **URL**, never a local path, so
+a client's product photo has to be uploaded first. Without this step the model
+invents a generic product: right category, wrong label, wrong brand, unusable
+for anything performance-led.
+
+```
+node scripts/kie.mjs upload ./bottle_front.png
+```
+
+Prints a URL on stdout. Pass it into the model's image-input field.
+
+**The field name varies by model, and the wrong key is silently ignored:**
+
+| Model family | Field |
+| --- | --- |
+| `google/nano-banana-edit`, `nano-banana-2-lite` | `image_urls` |
+| `nano-banana-2`, `nano-banana-pro` | `image_input` |
+| `flux-2/*-image-to-image` | `input_urls` |
+| `bytedance/seedream-v4-edit`, `seedream/*-image-to-image` | `image_urls` |
+| `ideogram/v3-remix`, `qwen/image-edit` | `image_url` (singular) |
+| `kling/*-image-to-video`, `bytedance/v1-*-image-to-video` | `image_url` |
+| `bytedance/seedance-2*`, `minimax-h3/*` | `first_frame_url`, `reference_image_urls` |
+| `veo-3-1` | `image_urls` |
+
+**Upload late.** The URL expires in about 24 hours (Kie's docs also say 3 days;
+assume the shorter). Upload immediately before the generation that consumes it,
+never at the start of a long batch, or the last cells of a matrix will fail on
+dead URLs.
+
+**Reference count caps matter when choosing a model.** `nano-banana-2` takes 14,
+`seedream/4.5-edit` 14, `google/nano-banana-edit` 10, `nano-banana-pro` 8,
+`flux-2` 8. A brief with a product plus a set of style references can exceed
+the smaller models.
+
+**Blocked, not improvised.** A product-led brief listing product references
+under `brand_assets.missing` is blocked until they are supplied. Do not generate
+a stand-in product and present it as the client's. Say what is missing and stop.
+
 ## Full parameter detail
 
 `references/model-routing.md` for per-model parameters, and

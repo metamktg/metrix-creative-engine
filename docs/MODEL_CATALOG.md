@@ -316,21 +316,30 @@ Three endpoints, all authenticated with the same bearer token. Note the path has
 Take **`downloadUrl`** from the response — it is the one URL field present in
 both documented response shapes.
 
-**Three things here are contradictory in Kie's own docs, so verify before you
-depend on them:**
+**The host contradiction is RESOLVED** (probed live, 2026-09-15): the prose
+examples are right and the OpenAPI `servers` block is wrong.
 
-- **Host.** Every prose example uses `https://kieai.redpandaai.co`; the OpenAPI
-  `servers` block says `https://api.kie.ai`.
+- `https://kieai.redpandaai.co/api/file-stream-upload` is the real endpoint. It
+  answers `401 Authentication failed` to a bad key, which is a live endpoint
+  rejecting a credential.
+- `https://api.kie.ai/api/file-stream-upload` returns **404, path not found**.
+
+`scripts/kie.mjs upload` tries redpandaai first and falls back, so it keeps
+working if Kie moves it. Override with `KIE_AI_UPLOAD_BASE_URL`.
+
+**Two things remain contradictory in Kie's docs:**
 - **Response shape.** The spec returns `{fileName, filePath, downloadUrl,
   fileSize, mimeType, uploadedAt}`; the prose example returns `{fileId,
   originalName, uploadPath, fileUrl, downloadUrl, uploadTime, expiresAt}`.
-- **Expiry.** Stated as both 24 hours and 3 days on the same page.
+- **Expiry.** Stated as both 24 hours and 3 days on the same page. Treat it as
+  24 hours and upload late.
 
 Because uploaded URLs expire, upload as late as possible — right before the
 generation that consumes the URL, not at the start of a long batch.
 
-The MCP server does **not** wrap these endpoints. Upload with `curl` when you
-need it.
+`scripts/kie.mjs upload <file>` wraps this. It reads `downloadUrl` or
+`fileUrl`, whichever the response carries, since the two documented shapes
+disagree on which exists.
 
 ---
 

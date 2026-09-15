@@ -99,6 +99,64 @@ async function download(urls, dir, taskId) {
   }
 }
 
+
+/**
+ * Upload a local file so a reference-capable model can consume it.
+ *
+ * Kie's docs contradict themselves on the host: every prose example uses
+ * kieai.redpandaai.co, the OpenAPI servers block says api.kie.ai. Rather than
+ * pick one and be wrong half the time, try both and report which answered.
+ * They also disagree on the response shape, so read downloadUrl OR fileUrl,
+ * the only two URL fields either shape documents.
+ */
+const UPLOAD_HOSTS = [
+  process.env.KIE_AI_UPLOAD_BASE_URL,
+  "https://kieai.redpandaai.co",
+  "https://api.kie.ai",
+].filter(Boolean);
+
+async function upload(filePath, uploadPath) {
+  const { readFile } = await import("node:fs/promises");
+  const pathMod = await import("node:path");
+  let bytes;
+  try { bytes = await readFile(filePath); }
+  catch (e) { die(`cannot read ${filePath}: ${e.message}`); }
+
+  const name = pathMod.basename(filePath);
+  const problems = [];
+  for (const host of UPLOAD_HOSTS) {
+    const form = new FormData();
+    form.append("file", new Blob([bytes]), name);
+    form.append("uploadPath", uploadPath);
+    form.append("fileName", name);
+    let res;
+    try {
+      res = await fetch(`${host}/api/file-stream-upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${KEY}` }, // no Content-Type: fetch sets the boundary
+        body: form,
+      });
+    } catch (e) { problems.push(`${host}: ${e.message}`); continue; }
+
+    const text = await res.text();
+    let body;
+    try { body = JSON.parse(text); } catch { problems.push(`${host}: non-JSON (HTTP ${res.status}) ${text.slice(0,120)}`); continue; }
+    const code = Number(body.code ?? res.status);
+    if (!res.ok || (code && code !== 200)) {
+      problems.push(`${host}: HTTP ${res.status} code ${code} ${body.msg || ""}`.trim());
+      continue;
+    }
+    const d = body.data || {};
+    const url = d.downloadUrl || d.fileUrl;
+    if (!url) { problems.push(`${host}: succeeded but returned no downloadUrl or fileUrl`); continue; }
+    console.error(`uploaded via ${host}${d.expiresAt ? `, expires ${d.expiresAt}` : ""}`);
+    console.error("NOTE: Kie documents this URL as lasting 24 hours in one place and 3 days in");
+    console.error("      another. Upload immediately before the generation that consumes it.");
+    return url;
+  }
+  die(`upload failed on every documented host:\n  ${problems.join("\n  ")}`);
+}
+
 const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf(n); return i === -1 ? d : argv[i + 1]; };
 const timeout = Number(flag("--timeout", 300));
@@ -127,9 +185,12 @@ if (cmd === "credits") {
   console.error(`task: ${taskId}`);
   if (cmd === "start") console.log(taskId);
   else await poll(taskId, timeout, outDir);
+} else if (cmd === "upload") {
+  if (!a) die("usage: node kie.mjs upload <file> [--path images/user-uploads]");
+  console.log(await upload(a, flag("--path", "images/user-uploads")));
 } else if (cmd === "poll") {
   if (!a) die("usage: node kie.mjs poll <taskId>");
   await poll(a, timeout, outDir);
 } else {
-  die("usage: node kie.mjs credits | run <model> '<json>' | start <model> '<json>' | poll <taskId>   [--timeout N] [--out DIR]");
+  die("usage: node kie.mjs credits | upload <file> | run <model> '<json>' | start <model> '<json>' | poll <taskId>   [--timeout N] [--out DIR]");
 }

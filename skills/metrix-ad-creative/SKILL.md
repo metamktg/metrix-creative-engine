@@ -99,35 +99,51 @@ locked. Say explicitly in the output that you took the exception and why.
    partial row, which is an unusable test. Report the balance and stop if it
    will not cover the run.
 
-3. **Build the base prompt** from `visual_direction` only — composition, style
+3. **Upload the brand kit's references, if the brief carries any.** Product
+   photos, logos and style references in `brand_assets` are local files; every
+   reference-capable model takes a URL. Run `node scripts/kie.mjs upload <file>`
+   per file and pass the URLs into the model's image-input field, whose name
+   varies per model. See "Brand kit to generation" in
+   `references/format-routing.md`.
+
+   Do this immediately before generating, not at the start of a batch: the URLs
+   expire in about a day, so the last cells of a long matrix would fail on dead
+   links.
+
+   Skipping this is the failure that looks like success. The model invents a
+   generic product of the right category with the wrong label and no branding,
+   the render looks finished, and it passes a casual review while being unusable
+   for anything performance-led.
+
+4. **Build the base prompt** from `visual_direction` only — composition, style
    guide, colour palette, typography, imagery — plus the subject. Never from
    `copy_architecture`. Read `references/prompt-construction.md` for the clause
    order that works and the translation table from brief field to prompt clause.
 
-4. **Apply the avoid list.** `visual_direction.avoid_list` becomes negative
+5. **Apply the avoid list.** `visual_direction.avoid_list` becomes negative
    phrasing in the prompt, or a `negative_prompt` field where the model has one.
    Check `references/model-routing.md` for whether the chosen model supports one; if
    it does not, phrase the avoidance positively (say what to show, not what to
    omit) because most image models handle negations poorly.
 
-5. **Map specs to parameters.** `creative_specifications.dimensions` and
+6. **Map specs to parameters.** `creative_specifications.dimensions` and
    `.placement` decide aspect ratio; `.duration` decides video length. The
    mapping table is in `references/placement-specs.md`. Never guess an aspect
    ratio from the prompt text.
 
-6. **Pick the model from what the brief's `asset_type` allows.** The format is
+7. **Pick the model from what the brief's `asset_type` allows.** The format is
    declared by the brief, not chosen here: route through
    `references/format-routing.md`, pick within the eligible set, and state why.
    An `asset_type` with no route is a stop, never a fallback to the nearest one.
    Lock the model for the whole matrix — switching mid-matrix is the largest
    uncontrolled variable available.
 
-7. **Generate.** One `kie_run_task` per cell. For a row, hold the base constant
+8. **Generate.** One `node scripts/kie.mjs run ...` per cell, or `kie_run_task` where MCP is connected. For a row, hold the base constant
    and vary only the slot. If a cell fails, re-run **that cell only**; do not
    regenerate the row, because a re-roll changes the cells that already
    succeeded.
 
-8. **Name every output with the MST convention**, exactly as
+9. **Name every output with the MST convention**, exactly as
    `testing_framework.matrix_naming_convention` states:
 
    `{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`
@@ -138,13 +154,13 @@ locked. Say explicitly in the output that you took the exception and why.
    wrong name is an asset that cannot be scanned, and therefore cannot be
    attributed.
 
-9. **QA before handing over.** Walk `qa_requirements` and the avoid list against
+10. **QA before handing over.** Walk `qa_requirements` and the avoid list against
    what was actually generated — look at the image, do not assume the prompt was
    obeyed. Then hand to `metrix-mst-creative-scan` for the matrix-level check
    (row/column/diagonal consistency). Flag any cell where the model ignored a
    locked element; that cell is not usable as a test.
 
-10. **Report** as the output contract below.
+11. **Report** as the output contract below.
 
 ## Output contract
 
