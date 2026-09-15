@@ -45,7 +45,10 @@ for in-stream, and treat feed video as a crop from 9:16.
 **Not on Kie: Sora, Midjourney.** If a brief names one, say so and route to the
 nearest real option rather than substituting silently.
 
-## Lock the model for the whole matrix
+## Inside a Matrix Sprint Test, lock the model
+
+This applies only while a test is running. Outside one, pick the best model for
+each asset.
 
 Different models have different houses of style. Switching mid-matrix is the
 largest uncontrolled variable available to you, and it will dominate whatever
@@ -101,10 +104,11 @@ Take `downloadUrl` from the response. Kie's docs give the host as both
 `kieai.redpandaai.co` and `api.kie.ai`, and the expiry as both 24 hours and 3
 days — if one 404s, try the other, and upload late rather than early.
 
-## Cost planning for a matrix
+## Cost planning
 
 No per-model price table is published. Rough bands: images 10–50 credits, video
-100–500. A 3x3 image matrix is therefore of the order of a few hundred credits;
+100–500. A single static is small; a 3x3 image matrix is of the order of a few
+hundred credits;
 the same in video is thousands.
 
 Call `kie_get_credits` before the run and report the real `creditsConsumed` per

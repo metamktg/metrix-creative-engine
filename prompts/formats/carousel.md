@@ -37,7 +37,10 @@ Use the brief's order when it gives one. This table is a fallback.
   check the routing table's widest ratio first, and flag the limit if the brief
   wants more cards than the ratio allows.
 
-## Matrix mode
+## Inside a Matrix Sprint Test
+
+Only when an MST is running. A carousel is normally one set of cards built
+from one brief, not a row of test cells.
 
 Decide which card carries the isolated variable. If the test is the hook, only
 card one changes across the row, and every other card is byte-identical across

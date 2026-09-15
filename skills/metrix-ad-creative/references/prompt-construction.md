@@ -45,7 +45,8 @@ cells changes the weighting and is itself a variable.
 them. Translate to something a camera could capture: "premium" becomes the
 lighting, the surface, the styling. If the brief only gives you the adjective,
 translate it once, write the translation down in the report, and reuse that
-exact translation for the whole matrix.
+exact translation everywhere it recurs, and across a whole matrix if one is
+running.
 
 **Negations are unreliable.** "No text, no watermark, no people" often produces
 text, watermarks and people, because many models have no true negation. Prefer
@@ -63,7 +64,10 @@ Do not prompt for a specific real person, a lookalike of one, or a named public
 figure. Beyond the legal exposure, Kie's upstream models refuse or silently
 distort these, which corrupts a matrix cell in a way that is easy to miss.
 
-## Locking a matrix row
+## Locking a row, when a Matrix Sprint Test is running
+
+Only applies inside a live test. Most briefs produce one asset and need none of
+this.
 
 Write the base once, keep it verbatim, substitute only the slot:
 

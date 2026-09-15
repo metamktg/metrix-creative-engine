@@ -128,9 +128,11 @@ do not add information. An upscale will not fix a bad composition, a mangled
 hand, or garbled text — regenerate instead. Use it as the last step before
 delivery, once the asset is approved.
 
-## Prompting for a Matrix Sprint Test
+## Prompting inside a Matrix Sprint Test
 
-This is where prompt discipline stops being a preference.
+An MST is an optional sprint you run to answer a specific question, not a stage
+everything passes through. Most generation has no matrix and none of this
+applies. When one is running, prompt discipline stops being a preference.
 
 A matrix row isolates one variable. The prompt must isolate the same one: every
 cell in the row is **byte-identical except one clause**. Any other drift is a

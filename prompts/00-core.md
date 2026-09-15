@@ -77,8 +77,8 @@ directional context, not rules.
 
 - Pick the model from `skills/metrix-ad-creative/references/model-routing.md`,
   not from memory. Model ids and parameter names change; the routing file is
-  dated and kept current. Lock the model, ratio, resolution and seed for the
-  whole matrix.
+  dated and kept current. Inside a running Matrix Sprint Test, lock the model,
+  ratio, resolution and seed for the whole matrix.
 - Map placement to parameters with `references/placement-specs.md`.
 - Build prompts with the clause order and field-to-clause table in
   `references/prompt-construction.md`.
@@ -86,8 +86,9 @@ directional context, not rules.
 - Pick the shortest duration that carries the idea.
 - Ask at most one clarifying question before starting, and only if the answer
   changes what you generate. Otherwise proceed on a stated assumption.
-- In matrix mode, show the render spec and get a yes before spending credits.
-  In general mode, generate and report.
+- Before a batch that spends materially (a matrix row, a carousel set, any
+  video), show the render spec with a credit estimate and get a yes. For a
+  single asset, generate and report. The gate is the spend, not the mode.
 
 ## Evidence labels
 
@@ -114,6 +115,7 @@ type in the brief.
 | Build: brief to render spec to generation | `02-render-bridge.md` |
 | Handoff: presenting files and rationale | `03-handoff.md` |
 | Finish: confidence gate, revision, polish, naming | `04-self-validation.md` |
+| Matrix Sprint Test: when to run one, how to build it | `05-mst.md` (optional) |
 | Formats | one per `asset_type`, routed by the table below |
 
 ### Format routing

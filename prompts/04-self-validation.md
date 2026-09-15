@@ -22,15 +22,16 @@ revision budget spent. Those stop and report.
 
 ## The confidence gate
 
-The bar comes from `brief_metadata.confidence`. Two tests, and in matrix mode
-both must pass.
+The bar comes from `brief_metadata.confidence`.
 
-**1. Absolute identity.** Shown the asset alone, without the prompt, would a
-strategist name the intended variable value? A cell whose slot is `HK_Problem`
-has to read as a problem state. If the render is merely neutral and pleasant,
-it has not expressed the variable.
+**Always: does the asset express what the brief specified?** Shown the asset
+alone, without the prompt, would a strategist recognise the creative concept the
+brief describes? The declared format, the visual direction, the product, the
+angle. If the render is merely competent and generic, it has not expressed the
+brief, and a generic asset is the most expensive kind because it looks finished.
 
-**2. Comparative identity, matrix mode only, and this is the decisive one.**
+**Only inside a running Matrix Sprint Test, additionally: comparative
+identity.** Most work has no matrix, and this test does not apply to it.
 Placed beside its sibling cells in the row, is the difference visible, and is it
 attributable to the variable rather than to noise?
 
@@ -38,8 +39,8 @@ If `C1A` (`HK_Problem`) and `C1B` (`HK_Benefit`) are hard to tell apart, the row
 is dead regardless of how strong each cell is on its own. A test of a variable
 that produced no visible variance is not a test.
 
-Score each cell PASS or FAIL against both, with the reason in one line. Do not
-average them into a number that hides which test failed.
+Score PASS or FAIL against each test that applies, with the reason in one line.
+Do not average them into a number that hides which one failed.
 
 ## Revising a failure
 
@@ -47,8 +48,9 @@ Revision is bounded: **at most two cycles per cell.** After that, stop and
 report the cell as unresolved with what you tried. An unbounded revise loop
 spends real credits chasing a brief that may itself be the problem.
 
-Which part failed decides what may change, and this is where a matrix row is
-easiest to break:
+Outside an MST, revision is straightforward: change the clause that failed and
+re-render. Inside one, which part failed decides what may change, and this is
+where a row is easiest to break:
 
 **The slot failed** (the variable is not expressed, everything else is right).
 Rewrite the slot clause only, keep the base byte-identical, re-render that cell
@@ -86,7 +88,12 @@ Paying to upscale a 4K render wastes credits and changes nothing.
 
 The filename is how the asset is identified downstream, so it is not free-form.
 
-**Matrix mode: the MST convention**, exactly as
+**Default: a descriptive name** built from the creative concept, so the file is
+readable on its own six weeks later: `bottle-hero-concrete-ledge-4x5`. A
+coordinate is meaningless outside a live test and tells a reader nothing about
+what the creative was.
+
+**Inside a running MST: the convention**, exactly as
 `testing_framework.matrix_naming_convention` states:
 
 `{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`
@@ -95,10 +102,7 @@ This already contains the creative concept codes. Do not shorten it to the bare
 concept id: `metrix-mst-creative-scan` parses the full convention, and an asset
 it cannot parse cannot be scanned, which means it cannot be attributed.
 
-**General mode: the creative concept id**, since there is no matrix position to
-carry and no row to scan.
-
-Either way, set it at download:
+Set it at download either way:
 
 ```
 node scripts/kie.mjs run <model> --input-file spec.json --out ./out \
@@ -114,8 +118,8 @@ Per cell: PASS or FAIL on absolute identity, PASS or FAIL on comparative
 identity, revisions used, whether polished, the final filename, and the credits
 spent.
 
-Per row: whether the row is valid as a test. A row with one unresolved cell is
-not valid, and saying so is the whole point of this stage.
+Inside an MST, per row: whether the row is valid as a test. A row with one
+unresolved cell is not valid, and saying so is the whole point of this stage.
 
 ## Common failure
 

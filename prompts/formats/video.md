@@ -48,7 +48,9 @@ Go straight to text-to-video only for cheap exploration, or when the brief says 
 - Music beds come from the routing table's music model, instrumental unless
   vocals are the point. Voiceover comes from the speech model.
 
-## Matrix mode
+## Inside a Matrix Sprint Test
+
+Only when an MST is running, which most video work is not.
 
 The isolated variable usually lives in the opening seconds. Keep the approved
 still, the motion clause and the duration identical across the row, and vary

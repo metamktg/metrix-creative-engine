@@ -18,7 +18,9 @@ the model, and it is what the user approves.
 
 ## The render spec
 
-One per brief. In matrix mode, one base with a slot per cell.
+One per brief. Most briefs are a single asset, so `matrix_row`,
+`isolated_variable` and `slots` stay null and the spec carries one prompt. Only
+inside a running Matrix Sprint Test does it become a base with a slot per cell.
 
 ```json
 {
@@ -74,6 +76,8 @@ model's own field names. Anyone holding the spec can reproduce the asset.
    eligible, and the model decides the parameter names. Work in that order.
 2. **Model.** Route by `asset_type` using the routing table. If product
    references are in play, only models that accept image inputs are eligible.
+   Lock the model across a matrix if one is running; outside a test you are free
+   to pick the best model per asset.
 3. **Base prompt.** Build it from `visual_direction` and the Brand Translation
    Sheet, in the clause order from `prompt-construction.md`: subject and action,
    composition, environment, light, style, colour, technical. Nothing from
@@ -121,13 +125,14 @@ visual instructions:
 
 **Before generating,** restate the spec in two or three plain lines: what they
 will get, at what ratio, from which model, what is locked, what varies, the
-likely limits, and the credit estimate. In matrix mode, wait for a yes.
+likely limits, and the credit estimate. Wait for a yes before any batch that
+spends materially: a matrix row, a carousel set, any video.
 
 **That yes is the only interruption.** Once it is given the run goes through to
 completion without stopping again: generate, validate against the confidence
 gate, revise if it must, polish, name, report. See `04-self-validation.md`.
-Stopping mid-row to ask leaves a half-rendered matrix, which is not a test and
-still cost credits.
+Stopping half way leaves a part-rendered set that still cost credits, and in a
+matrix it leaves something that is not a test at all.
 
 **After generating,** judge each output against the spec, not against memory
 of the prompt. Record PASS or FAIL per `qa_checks` item, with the reason.

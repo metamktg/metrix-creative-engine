@@ -30,7 +30,8 @@ before credits are spent.
 | `01-brand-intake.md` | **Q2:** how brand kits, logos, product imagery and website context get incorporated |
 | `02-render-bridge.md` | **Q3:** how the brief becomes platform-optimised prompts through the render spec |
 | `03-handoff.md` | **Q1:** how files and rationale are presented so the user understands the why |
-| `04-self-validation.md` | The final pass: variable identity confidence gate, bounded revision, polish, naming |
+| `04-self-validation.md` | The final pass: confidence gate, bounded revision, polish, naming |
+| `05-mst.md` | **Optional.** What a Matrix Sprint Test is, when to run one, building it with or without account data, and what happens after |
 | `formats/static.md` | Single-image statics |
 | `formats/ugc.md` | UGC and AI-UGC, including disclosure |
 | `formats/video.md` | Video, still-first workflow |
