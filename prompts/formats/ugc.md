@@ -45,9 +45,14 @@ whole matrix, so "UGC feel" is not a hidden variable between cells.
 
 ## Caption bars
 
-A burned-in caption bar is a legitimate format exception (core rule 2). When
-it is the premise, the caption text is the isolated variable, and captions are
-better composited in post than generated, because generated text drifts.
+A burned-in caption bar is normal for this format, not an exception: core rule 1
+puts the brief's hook and CTA in the pixels.
+
+The craft note still stands, and it is a production choice rather than a rule:
+**composite the caption in post where you can.** Generated text drifts across
+frames, and a caption is the one element a reader is certain to read closely.
+Generate it only when the caption's treatment is itself under test, and then
+check every character of every frame.
 
 ## Talking-head video
 

@@ -34,7 +34,7 @@ On Windows the path is `scripts\kie.mjs`. Use the skill's own directory, which
 in an installed skill is under `.claude/skills/<skill>/`.
 
 **2. MCP tools, if `/mcp` lists `kie-ai`.** `kie_run_task`, `kie_create_task`,
-`kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_download_result`.
+`kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_ledger`, `kie_download_result`.
 Same API, typed arguments. Prefer these when present; they are not required.
 
 Never tell the user to install anything before generating. If the key is
@@ -123,3 +123,27 @@ Always give:
 
 A `taskId` is not an asset. Do not describe a job as done until a task record
 says `success`.
+
+
+## Recovering a batch after its URLs expire
+
+Kie's result URLs expire in about 24 hours. The `taskId` does not: re-polling it
+re-issues a URL. Every task this toolchain starts is appended to a local ledger
+for exactly that reason.
+
+```
+node scripts/kie.mjs ledger          # every task, newest first, with the window left
+```
+
+or the `kie_ledger` tool, with `onlyRecoverable: true` to see just what is still
+downloadable. It needs no API key, because the morning you need the ledger is
+not the morning to discover you cannot read it.
+
+A task whose window has closed is not lost. Take its id:
+
+```
+node scripts/kie.mjs poll <taskId> --out ./out
+```
+
+The ledger also counts distinct models. Two model ids in one batch means the
+comparison that batch was rendered for is void, and this is where you see it.

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_WAIT_SECONDS, loadConfig } from "../config.js";
+import { resolveLedgerPath } from "../ledger.js";
 
 describe("loadConfig", () => {
   it("requires an API key and says where to get one", () => {
@@ -16,6 +17,7 @@ describe("loadConfig", () => {
       requestTimeoutMs: undefined,
       defaultWaitSeconds: DEFAULT_WAIT_SECONDS,
       downloadDir: null,
+      ledgerPath: resolveLedgerPath({}, null),
     });
   });
 

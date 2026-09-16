@@ -14,9 +14,22 @@ must not be wrong first.
 4. Light                     quality, direction, time of day
 5. Style                     medium, era, film stock, render style
 6. Colour                    palette, grade
-7. Technical                 lens, depth of field, resolution cues
-8. Negative                  what to exclude (or the negative_prompt field)
+7. On-image text             the hook line and the CTA, quoted verbatim
+8. Technical                 lens, depth of field, resolution cues
+9. Negative                  what to exclude (or the negative_prompt field)
 ```
+
+Clause 7 is not optional on a Meta ad creative. Quote the exact string the brief
+gives and say where it sits and how it is set:
+
+```
+the words "Your favorite places, on your wall." set in a clean serif across the
+upper third, generous letter spacing, high contrast against the wall behind it,
+and a solid black button reading "SHOP NOW" in the lower third
+```
+
+Quote the string. A paraphrase renders as a paraphrase, and a model given
+"a headline about nostalgia" invents its own words.
 
 The isolated variable's slot goes wherever it naturally belongs in that order,
 but **in the same position for every cell in the row**. Moving the slot between
@@ -30,13 +43,16 @@ cells changes the weighting and is itself a variable.
 | `visual_direction.composition` | Composition (2) | Translate to shot language: "medium close-up, subject left third" |
 | `visual_direction.style_guide` | Style (5) | Name a medium, not an adjective. "Editorial photography" beats "premium" |
 | `visual_direction.color_palette` | Colour (6) | Name colours, not brand words. "Deep navy and warm cream" beats "on-brand" |
-| `visual_direction.typography` | usually **nothing** | Typography applies to on-image text. If you are not rendering text, drop it. See the copy rule in SKILL.md |
+| `visual_direction.typography` | On-image text (7) | The type treatment for the hook and CTA: weight, case, spacing, placement. Name it, do not drop it |
 | `visual_direction.avoid_list` | Negative (8) | See below |
 | `creative_specifications.format` | model choice | static vs video vs carousel frame |
 | `creative_specifications.dimensions` / `.placement` | aspect ratio parameter | Never a prompt clause. See `placement-specs.md` |
 | `creative_specifications.duration` | duration parameter | Video only |
 | `strategic_foundation.target_icp` | Subject, when the subject is a person | Describe observable traits only |
-| `copy_architecture.*` | **nothing** | Ads Manager fields, not pixels |
+| `copy_architecture.hook` | On-image text (7) | **Quoted verbatim.** The hook is the creative; it renders |
+| `copy_architecture.cta` | On-image text (7) | **Quoted verbatim**, with its button or lockup described |
+| `copy_architecture.headline` | On-image text (7) | Render when the brief places it in frame |
+| `copy_architecture.primary_text`, `.description` | **nothing** | These two are genuinely Ads Manager fields |
 
 ## Two things that go wrong
 

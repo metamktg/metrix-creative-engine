@@ -20,9 +20,30 @@ The exceptions are the ones that are not judgment calls: credits exhausted, a
 blocked brief (product references listed under `brand_assets.missing`), or the
 revision budget spent. Those stop and report.
 
+## The brief-alignment check
+
+Runs after the render, never before. The brief is IAP-validated, so this stage
+does not ask whether the brief was right; it asks whether the asset is what the
+brief specified. Five rows, each PASS or FAIL with a one-line reason. Do not
+average them into a score that hides which one failed.
+
+| # | Check | Passes when |
+| --- | --- | --- |
+| 1 | **Media format type** | The asset is the `asset_type` the brief declared. A static where the brief said carousel is a FAIL, however good it looks |
+| 2 | **Overlay text** | The hook (and headline, where the brief places it in frame) is present and matches `copy_architecture` **character for character**. Read it. A single wrong letter is a FAIL |
+| 3 | **CTA** | Present, worded as the brief specifies, rendered as specified (button, lockup), legible at thumbnail size |
+| 4 | **Aspect ratio** | Every ratio the brief's placement list requires exists as an asset, at that exact ratio, set as a parameter rather than cropped |
+| 5 | **Meta ad creative passed** | Platform specs met, text readable at feed thumbnail size, no policy trip (no fabricated proof, no banned claim, nothing from the account's banned list) |
+
+Row 2 and row 3 are the ones that used to be structurally impossible to pass:
+the engine stripped `copy_architecture` out of the prompt, so no asset carried a
+hook or a CTA and nothing checked for their absence. If either fails now, it is a
+revision.
+
 ## The confidence gate
 
-The bar comes from `brief_metadata.confidence`.
+Runs after the alignment check passes. The bar comes from
+`brief_metadata.confidence`.
 
 **Always: does the asset express what the brief specified?** Shown the asset
 alone, without the prompt, would a strategist recognise the creative concept the
@@ -114,9 +135,14 @@ it replaced. Overwriting loses the evidence of what changed.
 
 ## Report
 
-Per cell: PASS or FAIL on absolute identity, PASS or FAIL on comparative
-identity, revisions used, whether polished, the final filename, and the credits
+Per cell: the five alignment rows as PASS or FAIL, PASS or FAIL on absolute
+identity, PASS or FAIL on comparative identity, **the model id that produced
+it**, revisions used, whether polished, the final filename, and the credits
 spent.
+
+The model id is not optional. Core rule 3 locks one model per batch, and the
+report is where that lock is evidenced: if two model ids appear in one matrix,
+the matrix is void and the report has to say so.
 
 Inside an MST, per row: whether the row is valid as a test. A row with one
 unresolved cell is not valid, and saying so is the whole point of this stage.

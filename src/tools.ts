@@ -14,6 +14,7 @@ import type { ServerNotification, ServerRequest } from "@modelcontextprotocol/sd
 
 import { ASSET_TYPES, formatVerdict, validateBrief } from "./brief.js";
 import type { KieClient, PollUpdate } from "./client.js";
+import { appendLedger, formatLedger, readLedger } from "./ledger.js";
 import { RESULT_RETENTION_NOTE, summarizeTask, type TaskRecord } from "./protocol.js";
 import {
   createOutputShape,
@@ -22,6 +23,7 @@ import {
   briefVerdictShape,
   taskOutputShape,
   waitOutputShape,
+  ledgerOutputShape,
 } from "./schemas.js";
 
 export interface ToolDeps {
@@ -29,6 +31,8 @@ export interface ToolDeps {
   defaultWaitSeconds: number;
   /** Download tool is registered only when the operator configured a directory. */
   downloadDir: string | null;
+  /** Where task events are appended. Null switches the ledger off. */
+  ledgerPath?: string | null;
 }
 
 type ToolResult = {
@@ -127,6 +131,25 @@ const inputArg = z
 
 export function registerKieTools(server: McpServer, deps: ToolDeps): void {
   const { client, defaultWaitSeconds, downloadDir } = deps;
+  const ledgerPath = deps.ledgerPath ?? null;
+
+  /**
+   * Record a task event. Deliberately not awaited by the caller's critical
+   * path in a way that can fail it: a ledger error is logged to stderr and the
+   * render carries on. Losing the record of a task is bad; losing the task,
+   * and the credits with it, is worse.
+   */
+  const record = async (
+    event: "created" | "settled",
+    fields: { taskId: string; model: string; state?: string; resultUrls?: string[]; param?: unknown },
+  ) => {
+    const failure = await appendLedger(ledgerPath, {
+      ts: new Date().toISOString(),
+      event,
+      ...fields,
+    });
+    if (failure) console.error(`[ledger] could not record ${event} for ${fields.taskId}: ${failure.message}`);
+  };
 
   const waitArg = z
     .number()
@@ -207,6 +230,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
     async ({ model, input, callBackUrl }) =>
       guarded(async () => {
         const taskId = await client.createTask({ model, input, callBackUrl });
+        await record("created", { taskId, model, param: input });
         return text(
           [`Task created: ${taskId}\nModel: ${model}\nThe task is queued, not finished. Poll it with kie_get_task or kie_wait_for_task.`],
           { taskId, model },
@@ -246,15 +270,23 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
     },
     async ({ taskId, timeoutSeconds }, extra) =>
       guarded(async () => {
-        const { record, timedOut, polls } = await client.waitForTask(taskId, {
+        const { record: settled, timedOut, polls } = await client.waitForTask(taskId, {
           timeoutMs: (timeoutSeconds ?? defaultWaitSeconds) * 1000,
           onPoll: progressReporter(extra),
           signal: extra.signal,
         });
+        if (!timedOut) {
+          await record("settled", {
+            taskId,
+            model: settled.model ?? "unknown",
+            state: settled.state,
+            resultUrls: [...settled.resultUrls, ...settled.frameUrls],
+          });
+        }
         const prefix = timedOut
           ? `Still running after ${polls} polls — the timeout passed, not the task. Wait again with the same taskId.`
           : `Settled after ${polls} polls.`;
-        return taskResult(record, { task: record, timedOut, polls }, prefix);
+        return taskResult(settled, { task: settled, timedOut, polls }, prefix);
       }),
   );
 
@@ -275,15 +307,57 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
     async ({ model, input, timeoutSeconds }, extra) =>
       guarded(async () => {
         const taskId = await client.createTask({ model, input });
-        const { record, timedOut, polls } = await client.waitForTask(taskId, {
+        await record("created", { taskId, model, param: input });
+        const { record: settled, timedOut, polls } = await client.waitForTask(taskId, {
           timeoutMs: (timeoutSeconds ?? defaultWaitSeconds) * 1000,
           onPoll: progressReporter(extra),
           signal: extra.signal,
         });
+        if (!timedOut) {
+          await record("settled", {
+            taskId,
+            model,
+            state: settled.state,
+            resultUrls: [...settled.resultUrls, ...settled.frameUrls],
+          });
+        }
         const prefix = timedOut
           ? `Created ${taskId} but it was still running after ${polls} polls. Resume with kie_wait_for_task on that taskId.`
           : `Created ${taskId} and it settled after ${polls} polls.`;
-        return taskResult(record, { task: record, timedOut, polls }, prefix);
+        return taskResult(settled, { task: settled, timedOut, polls }, prefix);
+      }),
+  );
+
+  server.registerTool(
+    "kie_ledger",
+    {
+      title: "Read the local task ledger",
+      description: `List every task this server has recorded, newest first, with how much of Kie's result window each has left. ${RESULT_RETENTION_NOTE} A task whose window has closed is not lost: re-poll its taskId with kie_get_task and Kie re-issues a URL. Losing the taskId is what loses the asset.`,
+      inputSchema: {
+        onlyRecoverable: z
+          .boolean()
+          .optional()
+          .describe("Only tasks whose result window is still open. Use this to find what to download before it expires."),
+        model: z
+          .string()
+          .optional()
+          .describe("Only tasks rendered on this model id. Use it to check a batch ran on one model."),
+      },
+      outputSchema: ledgerOutputShape,
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    async ({ onlyRecoverable, model }) =>
+      guarded(async () => {
+        let tasks = await readLedger(ledgerPath, Date.now());
+        if (model) tasks = tasks.filter((task) => task.model === model);
+        if (onlyRecoverable) tasks = tasks.filter((task) => task.recoverable);
+        const models = [...new Set(tasks.map((task) => task.model))];
+        return text([formatLedger(tasks)], {
+          ledgerPath,
+          taskCount: tasks.length,
+          models,
+          tasks: tasks.map(({ param, ...rest }) => rest),
+        });
       }),
   );
 

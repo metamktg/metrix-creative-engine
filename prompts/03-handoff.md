@@ -116,8 +116,9 @@ the verdict called **How this works**. Four sentences at most:
    instructions; the assets come from the spec.
 2. In a test, only one thing changes between assets, so the result can be traced
    to that one thing.
-3. Ad copy lives in Ads Manager, not in the image, so copy can be tested without
-   remaking the creative.
+3. The hook and the CTA are in the image, because that is what stops a scroll;
+   Primary Text and Description stay in Ads Manager, where they can be tested
+   without remaking the creative.
 4. Every choice in the creative traces back to the brief, the brand, or a
    labelled production decision.
 

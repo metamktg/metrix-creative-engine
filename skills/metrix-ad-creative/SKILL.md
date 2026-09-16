@@ -18,7 +18,8 @@ and `KIE_AI_API_KEY` in the environment. Works on Windows, macOS and Linux.
 
 ```
 node scripts/kie.mjs credits
-node scripts/kie.mjs run "google/nano-banana" '{"prompt":"...","aspect_ratio":"4:5"}'
+node scripts/kie.mjs ledger                                # what ran, and what is still downloadable
+node scripts/kie.mjs run "nano-banana-2" '{"prompt":"...","aspect_ratio":"4:5"}'
 node scripts/kie.mjs run "veo-3-1" '{"prompt":"..."}' --timeout 900 --out ./out --name my-concept-id
 node scripts/kie.mjs start "kling/v2-1-master-image-to-video" '{...}'   # prints taskId, returns at once
 node scripts/kie.mjs poll <taskId> --timeout 900
@@ -98,20 +99,37 @@ Inside a live MST, and only there, assets also carry the MST naming convention,
 because `metrix-mst-creative-scan` parses it to attribute results. Everywhere
 else, descriptive names.
 
-## Do not render ad copy into the image
+## Render the hook and the CTA into the image
 
-Primary Text, Headline and Description are **Ads Manager fields**, not pixels.
-Baking them into the creative breaks the method in two ways:
+A Meta ad creative carries its hook in the pixels. That is what stops the
+scroll, and an asset without one is a product photo that happens to be running
+as an ad.
 
-1. Copy can no longer be tested independently of visual. A hook baked into the
-   image means every copy test is also a creative re-render.
-2. `copywriting-meta-ads` outputs those fields as paste-ready plain text. An
-   image carrying its own headline contradicts them the moment either changes.
+**Render from `copy_architecture`:**
 
-**The exception**, and it is narrow: a format whose whole premise is on-image
-text (a text-overlay static, a meme format, a UGC caption bar). Then the
-on-image text IS the isolated variable for that row, and every other variable is
-locked. Say explicitly in the output that you took the exception and why.
+| Field | In the frame? |
+| --- | --- |
+| `hook` | **Yes**, quoted verbatim. This is the creative |
+| `cta` | **Yes**, quoted verbatim, rendered as specified |
+| `headline` | Yes, where the brief places it in frame |
+| `primary_text` | No. Ads Manager field |
+| `description` | No. Ads Manager field |
+
+Primary Text and Description stay out because they are genuinely testable
+without a re-render. The hook is not: it is composed into the image and it
+carries the concept.
+
+Two consequences:
+
+1. **The model must be able to set type.** Route through
+   `references/model-routing.md`. Sending a text-bearing creative to a model
+   chosen only for its aspect ratio produces garbled words in every cell.
+2. **Check every character** in the output against the brief. One wrong letter
+   makes the asset unusable.
+
+*Until 2026-09-16 this section said the opposite, and step 4 below told you to
+build the prompt "never from `copy_architecture`". Between them they deleted the
+hook and the CTA from every asset the engine produced.*
 
 ## Process
 
@@ -145,10 +163,12 @@ locked. Say explicitly in the output that you took the exception and why.
    the render looks finished, and it passes a casual review while being unusable
    for anything performance-led.
 
-4. **Build the base prompt** from `visual_direction` only — composition, style
-   guide, colour palette, typography, imagery — plus the subject. Never from
-   `copy_architecture`. Read `references/prompt-construction.md` for the clause
-   order that works and the translation table from brief field to prompt clause.
+4. **Build the prompt** from `visual_direction` (composition, style guide,
+   colour palette, typography, imagery) plus the subject, **and the on-image
+   text from `copy_architecture`**: the hook and the CTA quoted verbatim, set
+   with the brief's typography. Read `references/prompt-construction.md` for the
+   clause order and the field-to-clause table. Use the order; do not let the
+   table flatten your art direction into a list.
 
 5. **Apply the avoid list.** `visual_direction.avoid_list` becomes negative
    phrasing in the prompt, or a `negative_prompt` field where the model has one.

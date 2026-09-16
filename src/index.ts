@@ -32,6 +32,7 @@ export async function main(): Promise<void> {
     client,
     defaultWaitSeconds: config.defaultWaitSeconds,
     downloadDir: config.downloadDir,
+    ledgerPath: config.ledgerPath,
   });
   // Capabilities are inferred from what is registered, so a server that only
   // registered tools advertised only tools. Reference documents and the render
@@ -41,7 +42,7 @@ export async function main(): Promise<void> {
 
   await server.connect(new StdioServerTransport());
   process.stderr.write(
-    `kie-ai-mcp-server ready (downloads ${config.downloadDir ? `-> ${config.downloadDir}` : "disabled"})\n`,
+    `kie-ai-mcp-server ready (downloads ${config.downloadDir ? `-> ${config.downloadDir}` : "disabled"}, ledger ${config.ledgerPath ? `-> ${config.ledgerPath}` : "off"})\n`,
   );
 }
 

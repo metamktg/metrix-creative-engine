@@ -12,7 +12,7 @@ all three server primitives.
 
 | Primitive | What it carries |
 | --- | --- |
-| **Tools** | The six below. Every one declares an `outputSchema` and returns `structuredContent` |
+| **Tools** | The eight below. Every one declares an `outputSchema` and returns `structuredContent` |
 | **Resources** | The model catalog and the format routing table, inlined at build time |
 | **Prompts** | One per media format, plus brand intake and the optional MST |
 
@@ -48,6 +48,7 @@ Checking on something started earlier          -> kie_get_task
 A wait timed out and you want to resume        -> kie_wait_for_task
 About to spend a lot                           -> kie_get_credits
 Keeping the asset                              -> kie_download_result
+"What did I render last night, is it still there?" -> kie_ledger
 ```
 
 ## `kie_run_task`
@@ -231,3 +232,48 @@ whoever remembers to open it; a prompt is selectable.
 | `KIE_AI_DEFAULT_WAIT_SECONDS` | no | 300 | Default timeout for waiting tools |
 | `KIE_AI_REQUEST_TIMEOUT_MS` | no | 60000 | Per-HTTP-request timeout |
 | `KIE_AI_BASE_URL` | no | `https://api.kie.ai` | Override for a proxy or test stub |
+
+
+## `kie_ledger`
+
+Reads the local append-only task ledger. No network call, no credit, no key
+needed on the CLI equivalent.
+
+| Argument | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `onlyRecoverable` | boolean | no | Only tasks whose result window is still open |
+| `model` | string | no | Only tasks rendered on this model id |
+
+### Why it exists
+
+Kie documents result URLs as expiring after about 24 hours. The `taskId` does
+not expire: `recordInfo` re-issues a URL for any task you can still name. So the
+id is the asset's real handle, and until this existed nothing persisted one. A
+batch rendered in the evening and read the next morning had URLs that were dead
+and ids that lived only in a conversation window. The credits were spent and the
+assets were unreachable, which is not a failure any log shows.
+
+Every `kie_create_task`, `kie_run_task` and settled `kie_wait_for_task` appends a
+line. A ledger write that fails is logged to stderr and swallowed: losing the
+record of a task is bad, losing the task is worse.
+
+### What it tells you
+
+`recoverable` is the field that matters, and `minutesLeft` is how long that stays
+true. A task past its window is **not lost** — re-poll the id with `kie_get_task`
+and Kie issues a fresh URL.
+
+The report also counts distinct models. Core rule 3 locks one model per batch, so
+two model ids in one batch's ledger means the comparison is void, and the ledger
+is where that becomes visible after the fact.
+
+### Where the file lives
+
+`<KIE_AI_DOWNLOAD_DIR or ./out>/kie-ledger.jsonl`, overridable with
+`KIE_AI_LEDGER_PATH`, or `off` to disable. JSONL rather than JSON so a process
+killed mid-append leaves every earlier line readable; append-only so a batch that
+dies does not take the record of its own successes with it.
+
+The CLI equivalent is `node kie.mjs ledger`, and it deliberately does **not**
+require `KIE_AI_API_KEY`: the ledger is the recovery path, and gating it behind a
+credential is exactly backwards on the morning you need it.
