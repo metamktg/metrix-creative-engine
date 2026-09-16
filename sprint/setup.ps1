@@ -10,6 +10,12 @@ $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $skills = Join-Path $env:USERPROFILE ".claude\skills"
 
+# Run from the repo, whatever directory the window opened in. Every failure of
+# this setup so far has been the same one: a fresh terminal starts in the user
+# profile, and a command written as "sprint\setup.ps1" or "git pull" only works
+# from inside the repo. The script knows where it lives, so it goes there.
+Set-Location $repo
+
 Write-Host ""
 Write-Host "Metrix Creative Engine setup" -ForegroundColor Cyan
 Write-Host ""
@@ -29,6 +35,17 @@ foreach ($tool in @("git", "node")) {
 }
 Write-Host ("  git:  " + (git --version)) -ForegroundColor Green
 Write-Host ("  node: " + (node --version)) -ForegroundColor Green
+
+# Update itself. Otherwise "git pull" is a second command to remember, run from
+# a directory that has to be right, which is the thing this script exists to
+# remove. A failed pull (offline, local edits) is a note, never a stop: the
+# checked-out version still works.
+try {
+  git -C $repo pull --ff-only --quiet 2>&1 | Out-Null
+  Write-Host ("  repo: up to date (" + (git -C $repo rev-parse --short HEAD) + ")") -ForegroundColor Green
+} catch {
+  Write-Host "  repo: could not update, carrying on with what is checked out" -ForegroundColor Yellow
+}
 
 # 1. The key -------------------------------------------------------------
 if ([string]::IsNullOrWhiteSpace($env:KIE_AI_API_KEY)) {

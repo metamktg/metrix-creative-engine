@@ -11,6 +11,9 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="$(dirname "$here")"
 skills="$HOME/.claude/skills"
 
+# Run from the repo, whatever directory the shell started in.
+cd "$repo"
+
 printf '\nMetrix Creative Engine setup\n\n'
 
 for tool in git node; do
@@ -22,6 +25,13 @@ for tool in git node; do
 done
 printf '  git:  %s\n' "$(git --version)"
 printf '  node: %s\n' "$(node --version)"
+
+# Update itself, so one command is the whole thing. A failed pull is a note.
+if git -C "$repo" pull --ff-only --quiet 2>/dev/null; then
+  printf '  repo: up to date (%s)\n' "$(git -C "$repo" rev-parse --short HEAD)"
+else
+  printf '  repo: could not update, carrying on with what is checked out\n'
+fi
 
 if [ -z "${KIE_AI_API_KEY:-}" ]; then
   echo "KIE_AI_API_KEY is not set in this terminal."
