@@ -1,0 +1,48 @@
+Run the creative sprint.
+
+Everything you need is in this repo and in sprint/. Do not ask me for paths,
+counts, or confirmations that you can work out yourself. Work autonomously
+until you hit the one stop below.
+
+INPUTS
+  sprint/briefs/    the briefs file from Metrix. Render one asset per brief,
+                    however many there are. The count is not a rule.
+  sprint/refs/      reference images. Upload them all, use the returned URLs
+                    as image_input. Without them the model invents the product.
+  sprint/out/       everything you produce goes here.
+  brand-kits/eastcoastartstudio/brand-kit.json
+  brand-kits/eastcoastartstudio/MASTER_EXECUTION_PROMPT.md
+
+DO THIS, IN ORDER, WITHOUT ASKING
+  1. Read the brand kit. client_account_rules and conflicts_to_resolve
+     override the briefs.
+  2. Read MASTER_EXECUTION_PROMPT.md and follow it.
+  3. Upload every file in sprint/refs/ and keep the URLs.
+  4. Run kie_validate_brief on every brief.
+  5. Check credits. Tell me the number and the estimated spend in one line.
+  6. Render TWO cells from different rows. Download them to sprint/out/.
+     Show them to me.
+
+  --> THIS IS THE ONLY STOP. Wait for my yes.
+
+  7. On yes: render the rest. One model for the whole batch, nano-banana-2,
+     aspect_ratio "4:5" set explicitly, resolution 2K. Download every asset to
+     sprint/out/ with its MST name as you go, never at the end.
+  8. Report: one table, one row per brief. Cell, pass/fail on the five
+     alignment rows, credits, filename. Then the total spent and anything you
+     could not make pass.
+
+RULES THAT ARE NOT NEGOTIABLE
+  - The product is a painted city scene with a real legible street nameplate.
+    It is NOT a map.
+  - Never render "3,000+ cities".
+  - The hook and the CTA go IN the image, quoted from copy_architecture.
+    CTA is "SHOP NOW" on a solid black button.
+  - No emoji. The phrase "Read why" is banned.
+  - No invented reviews, ratings or counts. There is no social proof yet.
+  - Read every character of rendered text before accepting an asset.
+
+IF SOMETHING IS WRONG
+  Fix it and tell me in the report. Do not stop to ask unless it is the
+  matrix isolation check failing, or you would have to spend credits on
+  something I did not authorise.

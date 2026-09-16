@@ -1,0 +1,6 @@
+out/
+!out/.gitkeep
+briefs/*
+!briefs/.gitkeep
+refs/*
+!refs/.gitkeep

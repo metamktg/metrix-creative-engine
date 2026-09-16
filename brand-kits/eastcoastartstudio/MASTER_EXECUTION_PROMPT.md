@@ -1,4 +1,4 @@
-# Master execution prompt: ECAS MST Sprint 1, 16 creatives
+# Master execution prompt: ECAS MST Sprint
 
 Paste the block below into a Claude Code session that has the `metrix-ad-creative`
 skill installed and `KIE_AI_API_KEY` set. Attach or name the three inputs:
@@ -7,20 +7,28 @@ skill installed and `KIE_AI_API_KEY` set. Attach or name the three inputs:
 ---
 
 ```
-Generate all 16 EastCoastArtStudio MST Sprint 1 creatives from the attached
-briefs, using the attached brand kit as the source of truth for the brand.
+Generate every EastCoastArtStudio creative in the attached briefs file, one
+per brief, using the attached brand kit as the source of truth for the brand.
+
+## The brief count is whatever the file holds
+
+Render one asset per brief. Do not expect a particular number, do not stop
+because there are more or fewer than you expected, and do not treat a count as a
+validation signal. A Matrix Sprint Test happens to be a 4x4 grid, which is where
+sixteen comes from, but the file is the authority and a sprint can be any size.
 
 ## Read these first, in this order
 
 1. brand-kit.json. Section `conflicts_to_resolve` overrides the briefs on two
    points, and section `client_account_rules` overrides everything.
-2. creative_briefs.json, all 16.
+2. The briefs file. Every brief in it, however many that is. The count is
+   whatever Metrix exported; it is not a number you check against anything.
 3. prompts/formats/static.md and prompts/04-self-validation.md from the engine.
 
 ## Three corrections to apply to every brief before rendering
 
 These are established, not suggestions. Applying the briefs verbatim produces
-16 assets that are wrong in the same way.
+a whole set of assets that are wrong in the same way.
 
 1. THE PRODUCT IS NOT A MAP. The briefs and the client library say "street/city
    map prints". The live catalogue is 1 map in 250: the product is a painted city
@@ -50,9 +58,9 @@ These are established, not suggestions. Applying the briefs verbatim produces
 
 ## Before spending a credit
 
-1. Run kie_validate_brief on all 16. Fix what it blocks. It is free.
-2. Check the credit balance and confirm it covers 16 renders plus a revision
-   budget of roughly 30%.
+1. Run kie_validate_brief on every brief. Fix what it blocks. It is free.
+2. Check the credit balance and confirm it covers one render per brief plus a
+   revision budget of roughly 30%.
 3. Upload the brand assets from brand_assets and use the returned URLs. Without a
    product reference the model invents a generic poster. This is the single most
    common cause of a wasted batch.
@@ -79,7 +87,7 @@ Read every character of rendered text in the output before accepting an asset.
 
 ## Rendering
 
-Work cell by cell, C1A through C4D. For each:
+Work brief by brief, in the order the file gives them. For each:
 
 - Route through kie_render_static on **`nano-banana-2`**: it is the only model
   in the routing table that holds 4:5 AND sets legible type AND takes the 14
@@ -124,7 +132,8 @@ isolation you could not prove. Do not round a failure up to a pass.
 ## Why this prompt is shaped this way
 
 Three of the four blocking problems in this package are invisible to a renderer
-reading a brief in isolation, and each one produces 16 identically wrong assets:
+reading a brief in isolation, and each one produces a whole set of identically
+wrong assets:
 the product is misdescribed, the proof claim overclaims against the brand's own
 site, and the vocabulary does not route. A per-cell prompt cannot catch any of
 them, so they are hoisted to the top and stated as corrections rather than
