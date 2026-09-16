@@ -15,7 +15,12 @@ const BASE = process.env.KIE_AI_BASE_URL || "https://api.kie.ai";
 const KEY = process.env.KIE_AI_API_KEY;
 
 const die = (msg, code = 1) => { console.error(msg); process.exit(code); };
-if (!KEY) die("KIE_AI_API_KEY is not set. Get a key at https://kie.ai/api-key and set it in your environment.");
+// Deferred, not top-level: `ledger` reads a local file and must work without a
+// key. The ledger IS the recovery path, so gating it behind a credential is
+// exactly backwards on the morning you need it.
+const requireKey = () => {
+  if (!KEY) die("KIE_AI_API_KEY is not set. Get a key at https://kie.ai/api-key and set it in your environment.");
+};
 
 // Transcribed from the `code` enum in
 // https://docs.kie.ai/market/common/get-task-detail. No rate-limit figure is
@@ -86,6 +91,39 @@ function frameUrls(data) {
   return [...urlsAt(parsed, "firstFrameUrl"), ...urlsAt(parsed, "lastFrameUrl")];
 }
 
+/**
+ * The task ledger. Kie's result URLs expire in about 24 hours; the taskId does
+ * not, and re-polling it re-issues a URL. So every create and every settle is
+ * appended to one JSONL file. A batch rendered overnight and read the next
+ * morning is recoverable from this file and unrecoverable without it.
+ *
+ * Append-only, and never fatal: a ledger that cannot be written is a warning on
+ * stderr. Losing the record of a task is bad; losing the task is worse.
+ */
+const LEDGER_OFF = process.env.KIE_AI_LEDGER_PATH?.trim().toLowerCase() === "off";
+
+/** Resolved lazily: `path` is imported per call site in this file, not at top level. */
+async function ledgerPath() {
+  if (LEDGER_OFF) return null;
+  const p = (await import("node:path")).default;
+  const configured = process.env.KIE_AI_LEDGER_PATH?.trim();
+  if (configured) return p.resolve(configured);
+  return p.resolve(process.env.KIE_AI_DOWNLOAD_DIR?.trim() || "./out", "kie-ledger.jsonl");
+}
+
+async function ledger(event, fields) {
+  const file = await ledgerPath();
+  if (!file) return;
+  try {
+    const p = (await import("node:path")).default;
+    const { mkdirSync, appendFileSync } = await import("node:fs");
+    mkdirSync(p.dirname(file), { recursive: true });
+    appendFileSync(file, JSON.stringify({ ts: new Date().toISOString(), event, ...fields }) + "\n", "utf8");
+  } catch (e) {
+    console.error(`  WARNING: could not write the ledger (${e.message}). The task is fine; its record is not.`);
+  }
+}
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function poll(taskId, timeoutSec, outDir) {
@@ -97,6 +135,14 @@ async function poll(taskId, timeoutSec, outDir) {
     const state = String(d?.state ?? "unknown");
     if (state === "success") {
       const urls = resultUrls(d);
+      await ledger("settled", {
+        taskId,
+        model: d?.model ?? "unknown",
+        state,
+        resultUrls: [...urls, ...frameUrls(d)],
+        name: wantedName ?? undefined,
+        credits: d?.creditsConsumed ?? undefined,
+      });
       console.error(`done in ${d.costTime ? (d.costTime / 1000).toFixed(1) + "s" : "?"}, credits: ${d.creditsConsumed ?? "?"}`);
       urls.forEach((u) => console.log(u));
       // firstFrameUrl / lastFrameUrl are documented beside resultUrls (Seedance 2
@@ -230,7 +276,35 @@ if (wantedName && !outDir && (cmd === "run" || cmd === "poll")) {
   console.error(`NOTE: --name needs somewhere to write. Saving to ./${outDir} (pass --out DIR to choose).`);
 }
 
-if (cmd === "credits") {
+if (cmd === "ledger") {
+  const file = await ledgerPath();
+  if (!file) die("The ledger is off (KIE_AI_LEDGER_PATH=off).", 2);
+  const { readFileSync } = await import("node:fs");
+  let raw = "";
+  try { raw = readFileSync(file, "utf8"); } catch { die(`No ledger yet at ${file}. It is written on the first run.`, 2); }
+  const byTask = new Map();
+  for (const l of raw.split("\n")) {
+    const t = l.trim();
+    if (!t) continue;
+    let e; try { e = JSON.parse(t); } catch { continue; }   // a half-written last line
+    if (!e?.taskId) continue;
+    const prev = byTask.get(e.taskId) ?? { taskId: e.taskId, model: e.model, createdAt: e.ts, state: "created", urls: [] };
+    if (e.event === "settled") { prev.settledAt = e.ts; prev.state = e.state ?? prev.state; if (e.resultUrls?.length) prev.urls = e.resultUrls; }
+    if (e.name) prev.name = e.name;
+    if (e.model) prev.model = e.model;
+    byTask.set(e.taskId, prev);
+  }
+  const rows = [...byTask.values()].sort((x, y) => String(y.createdAt).localeCompare(String(x.createdAt)));
+  const TTL = 24 * 60 * 60 * 1000;
+  console.error(`${rows.length} task(s) in ${file}`);
+  for (const r of rows) {
+    const left = Math.floor((Date.parse(r.settledAt ?? r.createdAt) + TTL - Date.now()) / 60000);
+    const win = r.state === "success" ? (left > 0 ? `${left} min left` : "window CLOSED, re-poll to re-issue") : r.state;
+    console.log(`${r.createdAt}  ${r.taskId}  ${r.model ?? "?"}  ${win}${r.name ? "  " + r.name : ""}`);
+  }
+  const models = new Set(rows.map((r) => r.model));
+  if (models.size > 1) console.error(`NOTE: ${models.size} models in this ledger. One model per batch, or the comparison is void.`);
+} else if (cmd === "credits") {
   console.log(await call("/api/v1/chat/credit"));
 } else if (cmd === "start" || cmd === "run") {
   // --input-file avoids shell quoting entirely. cmd.exe cannot pass a JSON
@@ -249,6 +323,7 @@ if (cmd === "credits") {
   const d = await call("/api/v1/jobs/createTask", { method: "POST", body: JSON.stringify({ model: a, input }) });
   const taskId = d?.taskId;
   if (!taskId) die("Kie accepted the task but returned no taskId.");
+  await ledger("created", { taskId, model: a, param: input, name: wantedName ?? undefined });
   console.error(`task: ${taskId}`);
   if (cmd === "start") console.log(taskId);
   else await poll(taskId, timeout, outDir);
@@ -259,5 +334,5 @@ if (cmd === "credits") {
   if (!a) die("usage: node kie.mjs poll <taskId>");
   await poll(a, timeout, outDir);
 } else {
-  die("usage: node kie.mjs credits | upload <file> | run <model> '<json>' | start <model> '<json>' | poll <taskId>   [--timeout N] [--out DIR] [--name NAME]");
+  die("usage: node kie.mjs credits | ledger | upload <file> | run <model> '<json>' | start <model> '<json>' | poll <taskId>   [--timeout N] [--out DIR] [--name NAME]");
 }

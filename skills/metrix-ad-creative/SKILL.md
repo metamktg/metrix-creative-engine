@@ -18,7 +18,8 @@ and `KIE_AI_API_KEY` in the environment. Works on Windows, macOS and Linux.
 
 ```
 node scripts/kie.mjs credits
-node scripts/kie.mjs run "google/nano-banana" '{"prompt":"...","aspect_ratio":"4:5"}'
+node scripts/kie.mjs ledger                                # what ran, and what is still downloadable
+node scripts/kie.mjs run "nano-banana-2" '{"prompt":"...","aspect_ratio":"4:5"}'
 node scripts/kie.mjs run "veo-3-1" '{"prompt":"..."}' --timeout 900 --out ./out --name my-concept-id
 node scripts/kie.mjs start "kling/v2-1-master-image-to-video" '{...}'   # prints taskId, returns at once
 node scripts/kie.mjs poll <taskId> --timeout 900

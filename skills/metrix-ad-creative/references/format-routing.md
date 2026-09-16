@@ -29,14 +29,23 @@ mechanical mapping only.
 
 ## Unmapped asset types
 
-If the brief's `asset_type` is not in this table, **stop and say so.** Do not
-route it to the nearest neighbour.
+The brief came from IAP already validated, so an unfamiliar `asset_type` is more
+often this engine's vocabulary gap than a bad brief. Two cases, and the line
+between them is the **medium**.
 
-Core rule 9 forbids silent substitution, and the reason is specific here:
-rendering a static for a brief that asked for motion produces an asset that
-looks finished, passes a casual review, and fails the thing the brief was
-testing. A visible stop costs a message. A silent substitution costs a test
-cycle and the spend behind it.
+**A dialect difference normalizes.** A ratio suffix (`static_4x5`) is that type
+at that ratio: route on the stem, set the ratio as a parameter.
+`validateBrief` does this and reports it as a warning, never silently.
+
+**Same medium, unlisted type: render the nearest and name it.** Say in the
+handoff what you substituted and why. Do not stop over a naming difference.
+
+**Across the still / motion boundary: stop.** Rendering a static for a brief
+that asked for motion produces an asset that looks finished, passes a casual
+review, and fails the thing the brief was testing. That is the one substitution
+no later step can correct, because the idea was built to move. A visible stop
+costs a message; this silent substitution costs a test cycle and the spend
+behind it.
 
 Say which type the brief asked for, that there is no route for it, and propose
 the nearest mapped type as a **question**, not a default.
@@ -76,7 +85,9 @@ is how a whole matrix renders at the wrong ratio without anyone noticing.
 ## Not available on Kie
 
 `sora`, `sora-2`, `midjourney`, `mmaudio`. If a brief names one, say so and
-route to an eligible model as a stated substitution, per rule 9.
+route to an eligible model as a stated substitution. A model swap is not a
+format swap: the medium is unchanged, so this is a note in the handoff, not a
+stop.
 
 ## Brand kit to generation
 

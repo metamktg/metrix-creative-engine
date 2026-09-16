@@ -54,9 +54,10 @@ which face, and what clear space the generated layer must hold.
 
 ## On-image text
 
-This is the format most likely to justify the core rule 2 exception. Even so,
-prefer composited type: it is legible, it is brand-correct, it is editable, and
-it lets copy be tested without re-rendering the visual.
+Core rule 1 puts the brief's hook and CTA in the frame, and for a motion graphic
+type is usually the whole point. Even so, **prefer composited type** on this
+format specifically: it is legible, brand-correct, editable, and it holds still
+across frames where generated type drifts.
 
 Generate type only when the type's *treatment* is the thing being tested, and
 then check every character.

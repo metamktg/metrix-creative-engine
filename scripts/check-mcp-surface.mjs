@@ -144,7 +144,26 @@ try {
 
   console.log("\n== Tools ==");
   const tools = (await rpc("tools/list", {})).result?.tools ?? [];
-  check("all seven tools listed", tools.length === 7, `${tools.length} listed`);
+  // Named, not counted: a count passes when one tool is swapped for another,
+  // and this check exists to catch a tool that stopped being registered.
+  const EXPECTED_TOOLS = [
+    "kie_validate_brief",
+    "kie_get_credits",
+    "kie_create_task",
+    "kie_get_task",
+    "kie_wait_for_task",
+    "kie_run_task",
+    "kie_ledger",
+    "kie_download_result",
+  ];
+  const listed = new Set(tools.map((tool) => tool.name));
+  const missing = EXPECTED_TOOLS.filter((name) => !listed.has(name));
+  const extra = [...listed].filter((name) => !EXPECTED_TOOLS.includes(name));
+  check(
+    "every expected tool is listed, and nothing unexpected",
+    missing.length === 0 && extra.length === 0,
+    missing.length || extra.length ? `missing: ${missing.join(", ") || "none"}; extra: ${extra.join(", ") || "none"}` : `${tools.length} listed`,
+  );
   const typed = tools.filter((tool) => tool.outputSchema);
   check("every tool declares an outputSchema", typed.length === tools.length, `${typed.length}/${tools.length}`);
 
@@ -226,6 +245,28 @@ try {
   );
   check("each carries the client's token", progress.every((note) => note.params.progressToken === "surface-check"));
   check("each says what the task is doing", progress.every((note) => typeof note.params.message === "string" && note.params.message));
+
+  // The ledger is the recovery path for a batch read after Kie's ~24h result
+  // window closes. It is only worth having if the run that spent the credits
+  // actually wrote to it, which is what this asserts: the run above, not a
+  // fixture.
+  console.log("\n== Task ledger ==");
+  const led = await rpc("tools/call", { name: "kie_ledger", arguments: {} });
+  const ledger = led.result?.structuredContent;
+  const logged = (ledger?.tasks ?? []).find((t) => t.taskId === structured?.task?.taskId);
+  check("the run that spent credits was recorded", Boolean(logged));
+  check("it carries the model it ran on", logged?.model === "google/nano-banana");
+  check("it settled, not merely created", logged?.state === "success");
+  check("its result urls were kept", (logged?.resultUrls ?? []).length > 0);
+  check("a fresh task is inside the result window", logged?.recoverable === true);
+  check("the ledger names its own file", typeof ledger?.ledgerPath === "string");
+
+  const filtered = await rpc("tools/call", {
+    name: "kie_ledger",
+    arguments: { model: "a-model-nothing-ran-on" },
+  });
+  check("filtering by a model with no tasks returns none, not everything",
+    (filtered.result?.structuredContent?.tasks ?? []).length === 0);
 
   console.log("\n== Transport hygiene ==");
   check("nothing but JSON-RPC was written to stdout", strayStdout === null, strayStdout ?? "");

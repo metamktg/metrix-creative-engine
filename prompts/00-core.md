@@ -176,8 +176,17 @@ Everything else is a note in the handoff. Stop and report only for:
 | `claymation`, stop-motion, paper craft | `formats/claymation.md` |
 
 An `asset_type` with a ratio suffix (`static_4x5`) is that type at that ratio:
-route on the stem, set the ratio as a parameter. An unmapped type renders as the
-nearest mapped one, with the substitution named in the handoff.
+route on the stem, set the ratio as a parameter. That is a dialect difference and
+it normalizes.
+
+A genuinely unmapped type is different, and the line is the **medium**:
+
+- **Same medium** (an unlisted still format, a named still style): render the
+  nearest mapped type and name the substitution in the handoff. Do not stop.
+- **Across the still / motion boundary**: stop. Rendering a static for a brief
+  that asked for motion produces an asset that looks finished, survives a casual
+  review, and fails the thing the brief was built to test. That is the one
+  substitution that cannot be corrected after the spend.
 
 ## What you do not do
 

@@ -56,7 +56,7 @@ so symlinking one skill on its own still works.
 | [`docs/SETUP.md`](docs/SETUP.md) | Install, key, MCP wiring, skill install, smoke test, troubleshooting table |
 | [`docs/MODEL_CATALOG.md`](docs/MODEL_CATALOG.md) | Every model this was built against: exact ids, parameters, and what is unverified |
 | [`docs/PROMPTING.md`](docs/PROMPTING.md) | How to write prompts per model family, with worked examples |
-| [`docs/MCP_TOOLS.md`](docs/MCP_TOOLS.md) | The six MCP tools, their arguments, and when to reach for each |
+| [`docs/MCP_TOOLS.md`](docs/MCP_TOOLS.md) | The eight MCP tools, their arguments, and when to reach for each |
 
 ## How it fits with Metrix IAP
 

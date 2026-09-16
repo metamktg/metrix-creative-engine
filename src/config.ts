@@ -1,3 +1,5 @@
+import { resolveLedgerPath } from "./ledger.js";
+
 /**
  * Configuration comes from the environment, because that is what an MCP client
  * can set in its server definition (`env` in the client's JSON config).
@@ -8,6 +10,8 @@ export interface ServerConfig {
   requestTimeoutMs: number | undefined;
   defaultWaitSeconds: number;
   downloadDir: string | null;
+  /** Where the task ledger is appended, or null when it is switched off. */
+  ledgerPath: string | null;
 }
 
 export const DEFAULT_WAIT_SECONDS = 300;
@@ -43,5 +47,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServerConfig {
       positiveInt(env.KIE_AI_DEFAULT_WAIT_SECONDS, "KIE_AI_DEFAULT_WAIT_SECONDS") ??
       DEFAULT_WAIT_SECONDS,
     downloadDir: downloadDir ? downloadDir : null,
+    ledgerPath: resolveLedgerPath(env, downloadDir ? downloadDir : null),
   };
 }

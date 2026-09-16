@@ -141,3 +141,15 @@ directory you chose.
 
 Kie documents result URLs as expiring after about **24 hours**. A result URL is not
 storage. Download anything you intend to keep or hand to a client.
+
+
+## The task ledger
+
+On by default. Every generation this server or the CLI starts appends one line
+to `<KIE_AI_DOWNLOAD_DIR or ./out>/kie-ledger.jsonl`, and another when it
+settles.
+
+It exists because Kie's result URLs expire after about 24 hours while the
+`taskId` does not, so the id is the only durable handle on an asset you have
+already paid for. Read it with `node kie.mjs ledger` (no API key required) or the
+`kie_ledger` tool. To disable: `KIE_AI_LEDGER_PATH=off`.

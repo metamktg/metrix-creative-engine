@@ -76,3 +76,27 @@ export const briefVerdictShape = {
   errors: z.array(z.string()).describe("Blocking problems. The render must not start."),
   warnings: z.array(z.string()).describe("Renderable, but the asset will be worse. Proceed knowingly."),
 } as const;
+
+/**
+ * The ledger read. `recoverable` is the field that matters: it answers "can I
+ * still get this asset back without paying for it again?", which is the only
+ * question a caller asks a ledger at eight the next morning.
+ */
+export const ledgerOutputShape = {
+  ledgerPath: z.string().nullable(),
+  taskCount: z.number(),
+  models: z.array(z.string()),
+  tasks: z.array(
+    z.object({
+      taskId: z.string(),
+      model: z.string(),
+      createdAt: z.string(),
+      settledAt: z.string().optional(),
+      state: z.string(),
+      resultUrls: z.array(z.string()),
+      name: z.string().optional(),
+      recoverable: z.boolean(),
+      minutesLeft: z.number(),
+    }),
+  ),
+};

@@ -76,12 +76,17 @@ model's own field names. Anyone holding the spec can reproduce the asset.
    eligible, and the model decides the parameter names. Work in that order.
 2. **Model.** Route by `asset_type` using the routing table. If product
    references are in play, only models that accept image inputs are eligible.
-   Lock the model across a matrix if one is running; outside a test you are free
-   to pick the best model per asset.
+   Lock the model across a matrix if one is running, and never run two models
+   concurrently against one brief (core rule 3): state the id here, before spend.
+   Outside a test you are free to pick the best model per asset. Where the asset
+   carries text, the model must be able to set type, not merely hold the ratio.
 3. **Base prompt.** Build it from `visual_direction` and the Brand Translation
    Sheet, in the clause order from `prompt-construction.md`: subject and action,
-   composition, environment, light, style, colour, technical. Nothing from
-   `copy_architecture`.
+   composition, environment, light, style, colour, **on-image text**, technical.
+   The on-image clause carries `copy_architecture.hook` and `.cta` **quoted
+   verbatim**, set with `visual_direction.typography`. Only `.primary_text` and
+   `.description` stay out: those two are Ads Manager fields and are testable
+   without a re-render.
 4. **Slot.** Express the isolated variable as one clause, in the same position
    for every cell.
 5. **Avoid list.** Use the model's `negative_prompt` field if it has one.
@@ -153,7 +158,9 @@ of the prompt. Record PASS or FAIL per `qa_checks` item, with the reason.
 - [ ] Ratio, resolution and duration are parameters, with this model's field names
 - [ ] Model accepts image inputs if references are used
 - [ ] Every cell's prompt is identical except the slot
-- [ ] No copy from `copy_architecture` in the prompt, or the exception is stated
+- [ ] Hook and CTA present in the prompt, quoted verbatim from `copy_architecture`
+- [ ] The chosen model can set legible type at this ratio
+- [ ] One model for the whole batch, and its id is written in this spec
 - [ ] Avoid list mapped to the right method for this model
 - [ ] Logo approach and clear space stated
 - [ ] MST name ready for every cell
