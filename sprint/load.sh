@@ -64,8 +64,13 @@ for f in "$srcdir"/*.jpg "$srcdir"/*.jpeg "$srcdir"/*.png "$srcdir"/*.webp; do
   stub="$(printf '%s' "$stem" | tr -cd 'A-Za-z0-9._-' | cut -c1-32)"
   [ -n "$stub" ] || stub="image"
   dest="$(printf 'ref-%02d-%s.%s' "$n" "$stub" "$(printf '%s' "$ext" | tr 'A-Z' 'a-z')")"
-  cp -f "$f" "$sprint/refs/$dest"
-  printf '        %s\n' "$dest"
+  # One unreadable file must not take the whole load down: the others are fine.
+  if cp -f "$f" "$sprint/refs/$dest" 2>/dev/null; then
+    printf '        %s\n' "$dest"
+  else
+    n=$((n-1))
+    printf '        SKIPPED %.60s...  (could not be read)\n' "$base"
+  fi
 done
 if [ "$n" -gt 0 ]; then printf '  refs:   %d image(s) from %s\n' "$n" "$srcdir"
 else printf '  refs:   no images beside the briefs file.\n'; fi

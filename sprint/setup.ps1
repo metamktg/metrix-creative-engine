@@ -9,7 +9,13 @@
 # Passed straight through to load.ps1. It lives here because setup.ps1 is the
 # only entry point that updates itself first, so it is the only one that can be
 # relied on to be the current version.
-param([string]$Briefs = "", [string]$Source = "")
+param(
+  [string]$Briefs = "",
+  [string]$Source = "",
+  # Set when this run is already a restart, so the restart can happen at most
+  # once and a broken pull can never spin.
+  [switch]$Restarted
+)
 
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
@@ -46,8 +52,26 @@ Write-Host ("  node: " + (node --version)) -ForegroundColor Green
 # remove. A failed pull (offline, local edits) is a note, never a stop: the
 # checked-out version still works.
 try {
+  $before = git -C $repo rev-parse HEAD
   git -C $repo pull --ff-only --quiet 2>&1 | Out-Null
-  Write-Host ("  repo: up to date (" + (git -C $repo rev-parse --short HEAD) + ")") -ForegroundColor Green
+  $after = git -C $repo rev-parse HEAD
+  if ($before -ne $after) {
+    Write-Host ("  repo: updated to " + $after.Substring(0, 7)) -ForegroundColor Green
+    if (-not $Restarted) {
+      # PowerShell parsed THIS file before the pull replaced it, so the code now
+      # running is the old version and cannot use what was just fetched. That is
+      # how a fix lands on disk and still does not take effect, which looks from
+      # the outside like the fix not working. Restart into the new file, once.
+      Write-Host "  repo: restarting with the updated script" -ForegroundColor Cyan
+      $again = @("-ExecutionPolicy", "Bypass", "-File", $PSCommandPath, "-Restarted")
+      if ($Briefs) { $again += @("-Briefs", $Briefs) }
+      if ($Source) { $again += @("-Source", $Source) }
+      & powershell @again
+      exit $LASTEXITCODE
+    }
+  } else {
+    Write-Host ("  repo: up to date (" + $after.Substring(0, 7) + ")") -ForegroundColor Green
+  }
 } catch {
   Write-Host "  repo: could not update, carrying on with what is checked out" -ForegroundColor Yellow
 }

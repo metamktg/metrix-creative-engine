@@ -90,17 +90,32 @@ if ($images) {
   # meaning to a render anyway; the index and a readable stub do.
   $i = 0
   $copied = @()
+  $skipped = @()
   foreach ($img in $images) {
     $i++
     $stub = [IO.Path]::GetFileNameWithoutExtension($img.Name) -replace '[^A-Za-z0-9._-]', ''
     if ($stub.Length -gt 32) { $stub = $stub.Substring(0, 32) }
     if ([string]::IsNullOrWhiteSpace($stub)) { $stub = "image" }
     $dest = Join-Path $refsDir ("ref-{0:d2}-{1}{2}" -f $i, $stub, $img.Extension.ToLower())
-    Copy-Item -LiteralPath $img.FullName -Destination $dest -Force
-    $copied += (Split-Path -Leaf $dest)
+    try {
+      # Long paths bite on the SOURCE too, not only the destination: a file whose
+      # NAME is 250 characters cannot be opened by Windows PowerShell 5 at all,
+      # even though Get-ChildItem listed it. And one unreadable file must never
+      # take the whole load down with it - the other references are fine, and
+      # stopping here means none of them arrive.
+      Copy-Item -LiteralPath $img.FullName -Destination $dest -Force -ErrorAction Stop
+      $copied += (Split-Path -Leaf $dest)
+    } catch {
+      $why = if ($img.FullName.Length -ge 250) { "its name is " + $img.Name.Length + " characters, past what Windows can open" } else { $_.Exception.Message }
+      $skipped += ("        SKIPPED " + $img.Name.Substring(0, [Math]::Min(60, $img.Name.Length)) + "...  (" + $why + ")")
+    }
   }
   Write-Host ("  refs:   " + $copied.Count + " image(s) from " + $brief.DirectoryName) -ForegroundColor Green
   $copied | ForEach-Object { Write-Host ("        " + $_) }
+  if ($skipped.Count -gt 0) {
+    Write-Host ("  refs:   " + $skipped.Count + " skipped, named below. The rest loaded fine.") -ForegroundColor Yellow
+    $skipped | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
+  }
 } else {
   Write-Host "  refs:   no images beside the briefs file." -ForegroundColor Yellow
   Write-Host "          Put them in one folder with the briefs and run this again,"
