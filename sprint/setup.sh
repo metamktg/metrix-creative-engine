@@ -52,7 +52,13 @@ if ! node "$repo/skills/metrix-ad-creative/scripts/kie.mjs" credits; then
   exit 1
 fi
 
-printf '\nReady.\n'
-printf '  1. Drop the briefs .json into  sprint/briefs/\n'
-printf '  2. Drop the reference images into  sprint/refs/\n'
-printf '  3. Start Claude Code here and paste the contents of sprint/GO.txt\n\n'
+# Open the folder rather than printing a path to be retyped.
+if command -v open >/dev/null 2>&1; then open "$here"
+elif command -v xdg-open >/dev/null 2>&1; then xdg-open "$here" >/dev/null 2>&1 || true
+fi
+
+printf '\nReady.\n\n'
+printf 'Drag your files into the sprint folder:\n'
+printf '  briefs  <- the briefs .json\n'
+printf '  refs    <- the reference images\n\n'
+printf 'Then start Claude Code here and paste the contents of GO.txt.\n\n'

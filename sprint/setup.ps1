@@ -66,9 +66,16 @@ if ($LASTEXITCODE -ne 0) {
   exit 1
 }
 
+# Open the folder rather than printing a path to be typed. A path on screen is
+# a path someone has to retype correctly, and that is a needless way to fail.
+Start-Process explorer.exe $PSScriptRoot
+
 Write-Host ""
 Write-Host "Ready." -ForegroundColor Cyan
-Write-Host "  1. Drop the briefs .json into  sprint\briefs\"
-Write-Host "  2. Drop the reference images into  sprint\refs\"
-Write-Host "  3. Start Claude Code in this folder and paste the contents of sprint\GO.txt"
+Write-Host ""
+Write-Host "A File Explorer window just opened. Drag your files into it:"
+Write-Host "  briefs  <- the briefs .json"
+Write-Host "  refs    <- the reference images"
+Write-Host ""
+Write-Host "Then start Claude Code here and paste the contents of GO.txt."
 Write-Host ""
