@@ -23,6 +23,9 @@ $sprint = $PSScriptRoot
 $briefsDir = Join-Path $sprint "briefs"
 $refsDir = Join-Path $sprint "refs"
 New-Item -ItemType Directory -Force -Path $briefsDir, $refsDir | Out-Null
+# A load is a load, not an append: without this, every run piles more images on
+# top of the last run's.
+Get-ChildItem -LiteralPath $refsDir -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
 if ($Source) {
   $roots = @($Source)
@@ -77,10 +80,34 @@ if ($found.Count -gt 1) {
   Write-Host '  To use a different one:  .\sprint\load.ps1 -Briefs "C:\path\to\that.json"' -ForegroundColor Yellow
 }
 
-# Images, from the folder the briefs came from only.
+# Images. "From the folder the briefs came from" was not a safeguard at all when
+# that folder is Downloads: it swept 1,381 files, every image the machine had
+# ever downloaded, into a set that a model reads as product references. A
+# reference folder is one somebody made on purpose. Downloads, Desktop and
+# Documents are junk drawers and are never it.
 $imgExt = @(".jpg", ".jpeg", ".png", ".webp")
-$images = Get-ChildItem -LiteralPath $brief.DirectoryName -File -ErrorAction SilentlyContinue |
-  Where-Object { $imgExt -contains $_.Extension.ToLower() }
+$generic = @("Downloads", "Desktop", "Documents") | ForEach-Object { Join-Path $env:USERPROFILE $_ }
+$imgSource = if ($Source) { $Source } else { $brief.DirectoryName }
+
+$images = @()
+if ($generic -contains $imgSource.TrimEnd('\')) {
+  Write-Host "  refs:   not taken from $imgSource - it is a general folder, not a reference set." -ForegroundColor Yellow
+  Write-Host "          Put the product images in their own folder and run:" -ForegroundColor Yellow
+  Write-Host ('          ...\setup.ps1 -Source "C:\path\to\that\folder"') -ForegroundColor Yellow
+} else {
+  $images = Get-ChildItem -LiteralPath $imgSource -File -ErrorAction SilentlyContinue |
+    Where-Object { $imgExt -contains $_.Extension.ToLower() }
+}
+
+# The model takes 14 reference images. More than that is not a richer brief, it
+# is a folder that was not curated, and loading it silently wastes a batch.
+$REF_LIMIT = 14
+if ($images.Count -gt $REF_LIMIT) {
+  Write-Host ("  refs:   " + $images.Count + " images in $imgSource, and the model takes " + $REF_LIMIT + ".") -ForegroundColor Red
+  Write-Host "          That folder has not been curated. Nothing was loaded." -ForegroundColor Red
+  Write-Host "          Put the product shots in a folder of their own and point -Source at it." -ForegroundColor Red
+  $images = @()
+}
 
 if ($images) {
   # Shorten the destination name. A browser download can carry a 200-character
@@ -116,8 +143,8 @@ if ($images) {
     Write-Host ("  refs:   " + $skipped.Count + " skipped, named below. The rest loaded fine.") -ForegroundColor Yellow
     $skipped | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
   }
-} else {
-  Write-Host "  refs:   no images beside the briefs file." -ForegroundColor Yellow
+} elseif ($images.Count -eq 0 -and -not ($generic -contains $imgSource.TrimEnd('\'))) {
+  Write-Host "  refs:   no images in $imgSource." -ForegroundColor Yellow
   Write-Host "          Put them in one folder with the briefs and run this again,"
   Write-Host "          or run:  .\sprint\load.ps1 C:\path\to\your\images"
 }

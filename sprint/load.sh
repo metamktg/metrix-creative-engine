@@ -8,6 +8,8 @@ set -euo pipefail
 
 sprint="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p "$sprint/briefs" "$sprint/refs"
+# A load is a load, not an append.
+find "$sprint/refs" -maxdepth 1 -type f -delete 2>/dev/null || true
 
 # --briefs <file> names one exactly, for when more than one is lying around.
 explicit=""
@@ -52,7 +54,31 @@ fi
 cp -f "$brief" "$sprint/briefs/"
 printf '  briefs: %s\n' "$(basename "$brief")"
 
-srcdir="$(dirname "$brief")"
+srcdir="${IMG_SOURCE:-$(dirname "$brief")}"
+
+# A general folder is never a reference set. Downloads held 1,381 images.
+for junk in "$HOME/Downloads" "$HOME/Desktop" "$HOME/Documents"; do
+  if [ "${srcdir%/}" = "${junk%/}" ]; then
+    printf '  refs:   not taken from %s, it is a general folder, not a reference set.\n' "$srcdir"
+    printf '          Put the product images in their own folder and pass it:\n'
+    printf '          bash sprint/load.sh /path/to/that/folder\n\n'
+    printf 'Loaded. Start Claude Code here and paste the contents of GO.txt.\n\n'
+    exit 0
+  fi
+done
+
+# The model takes 14 references. More means the folder was not curated.
+# `|| true`: ls exits non-zero when a glob matches nothing, and under
+# `set -e` an assignment from a failing command substitution kills the script
+# with no message at all - which is exactly how this read as "found no images"
+# when it had in fact died before looking.
+count=$(ls -1 "$srcdir"/*.jpg "$srcdir"/*.jpeg "$srcdir"/*.png "$srcdir"/*.webp 2>/dev/null | wc -l || true)
+if [ "$count" -gt 14 ]; then
+  printf '  refs:   %s images in %s, and the model takes 14. Nothing loaded.\n' "$count" "$srcdir"
+  printf '          Put the product shots in a folder of their own and pass that folder.\n\n'
+  exit 0
+fi
+
 n=0
 # Shorten the destination name: a browser download can carry a 200-character
 # name, which on Windows blows the 260-character path limit. Same rule both
