@@ -13,6 +13,16 @@ skills="$HOME/.claude/skills"
 
 printf '\nMetrix Creative Engine setup\n\n'
 
+for tool in git node; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    printf '  %s is not installed, or not on PATH.\n' "$tool"
+    [ "$tool" = "node" ] && printf '  Install Node 20 or newer: https://nodejs.org\n'
+    exit 1
+  fi
+done
+printf '  git:  %s\n' "$(git --version)"
+printf '  node: %s\n' "$(node --version)"
+
 if [ -z "${KIE_AI_API_KEY:-}" ]; then
   echo "KIE_AI_API_KEY is not set in this terminal."
   echo "Paste your Kie key (not echoed, not logged, not stored by this script):"

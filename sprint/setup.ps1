@@ -14,6 +14,22 @@ Write-Host ""
 Write-Host "Metrix Creative Engine setup" -ForegroundColor Cyan
 Write-Host ""
 
+# 0. Prerequisites -------------------------------------------------------
+# Checked by name rather than assumed. A missing node shows up three steps
+# later as an unreadable error about a script path, which is how someone ends
+# up debugging the wrong thing.
+foreach ($tool in @("git", "node")) {
+  if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+    Write-Host "  $tool is not installed, or not on PATH." -ForegroundColor Red
+    if ($tool -eq "node") { Write-Host "  Install Node 20 or newer: https://nodejs.org" }
+    else { Write-Host "  Install Git: https://git-scm.com/download/win" }
+    Write-Host "  Then close this window, open a new one, and run this again."
+    exit 1
+  }
+}
+Write-Host ("  git:  " + (git --version)) -ForegroundColor Green
+Write-Host ("  node: " + (node --version)) -ForegroundColor Green
+
 # 1. The key -------------------------------------------------------------
 if ([string]::IsNullOrWhiteSpace($env:KIE_AI_API_KEY)) {
   Write-Host "KIE_AI_API_KEY is not set in this terminal." -ForegroundColor Yellow

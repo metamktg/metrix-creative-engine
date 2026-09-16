@@ -1,0 +1,49 @@
+FIRST TIME ON THIS MACHINE
+==========================
+
+Open Windows PowerShell (the blue one). Paste these four lines, one at a time.
+
+    cd $HOME
+    git clone https://github.com/metamktg/metrix-creative-engine.git
+    cd metrix-creative-engine
+    powershell -ExecutionPolicy Bypass -File sprint\setup.ps1
+
+
+The last line does everything else: asks for your Kie key if this terminal
+does not have one, installs the skills, makes the folders, checks your balance.
+
+
+IF YOU ALREADY CLONED IT BEFORE
+===============================
+
+    cd $HOME\metrix-creative-engine
+    git pull
+    powershell -ExecutionPolicy Bypass -File sprint\setup.ps1
+
+
+COMMON ERRORS
+=============
+
+"fatal: not a git repository"
+    You are not inside the repo folder. Run the cd line first.
+
+"The argument 'sprint\setup.ps1' ... does not exist"
+    Same cause. You are not inside the repo folder.
+
+"powershell: command not found"
+    You are in a Linux shell (Replit, WSL, Git Bash). Use the Windows
+    PowerShell window instead, or run:  bash sprint/setup.sh
+
+"git is not recognized"
+    Install Git: https://git-scm.com/download/win
+    Then close the window, open a new one, and start again.
+
+
+THEN
+====
+
+Put the briefs .json in     sprint\briefs\
+Put the reference images in sprint\refs\
+
+Start Claude Code in the metrix-creative-engine folder, and paste the
+contents of sprint\GO.txt. That is the only prompt you type.
