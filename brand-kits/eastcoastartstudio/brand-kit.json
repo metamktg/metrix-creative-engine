@@ -235,6 +235,54 @@
       "role": "size_guide",
       "url": "https://eastcoastartstudio.com/cdn/shop/files/079ccba8-cc03-4195-8bfd-f9da34e6f76c-copy.jpg",
       "note": "Shared across products. Ratio diagrams over a warm living room."
+    },
+    {
+      "role": "product_shot",
+      "url": "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/f7568062-fb62-4b7a-98ee-4fa42fd799fb-copy.jpg",
+      "note": "Berry Street Oil Painting Art Print: Williamsburg Brooklyn NYC Travel Poster",
+      "evidence": "live catalogue, products.json, 2026-09-16"
+    },
+    {
+      "role": "product_shot",
+      "url": "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/d8d5fdee-3064-4af8-9b43-dd54b647d521-copy.jpg",
+      "note": "Alameda Oil Painting Art Print: Santiago Chile Street Sign Travel Poster",
+      "evidence": "live catalogue, products.json, 2026-09-16"
+    },
+    {
+      "role": "product_shot",
+      "url": "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/160d1c01-807f-4c85-b935-c22b34ea39ef-copy.jpg",
+      "note": "Abbey Road Cubism Art Print: London Crossing Travel Poster",
+      "evidence": "live catalogue, products.json, 2026-09-16"
+    },
+    {
+      "role": "product_shot",
+      "url": "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/cf22ecea-f074-4ce9-9741-1c4ca2d6d2d7-copy.jpg",
+      "note": "Alter Markt Cubism Art Print: Cologne Old Town Travel Poster",
+      "evidence": "live catalogue, products.json, 2026-09-16"
+    },
+    {
+      "role": "product_shot",
+      "url": "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/eaed03fe-a65b-4ff8-9dc5-df178c7f8fb4-copy.jpg",
+      "note": "Bitola Oil Painting Art Print: North Macedonia Street Sign Travel Poster",
+      "evidence": "live catalogue, products.json, 2026-09-16"
+    },
+    {
+      "role": "product_shot",
+      "url": "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/76e5e1c3-08f9-4844-84fe-7f4b71ba210c-copy.jpg",
+      "note": "Bergen Oil Painting Art Print: Norway Fjord Street Sign Travel Poster",
+      "evidence": "live catalogue, products.json, 2026-09-16"
+    },
+    {
+      "role": "product_shot",
+      "url": "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/74861217-2c15-4ad8-882b-559d601f5ae7-copy.jpg",
+      "note": "Abbey Street Cubism Art Print: Dublin City Center Travel Poster",
+      "evidence": "live catalogue, products.json, 2026-09-16"
+    },
+    {
+      "role": "product_shot",
+      "url": "https://cdn.shopify.com/s/files/1/0697/9754/4074/files/d1f0ab39-6ade-4d2f-85c5-a2d20b976df6-copy.jpg",
+      "note": "Andrassy Avenue Cubism Art Print: Budapest Historic Boulevard Travel Poster",
+      "evidence": "live catalogue, products.json, 2026-09-16"
     }
   ],
   "client_account_rules": {

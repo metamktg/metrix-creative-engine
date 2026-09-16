@@ -149,6 +149,34 @@ if ($images) {
   Write-Host "          or run:  .\sprint\load.ps1 C:\path\to\your\images"
 }
 
+# Nothing local? The brand kit recorded real asset URLs during the site audit,
+# and they were verified reachable when it was written. Downloading them beats
+# asking someone to go and find product photography they may not have: a render
+# without references invents the product, which is the most common way a batch
+# is wasted.
+if ($copied.Count -eq 0) {
+  $kits = @(Get-ChildItem -Path (Join-Path (Split-Path -Parent $PSScriptRoot) "brand-kits") -Filter "brand-kit.json" -Recurse -ErrorAction SilentlyContinue)
+  if ($kits.Count -eq 1) {
+    $kit = Get-Content -Raw -LiteralPath $kits[0].FullName | ConvertFrom-Json
+    $assets = @($kit.brand_assets | Where-Object { $_.url })
+    if ($assets.Count -gt 0) {
+      Write-Host ("  refs:   no local images, pulling " + $assets.Count + " from " + $kit.brand + "'s brand kit") -ForegroundColor Cyan
+      $j = 0
+      foreach ($a in $assets) {
+        $j++
+        $ext = [IO.Path]::GetExtension(($a.url -split '\?')[0]); if (-not $ext) { $ext = ".jpg" }
+        $dest = Join-Path $refsDir ("ref-{0:d2}-{1}{2}" -f $j, ($a.role -replace '[^A-Za-z0-9_-]', ''), $ext)
+        try {
+          Invoke-WebRequest -Uri $a.url -OutFile $dest -UseBasicParsing -ErrorAction Stop
+          Write-Host ("        " + (Split-Path -Leaf $dest) + "   " + $a.role)
+        } catch {
+          Write-Host ("        COULD NOT FETCH " + $a.url + " (" + $_.Exception.Message + ")") -ForegroundColor Yellow
+        }
+      }
+    }
+  }
+}
+
 Write-Host ""
 Write-Host "Loaded. Start Claude Code here and paste the contents of GO.txt." -ForegroundColor Cyan
 Write-Host ""

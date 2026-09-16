@@ -57,13 +57,13 @@ printf '  briefs: %s\n' "$(basename "$brief")"
 srcdir="${IMG_SOURCE:-$(dirname "$brief")}"
 
 # A general folder is never a reference set. Downloads held 1,381 images.
+# Skip the local sweep rather than exiting: the brand-kit fallback below is a
+# better answer than no references at all, and exiting here denied it.
+skip_local=0
 for junk in "$HOME/Downloads" "$HOME/Desktop" "$HOME/Documents"; do
   if [ "${srcdir%/}" = "${junk%/}" ]; then
     printf '  refs:   not taken from %s, it is a general folder, not a reference set.\n' "$srcdir"
-    printf '          Put the product images in their own folder and pass it:\n'
-    printf '          bash sprint/load.sh /path/to/that/folder\n\n'
-    printf 'Loaded. Start Claude Code here and paste the contents of GO.txt.\n\n'
-    exit 0
+    skip_local=1
   fi
 done
 
@@ -74,12 +74,13 @@ done
 # when it had in fact died before looking.
 count=$(ls -1 "$srcdir"/*.jpg "$srcdir"/*.jpeg "$srcdir"/*.png "$srcdir"/*.webp 2>/dev/null | wc -l || true)
 if [ "$count" -gt 14 ]; then
-  printf '  refs:   %s images in %s, and the model takes 14. Nothing loaded.\n' "$count" "$srcdir"
-  printf '          Put the product shots in a folder of their own and pass that folder.\n\n'
-  exit 0
+  printf '  refs:   %s images in %s, and the model takes 14. Not loaded.\n' "$count" "$srcdir"
+  printf '          Put the product shots in a folder of their own and pass that folder.\n'
+  skip_local=1
 fi
 
 n=0
+if [ "$skip_local" = "0" ]; then
 # Shorten the destination name: a browser download can carry a 200-character
 # name, which on Windows blows the 260-character path limit. Same rule both
 # sides so the two stay comparable.
@@ -98,7 +99,30 @@ for f in "$srcdir"/*.jpg "$srcdir"/*.jpeg "$srcdir"/*.png "$srcdir"/*.webp; do
     printf '        SKIPPED %.60s...  (could not be read)\n' "$base"
   fi
 done
-if [ "$n" -gt 0 ]; then printf '  refs:   %d image(s) from %s\n' "$n" "$srcdir"
-else printf '  refs:   no images beside the briefs file.\n'; fi
+fi
+if [ "$n" -gt 0 ]; then printf '  refs:   %d image(s) from %s\n' "$n" "$srcdir"; fi
+
+# Nothing local? Pull the brand kit's recorded asset URLs. A render without
+# references invents the product.
+if [ "$n" -eq 0 ]; then
+  kit="$(find "$sprint/../brand-kits" -name brand-kit.json 2>/dev/null | head -2)"
+  if [ "$(printf '%s\n' "$kit" | wc -l)" = "1" ] && [ -n "$kit" ]; then
+    node -e '
+      const fs=require("fs"), {execFileSync}=require("child_process");
+      const kit=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+      const dir=process.argv[2];
+      const assets=(kit.brand_assets||[]).filter(a=>a.url);
+      if(!assets.length) process.exit(0);
+      console.log(`  refs:   no local images, pulling ${assets.length} from ${kit.brand||"the"} brand kit`);
+      assets.forEach((a,i)=>{
+        const ext=(a.url.split("?")[0].match(/\.[a-z0-9]+$/i)||[".jpg"])[0];
+        const role=String(a.role||"asset").replace(/[^A-Za-z0-9_-]/g,"");
+        const dest=`${dir}/ref-${String(i+1).padStart(2,"0")}-${role}${ext}`;
+        try { execFileSync("curl",["-sSfL","-m","40","-o",dest,a.url]); console.log(`        ${dest.split("/").pop()}   ${a.role}`); }
+        catch { console.log(`        COULD NOT FETCH ${a.url}`); }
+      });
+    ' "$kit" "$sprint/refs"
+  fi
+fi
 
 printf '\nLoaded. Start Claude Code here and paste the contents of GO.txt.\n\n'
