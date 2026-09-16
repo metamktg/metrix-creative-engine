@@ -8,7 +8,7 @@
  * Needs KIE_AI_API_KEY. Spends a small number of credits (one image).
  */
 import { spawn } from "node:child_process";
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -41,6 +41,10 @@ console.error(`    balance: ${credits}`);
 if (Number.isFinite(credits) && credits <= 0) { console.error("\nFAIL: no credits on the account. Top up at https://kie.ai"); process.exit(1); }
 
 console.error("\n=== 2/3  generate a 4:5 static (spends credits) ===");
+// Deliberately the CHEAP model, not the routing table's default. This smoke
+// tests the plumbing (key, model id, parameter names, polling, download,
+// ledger), and a 4K render on nano-banana-2 would cost more and prove the same
+// thing. Do not "fix" this to match the delivery default.
 const g = await run(["run", "google/nano-banana", "--input-file", spec, "--out", out, "--timeout", "300"]);
 if (g.code === 2) { console.error("\nINCONCLUSIVE: timed out. The task is still running; poll the taskId above."); process.exit(2); }
 if (g.code !== 0) {
@@ -50,13 +54,25 @@ if (g.code !== 0) {
 }
 
 console.error("\n=== 3/3  check a file actually landed ===");
-const files = existsSync(out) ? readdirSync(out).filter((f) => statSync(path.join(out, f)).size > 1024) : [];
+const files = existsSync(out)
+  ? readdirSync(out).filter((f) => f !== "kie-ledger.jsonl" && statSync(path.join(out, f)).size > 1024)
+  : [];
 if (!files.length) {
   console.error("PARTIAL: generation succeeded and returned a URL, but nothing downloaded.");
   console.error("The URL above is valid for about 24 hours. Open it in a browser.");
   process.exit(1);
 }
 for (const f of files) console.error(`    ${path.join(out, f)}  (${statSync(path.join(out, f)).size} bytes)`);
+
+const ledgerFile = path.join(out, "kie-ledger.jsonl");
+if (existsSync(ledgerFile)) {
+  const lines = readFileSync(ledgerFile, "utf8").split("\n").filter((l) => l.trim());
+  console.error(`    ledger: ${lines.length} event(s) at ${ledgerFile}`);
+} else {
+  // Not a failure of the generation, but worth saying: without the ledger this
+  // asset is only recoverable while its URL lives.
+  console.error(`    NOTE: no ledger at ${ledgerFile}. Recovery after the URL expires depends on it.`);
+}
 
 console.error(`
 PASS. The chain works end to end: key, model id, parameters, polling, download.

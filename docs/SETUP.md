@@ -115,10 +115,15 @@ otherwise. Either way they work.
 
 ```
 node scripts/kie.mjs credits
+node scripts/kie.mjs ledger                       # what ran, and what is still downloadable
+node scripts/kie.mjs upload <file>
 node scripts/kie.mjs run   <model> '<input-json>' [--timeout N] [--out DIR] [--name ID]
 node scripts/kie.mjs start <model> '<input-json>'
 node scripts/kie.mjs poll  <taskId> [--timeout N] [--out DIR] [--name ID]
 ```
+
+`ledger` is the only one that needs no API key, deliberately: it reads a local
+file and it is the path back to an asset whose result URL has expired.
 
 Result URLs on stdout, progress on stderr. No dependencies beyond Node.
 
