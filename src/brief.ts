@@ -159,10 +159,70 @@ function crossFieldChecks(brief: Brief): { errors: string[]; warnings: string[] 
 }
 
 /**
+ * The brief arrives from `metrix-brief-builder`, which passed its own QA before
+ * it reached us. Its vocabulary is not always this engine's vocabulary: IAP
+ * writes `static_4x5` for a 4:5 static and `MST_matrix_cell` for a matrix cell,
+ * and neither is a value the enums carry.
+ *
+ * Rejecting those was wrong. A brief that IAP validated does not need this
+ * engine's discernment; it needs rendering. So a known dialect difference is
+ * NORMALIZED and reported as a note, and only a genuinely unroutable type stops.
+ *
+ * Note what is deliberately NOT here: a fuzzy nearest-match. `static_4x5` maps
+ * to `static` because the suffix is a ratio this engine already sets as a
+ * parameter, not because the strings look similar.
+ */
+const MODE_ALIASES: Record<string, (typeof BRIEF_MODES)[number]> = {
+  mst_matrix_cell: "matrix",
+  matrix_cell: "matrix",
+  mst: "matrix",
+  general: "standard",
+};
+
+/** `4x5` / `4_5` / `4-5` all mean the same ratio. */
+const RATIO_SUFFIX = /[_-](\d{1,2})[x_-](\d{1,2})$/i;
+
+export function normalizeBriefVocabulary(input: unknown): { input: unknown; notes: string[] } {
+  const notes: string[] = [];
+  if (!input || typeof input !== "object") return { input, notes };
+
+  const brief = structuredClone(input) as Record<string, any>;
+  const meta = brief.brief_metadata;
+  if (!meta || typeof meta !== "object") return { input: brief, notes };
+
+  if (typeof meta.asset_type === "string" && !ASSET_TYPES.includes(meta.asset_type)) {
+    const match = meta.asset_type.match(RATIO_SUFFIX);
+    if (match) {
+      const stem = meta.asset_type.slice(0, match.index).toLowerCase();
+      if ((ASSET_TYPES as readonly string[]).includes(stem)) {
+        const ratio = `${match[1]}:${match[2]}`;
+        notes.push(
+          `asset_type "${meta.asset_type}" read as "${stem}" at ${ratio}. The ratio is a parameter, not part of the type. Set aspect_ratio explicitly.`,
+        );
+        meta.asset_type = stem;
+        brief.creative_specifications ??= {};
+        brief.creative_specifications.dimensions ??= ratio;
+      }
+    }
+  }
+
+  if (typeof meta.mode === "string" && !(BRIEF_MODES as readonly string[]).includes(meta.mode)) {
+    const mapped = MODE_ALIASES[meta.mode.toLowerCase()];
+    if (mapped) {
+      notes.push(`mode "${meta.mode}" read as "${mapped}".`);
+      meta.mode = mapped;
+    }
+  }
+
+  return { input: brief, notes };
+}
+
+/**
  * Validate a brief. Never throws: a malformed brief is a verdict, not an
  * exception, because the caller's next move is to report it, not to crash.
  */
-export function validateBrief(input: unknown): BriefVerdict {
+export function validateBrief(rawInput: unknown): BriefVerdict {
+  const { input, notes } = normalizeBriefVocabulary(rawInput);
   const parsed = briefSchema.safeParse(input);
   if (!parsed.success) {
     const errors = parsed.error.issues.map((issue) => {
@@ -177,7 +237,7 @@ export function validateBrief(input: unknown): BriefVerdict {
   }
 
   const { errors, warnings } = crossFieldChecks(parsed.data);
-  return { ok: errors.length === 0, errors, warnings, brief: parsed.data };
+  return { ok: errors.length === 0, errors, warnings: [...notes, ...warnings], brief: parsed.data };
 }
 
 /** One readable block, for a tool result or a terminal. */

@@ -18,9 +18,33 @@ Meta's feed default is **4:5**. Most models do not offer it.
 | `ideogram/*` | no |
 | `veo-3-1` (video) | no, 16:9 and 9:16 only |
 
-So for feed statics, **`google/nano-banana` or `nano-banana-2` unless you have a
-reason otherwise.** Everything else means generating 1:1 or 9:16 and cropping,
-which costs you composition at the exact edges where the subject usually sits.
+So for feed statics, **`nano-banana-2`** unless you have a reason otherwise.
+Everything else means generating 1:1 or 9:16 and cropping, which costs you
+composition at the exact edges where the subject usually sits.
+
+### The text-and-ratio bind, and how it is resolved
+
+A Meta ad creative carries a hook and a CTA in the frame (core rule 1) AND has
+to be 4:5. Until 2026-09-16 this table sent text to `ideogram/v3-text-to-image`,
+which does not offer 4:5 (see the row above), so every text-bearing feed static
+had to break one of the two. Assets came back either at the wrong ratio or with
+garbled words, and the cause looked like model weakness rather than routing.
+
+`nano-banana-2` does both, and carries the budget a real brief needs:
+
+| | `google/nano-banana` | `nano-banana-pro` | `nano-banana-2` |
+| --- | --- | --- | --- |
+| Native 4:5 | yes | yes | yes |
+| Prompt budget | small | 10,000 | **20,000** |
+| Reference images | 10 | 8 | **14** |
+| Resolution | 1K | to 4K | to 4K |
+
+A brief with product references, a palette, a hook line and a CTA needs the
+room. Default to `nano-banana-2`. Drop to `google/nano-banana` only for cheap
+iteration where neither text nor 4K matters.
+
+**`aspect_ratio` defaults to `auto` on `nano-banana-2`. Set it explicitly every
+time** or the ratio you get is whatever the model inferred.
 
 For video there is no 4:5 anywhere. Generate 9:16 for Reels and Stories, 16:9
 for in-stream, and treat feed video as a crop from 9:16.
@@ -29,12 +53,13 @@ for in-stream, and treat feed video as a crop from 9:16.
 
 | `asset_type` in the brief | Model | Why |
 | --- | --- | --- |
-| Static, feed | `google/nano-banana` | Native 4:5 |
-| Static, maximum quality | `nano-banana-2` | 4K; no `google/` prefix |
-| Static with on-image text | `ideogram/v3-text-to-image` | Best text rendering, real `negative_prompt`. Only if the format demands text — see the copy rule in SKILL.md |
+| Static, feed (default) | `nano-banana-2` | Native 4:5, 20k prompt, 14 refs, 4K. No `google/` prefix |
+| Static with on-image text | `nano-banana-2` | Sets type AND holds 4:5. This is the normal case, not an exception |
+| Static, cheap iteration | `google/nano-banana` | 1K, small prompt budget. Not for delivery |
+| Static, text where ratio is free | `ideogram/v3-text-to-image` | Strong text and a real `negative_prompt`, but **no 4:5**: only when the placement is 1:1 or 9:16 |
 | Product-led static | `bytedance/seedream-v4-text-to-image` | Product realism; no 4:5 |
-| Carousel | `google/nano-banana` at `1:1` | One model across all cards, or they will not sit together |
-| UGC / AI-UGC still | `google/nano-banana` | |
+| Carousel | `nano-banana-2` at `1:1` | One model across all cards, or they will not sit together |
+| UGC / AI-UGC still | `nano-banana-2` | Caption bars are on-image text |
 | Video from a still | `kling/v2-1-master-image-to-video` | Approve the frame, then animate |
 | Video, top quality | `veo-3-1` | 1080p/4K with native audio |
 | Video, cheap iteration | `bytedance/v1-lite-text-to-video` | |
@@ -117,3 +142,26 @@ Call `kie_get_credits` before the run and report the real `creditsConsumed` per
 task afterwards. A matrix that runs out halfway is not a cheap partial result —
 it is an unusable test, because the cells that never rendered cannot be
 compared against the ones that did.
+
+
+## One model per batch
+
+Core rule 3. Inside a matrix, a carousel set, or any group that will be compared,
+the model id, aspect ratio, resolution and seed are chosen once, before the first
+render, and do not change for the whole group.
+
+**Never run two models concurrently against one brief or one matrix.** Model
+identity is the largest uncontrolled variable available to you. A row rendered
+half on `nano-banana-2` and half on `google/nano-banana` produces a difference
+that looks like a creative result and is actually a model artefact, and the
+sprint is void without anyone noticing.
+
+Where this is stated, every time:
+
+1. The **render spec**, before spend: the model id and the locked parameters.
+2. The **handoff**, beside every asset: the model that produced it.
+3. The **filename record** in the report.
+
+If a model has to change mid-batch (it is withdrawn, it refuses the brief), the
+whole group is re-rendered on the new model as a new version. Patching the
+remaining cells is not an option.

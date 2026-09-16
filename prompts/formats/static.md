@@ -29,10 +29,22 @@ present or implied.
 
 ## On-image text
 
-Out of scope by default (see core rule 2). If the format's premise is text
-overlay, route to the model the routing table lists for text rendering, keep the
-text to a few words, make the text the isolated variable, and check every
-character before calling it done.
+**In scope, and usually the most important thing in the frame.** A feed static
+has about one second to stop a thumb, and the hook does that work.
+
+- Take the hook and the CTA from `copy_architecture` and **quote them verbatim**
+  in the prompt. A paraphrase renders as a paraphrase.
+- Set them with `visual_direction.typography`: weight, case, spacing, placement.
+- Route to a model that can set type at 4:5 (`nano-banana-2`, see
+  `model-routing.md`). Never send text to a model picked for ratio alone.
+- Keep the hook short enough to read at thumbnail size. If it will not fit in a
+  glance, shorten the line, not the type.
+- The CTA is rendered as the brief specifies it, button and all.
+- **Read every character in the output.** A single wrong letter makes the asset
+  unusable, and it is the most common failure of this format.
+
+Leave out only what the brief marks as an Ads Manager field: Primary Text and
+Description are tested without re-rendering, so they stay out of the pixels.
 
 ## QA checks to add
 
@@ -42,6 +54,9 @@ character before calling it done.
 - [ ] Hands, reflections and small text zoomed and checked
 - [ ] Object counts match the prompt where a count matters
 - [ ] Logo clear space is actually clear
+- [ ] Hook text matches `copy_architecture` character for character
+- [ ] CTA present, correctly worded, and legible at thumbnail size
+- [ ] Aspect ratio is the one the placement needs, set as a parameter
 
 ## Common failure
 

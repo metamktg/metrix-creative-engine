@@ -175,11 +175,30 @@ try {
   // which is how a caller pasting a brief actually reaches it.
   const gate = await rpc("tools/call", {
     name: "kie_validate_brief",
-    arguments: { brief: JSON.stringify({ brief_metadata: { brief_id: "x", asset_type: "static_4x5", confidence: "medium" } }) },
+    arguments: { brief: JSON.stringify({ brief_metadata: { brief_id: "x", asset_type: "hologram", confidence: "medium" } }) },
   });
   const verdict = gate.result?.structuredContent;
   check("an unmapped asset_type is refused", verdict?.ok === false);
   check("the refusal names the closed set", (verdict?.errors ?? []).join(" ").includes("static, carousel, video"));
+
+  // The brief comes from IAP already validated, so its dialect is normalized
+  // rather than refused. This asserts the normalization survives the bundle and
+  // the JSON-string path, not just the unit test.
+  const dialect = await rpc("tools/call", {
+    name: "kie_validate_brief",
+    arguments: {
+      brief: JSON.stringify({
+        brief_metadata: { brief_id: "ECAS_C1A_001", asset_type: "static_4x5", mode: "MST_matrix_cell", confidence: "medium" },
+        creative_specifications: { placement: "Feed" },
+        visual_direction: { composition: "Framed print on a panelled wall", imagery: "Painted city scene, legible street nameplate" },
+        testing_framework: { isolated_variable: "HK_Problem" },
+        brand_assets: [{ role: "product_front", url: "https://cdn.example/print.png" }],
+      }),
+    },
+  });
+  const dv = dialect.result?.structuredContent;
+  check("an IAP dialect brief renders instead of stopping", dv?.ok === true);
+  check("static_4x5 is read as a static at 4:5", (dv?.warnings ?? []).join(" ").includes("4:5"));
 
   console.log("\n== Structured output and progress ==");
   const call = await rpc("tools/call", {

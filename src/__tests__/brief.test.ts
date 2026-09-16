@@ -38,23 +38,14 @@ describe("a renderable brief", () => {
 });
 
 describe("an unmapped asset_type stops", () => {
-  it('rejects "static_4x5" and names the closed set', () => {
+  it("rejects a type with no route and names the closed set", () => {
     const message = errorsOf({
       ...renderable,
-      brief_metadata: { ...renderable.brief_metadata, asset_type: "static_4x5" },
+      brief_metadata: { ...renderable.brief_metadata, asset_type: "hologram" },
     });
-    expect(message).toMatch(/static_4x5/);
+    expect(message).toMatch(/hologram/);
     expect(message).toMatch(/no route/i);
     expect(message).toMatch(/static, carousel, video, ugc, ai_ugc, motion_graphic, claymation/);
-  });
-
-  it('rejects an unknown mode rather than silently ignoring it', () => {
-    expect(
-      errorsOf({
-        ...renderable,
-        brief_metadata: { ...renderable.brief_metadata, mode: "MST_matrix_cell" },
-      }),
-    ).toMatch(/mode/);
   });
 });
 
@@ -132,5 +123,34 @@ describe("matrix mode", () => {
     expect(
       warningsOf({ ...renderable, testing_framework: { matrix_position: "C1A" } }),
     ).toMatch(/coordinate is an index/);
+  });
+});
+
+describe("IAP vocabulary normalization", () => {
+  const meta = renderable.brief_metadata;
+
+  it("reads static_4x5 as a static at 4:5 rather than rejecting it", () => {
+    const v = validateBrief({ ...renderable, brief_metadata: { ...meta, asset_type: "static_4x5" } });
+    expect(v.ok).toBe(true);
+    expect(v.brief?.brief_metadata.asset_type).toBe("static");
+    expect(v.warnings.join(" ")).toMatch(/4:5/);
+  });
+
+  it("reads MST_matrix_cell as matrix mode", () => {
+    const v = validateBrief({
+      ...renderable,
+      brief_metadata: { ...meta, mode: "MST_matrix_cell" },
+      testing_framework: { isolated_variable: "HK_Problem" },
+    });
+    expect(v.ok).toBe(true);
+    expect(v.brief?.brief_metadata.mode).toBe("matrix");
+  });
+
+  it("still stops on a type that genuinely has no route", () => {
+    expect(validateBrief({ ...renderable, brief_metadata: { ...meta, asset_type: "hologram_9x16" } }).ok).toBe(false);
+  });
+
+  it("does not invent a ratio for a stem that is not a real asset type", () => {
+    expect(validateBrief({ ...renderable, brief_metadata: { ...meta, asset_type: "poster_4x5" } }).ok).toBe(false);
   });
 });
