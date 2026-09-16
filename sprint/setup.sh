@@ -64,6 +64,6 @@ fi
 
 # Find and load the sprint files rather than asking for them to be dragged.
 # load.sh opens the folder itself when it finds nothing.
-bash "$here/load.sh" || true
+bash "$here/load.sh" "$@" || true
 
 printf 'Ready.\n\n'

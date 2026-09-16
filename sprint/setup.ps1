@@ -6,6 +6,11 @@
 # Safe to re-run: it overwrites the skills with the current version, which is
 # what you want after a git pull.
 
+# Passed straight through to load.ps1. It lives here because setup.ps1 is the
+# only entry point that updates itself first, so it is the only one that can be
+# relied on to be the current version.
+param([string]$Briefs = "", [string]$Source = "")
+
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $skills = Join-Path $env:USERPROFILE ".claude\skills"
@@ -86,6 +91,9 @@ if ($LASTEXITCODE -ne 0) {
 # 5. Find the sprint files and load them ---------------------------------
 # Dragging files between folders is not the operator's job when the machine can
 # identify them. load.ps1 opens the folder itself if it finds nothing.
-& (Join-Path $PSScriptRoot "load.ps1")
+$loadArgs = @{}
+if ($Briefs) { $loadArgs["Briefs"] = $Briefs }
+if ($Source) { $loadArgs["Source"] = $Source }
+& (Join-Path $PSScriptRoot "load.ps1") @loadArgs
 Write-Host "Ready." -ForegroundColor Cyan
 Write-Host ""

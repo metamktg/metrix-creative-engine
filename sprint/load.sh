@@ -9,6 +9,9 @@ set -euo pipefail
 sprint="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p "$sprint/briefs" "$sprint/refs"
 
+# --briefs <file> names one exactly, for when more than one is lying around.
+explicit=""
+if [ "${1:-}" = "--briefs" ]; then explicit="${2:-}"; shift 2 || true; fi
 if [ $# -gt 0 ]; then roots=("$1"); else roots=("$HOME/Downloads" "$HOME/Desktop" "$HOME/Documents"); fi
 
 is_briefs() {
@@ -27,7 +30,12 @@ is_briefs() {
 printf '\nLooking for your sprint files...\n'
 
 brief=""
-for root in "${roots[@]}"; do
+if [ -n "$explicit" ]; then
+  if [ ! -f "$explicit" ]; then printf '  No file at %s\n' "$explicit"; exit 1; fi
+  if ! is_briefs "$explicit"; then printf '  %s does not look like a briefs file (no brief_metadata).\n' "$explicit"; exit 1; fi
+  brief="$explicit"
+fi
+[ -n "$brief" ] || for root in "${roots[@]}"; do
   [ -d "$root" ] || continue
   while IFS= read -r f; do
     if is_briefs "$f"; then brief="$f"; break 2; fi
