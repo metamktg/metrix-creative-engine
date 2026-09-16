@@ -52,13 +52,8 @@ if ! node "$repo/skills/metrix-ad-creative/scripts/kie.mjs" credits; then
   exit 1
 fi
 
-# Open the folder rather than printing a path to be retyped.
-if command -v open >/dev/null 2>&1; then open "$here"
-elif command -v xdg-open >/dev/null 2>&1; then xdg-open "$here" >/dev/null 2>&1 || true
-fi
+# Find and load the sprint files rather than asking for them to be dragged.
+# load.sh opens the folder itself when it finds nothing.
+bash "$here/load.sh" || true
 
-printf '\nReady.\n\n'
-printf 'Drag your files into the sprint folder:\n'
-printf '  briefs  <- the briefs .json\n'
-printf '  refs    <- the reference images\n\n'
-printf 'Then start Claude Code here and paste the contents of GO.txt.\n\n'
+printf 'Ready.\n\n'

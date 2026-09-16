@@ -53,8 +53,14 @@ on parameter 'test'"
 THEN
 ====
 
-Put the briefs .json in     sprint\briefs\
-Put the reference images in sprint\refs\
+setup.ps1 finds your briefs and images by itself. It looks in Downloads,
+Desktop and Documents for a .json that really is a briefs file (it reads the
+contents, it does not trust the filename), and takes the images sitting beside
+it.
 
-Start Claude Code in the metrix-creative-engine folder, and paste the
+If your files are somewhere else, point it there:
+
+    .\sprint\load.ps1 C:\path\to\that\folder
+
+Then start Claude Code in the metrix-creative-engine folder and paste the
 contents of sprint\GO.txt. That is the only prompt you type.

@@ -66,16 +66,9 @@ if ($LASTEXITCODE -ne 0) {
   exit 1
 }
 
-# Open the folder rather than printing a path to be typed. A path on screen is
-# a path someone has to retype correctly, and that is a needless way to fail.
-Start-Process explorer.exe $PSScriptRoot
-
-Write-Host ""
+# 5. Find the sprint files and load them ---------------------------------
+# Dragging files between folders is not the operator's job when the machine can
+# identify them. load.ps1 opens the folder itself if it finds nothing.
+& (Join-Path $PSScriptRoot "load.ps1")
 Write-Host "Ready." -ForegroundColor Cyan
-Write-Host ""
-Write-Host "A File Explorer window just opened. Drag your files into it:"
-Write-Host "  briefs  <- the briefs .json"
-Write-Host "  refs    <- the reference images"
-Write-Host ""
-Write-Host "Then start Claude Code here and paste the contents of GO.txt."
 Write-Host ""
