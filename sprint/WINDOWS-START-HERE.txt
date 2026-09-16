@@ -34,6 +34,17 @@ COMMON ERRORS
     You are in a Linux shell (Replit, WSL, Git Bash). Use the Windows
     PowerShell window instead, or run:  bash sprint/setup.sh
 
+"The term 'it' is not recognized" / "Cannot process argument transformation
+on parameter 'test'"
+    Your paste dropped the first character: git arrived as "it", and PowerShell
+    read "It" as a Pester cmdlet. This happens when PSReadLine is disabled,
+    which PowerShell does automatically if it detects a screen reader.
+    Fix it either way:
+      - run  Import-Module PSReadLine  and paste again, or
+      - use Command Prompt (cmd.exe) instead, which does not have the problem.
+    Either way, check the first character of a pasted line before you press
+    Enter.
+
 "git is not recognized"
     Install Git: https://git-scm.com/download/win
     Then close the window, open a new one, and start again.
