@@ -10,6 +10,9 @@ sprint="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p "$sprint/briefs" "$sprint/refs"
 # A load is a load, not an append.
 find "$sprint/refs" -maxdepth 1 -type f -delete 2>/dev/null || true
+# briefs/ too: it was accumulating, and a stale file for another account sat
+# beside the real one.
+find "$sprint/briefs" -maxdepth 1 -type f -delete 2>/dev/null || true
 
 # --briefs <file> names one exactly, for when more than one is lying around.
 explicit=""

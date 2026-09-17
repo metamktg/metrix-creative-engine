@@ -26,6 +26,12 @@ New-Item -ItemType Directory -Force -Path $briefsDir, $refsDir | Out-Null
 # A load is a load, not an append: without this, every run piles more images on
 # top of the last run's.
 Get-ChildItem -LiteralPath $refsDir -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+# briefs/ was NOT cleared, so every load left the previous run's file behind.
+# Two briefs files accumulated there - one of them for an entirely different
+# account - and the renderer had to work out on its own which brand it was
+# being asked to advertise. That is not a judgement call anything should be
+# making with a credit balance attached.
+Get-ChildItem -LiteralPath $briefsDir -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
 if ($Source) {
   $roots = @($Source)
