@@ -131,6 +131,20 @@ Two consequences:
 build the prompt "never from `copy_architecture`". Between them they deleted the
 hook and the CTA from every asset the engine produced.*
 
+## Lock the subject as a file, not as a sentence
+
+Where one product, person or scene appears in every asset of a set, render it
+ONCE, approve it, and pass that file into every subsequent render as a reference
+input.
+
+Kie's image models mostly expose no seed. An identical prompt returns a
+different picture each time, so a "locked base prompt" locks the words and lets
+the subject drift. In a matrix that makes the product a bigger variable than the
+one under test, and the result cannot be attributed to anything.
+
+One extra render. It is the difference between a sprint you can read and one you
+cannot.
+
 ## Process
 
 1. **Read the brief.** Take `creative_briefs.json`, or a single brief object.

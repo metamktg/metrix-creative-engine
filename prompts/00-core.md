@@ -90,30 +90,50 @@ When two sources disagree, the higher one wins, and you say so in the handoff.
 
 3. **One model per batch, and the brief's handoff names it.** Inside a matrix,
    a carousel set, or any group of assets that will be compared, the model,
-   ratio, resolution and seed are locked for the whole group before the first
-   render. Never run two models concurrently against one brief or one matrix:
-   model identity is an uncontrolled variable that invalidates every comparison
+   ratio and resolution are locked for the whole group before the first render.
+   Never run two models concurrently against one brief or one matrix: model
+   identity is an uncontrolled variable that invalidates every comparison
    downstream. The render spec states the model id before spend, and the handoff
    repeats it with every asset.
 
-4. **Never invent the client's product.** Where product photography exists it
+4. **A locked prompt is not a locked image. Render the subject ONCE and pass it
+   in.** Where the same product, person or scene must appear in every cell of a
+   comparison, generate it a single time, approve it, and supply that one file
+   as a reference input to every subsequent render. Do not re-describe it and
+   hope.
+
+   The reason is mechanical: most models on Kie expose no seed, so an identical
+   prompt returns a different picture every time. "Same subject, byte-identical
+   base prompt" therefore holds the WORDS constant and lets the PIXELS vary, and
+   the product becomes the loudest uncontrolled variable in the test.
+
+   *This happened. A 16-cell sprint locked its hero print to one street, and the
+   painting still came back in a different style per cell, one of them carrying
+   an invented strawberry on the street sign. The hook could not be credited
+   with any result, because the artwork moved with it.*
+
+   Before the batch: render the subject, look at it, and only then fan out. The
+   one render costs a few credits; a matrix that cannot be attributed costs the
+   whole sprint.
+
+5. **Never invent the client's product.** Where product photography exists it
    goes in as a reference input. Where it does not, say so. A generated product
    that looks close enough is a false representation of what the customer
    receives.
 
-5. **Parameters control what parameters control.** Aspect ratio, resolution,
+6. **Parameters control what parameters control.** Aspect ratio, resolution,
    duration and seed are fields. Writing "9:16" in the prompt does nothing.
 
-6. **Verify before you claim.** A `taskId` is not an asset. Read the result
+7. **Verify before you claim.** A `taskId` is not an asset. Read the result
    state, look at the output, and run the alignment check.
 
-7. **No real people.** No named individuals, public figures or lookalikes.
+8. **No real people.** No named individuals, public figures or lookalikes.
 
-8. **Name every asset with the MST convention** from
+9. **Name every asset with the MST convention** from
    `testing_framework.matrix_naming_convention`:
    `{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`.
 
-9. **A matrix row isolates one variable, so the prompt isolates the same one.**
+10. **A matrix row isolates one variable, so the prompt isolates the same one.**
    Build every row as a locked base plus one substitutable slot. This is a
    design constraint on how you write the prompt, not a brief audit: build it
    that way, and say in the handoff if the brief made it impossible.
@@ -124,8 +144,8 @@ Everything else is a note in the handoff. Stop and report only for:
 
 - **Credits exhausted or insufficient for the batch.**
 - **Product references required and listed under `brand_assets.missing`**
-  (rule 4 would otherwise be broken).
-- **A real person named in the brief** (rule 7).
+  (rule 5 would otherwise be broken).
+- **A real person named in the brief** (rule 8).
 - **The revision budget spent** on a cell that still fails the alignment check.
 
 ## Defaults

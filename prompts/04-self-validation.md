@@ -34,8 +34,14 @@ average them into a score that hides which one failed.
 | 3 | **CTA** | Present, worded as the brief specifies, rendered as specified (button, lockup), legible at thumbnail size |
 | 4 | **Aspect ratio** | Every ratio the brief's placement list requires exists as an asset, at that exact ratio, set as a parameter rather than cropped |
 | 5 | **Meta ad creative passed** | Platform specs met, text readable at feed thumbnail size, no policy trip (no fabricated proof, no banned claim, nothing from the account's banned list) |
+| 6 | **Subject identical** (comparisons only) | Put the cells side by side. The product, person or scene the brief holds constant is the SAME PICTURE in every one, not the same description rendered again |
 
-Row 2 and row 3 are the ones that used to be structurally impossible to pass:
+Row 6 is the one that is invisible cell by cell and only shows when the set is
+laid out together, so it is the one most likely to be skipped. A matrix whose
+subject drifts cannot attribute a result to anything: whatever the numbers say,
+the artwork moved too. Core rule 4 prevents it; this row catches it.
+
+Row 2 and row 3 were structurally impossible to pass before 2026-09-16:
 the engine stripped `copy_architecture` out of the prompt, so no asset carried a
 hook or a CTA and nothing checked for their absence. If either fails now, it is a
 revision.
@@ -76,6 +82,12 @@ where a row is easiest to break:
 **The slot failed** (the variable is not expressed, everything else is right).
 Rewrite the slot clause only, keep the base byte-identical, re-render that cell
 alone. The row stays valid because every other cell is untouched.
+
+**The subject drifted** (row 6): the product is a different picture cell to
+cell. No amount of re-rendering individual cells fixes this, because each new
+render is a new picture again. Go back to the hero render (`02-render-bridge.md`
+step 3), pick or render ONE subject file, and re-render every cell passing it as
+a reference. Say so and give the credit cost.
 
 **The base failed** (the whole row has a problem: contrast too low, subject too
 small, product wrong). The base is shared, so fixing it for one cell makes that
@@ -135,7 +147,7 @@ it replaced. Overwriting loses the evidence of what changed.
 
 ## Report
 
-Per cell: the five alignment rows as PASS or FAIL, PASS or FAIL on absolute
+Per cell: the six alignment rows as PASS or FAIL, PASS or FAIL on absolute
 identity, PASS or FAIL on comparative identity, **the model id that produced
 it**, revisions used, whether polished, the final filename, and the credits
 spent.

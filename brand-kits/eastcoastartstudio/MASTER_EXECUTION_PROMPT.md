@@ -93,7 +93,13 @@ Work brief by brief, in the order the file gives them. For each:
   in the routing table that holds 4:5 AND sets legible type AND takes the 14
   references and 20k prompt this brief needs. Set `aspect_ratio` explicitly to
   `4:5`; its default is `auto`.
-- Lock across the whole matrix: model, 4:5, resolution, and seed where exposed.
+- RENDER THE PRINT ONCE FIRST. One Berry St artwork, rendered a single time,
+  shown to me, then passed as a reference input (image_input) into all sixteen
+  cells. nano-banana-2 exposes no seed, so re-describing the same street returns
+  a different painting every time: the first run of this sprint came back with a
+  different style per cell and an invented strawberry on the street sign, and no
+  hook could be credited with any result.
+- Lock across the whole matrix: model, 4:5, resolution.
   **One model for the entire sprint, never two running at once.** Switching
   model mid-matrix is the largest uncontrolled variable available to you, and it
   invalidates the sprint. State the model id in the render spec before spend and

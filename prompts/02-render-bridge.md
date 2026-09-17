@@ -80,22 +80,36 @@ model's own field names. Anyone holding the spec can reproduce the asset.
    concurrently against one brief (core rule 3): state the id here, before spend.
    Outside a test you are free to pick the best model per asset. Where the asset
    carries text, the model must be able to set type, not merely hold the ratio.
-3. **Base prompt.** Build it from `visual_direction` and the Brand Translation
+3. **Hero render, before anything fans out.** If the same product, person or
+   scene must appear in every cell, render it ONCE on the locked model, look at
+   it, and keep the file. Every cell afterwards passes that file as a reference
+   input (`image_input` on the nano-banana family, `image_urls` elsewhere: check
+   `references/model-routing.md`, the field name varies and the wrong key is
+   silently ignored).
+
+   Core rule 4. Skipping this and relying on a byte-identical base prompt does
+   NOT hold the subject still, because the model has no seed: every cell gets a
+   different picture of the same description, and the product ends up varying
+   more than the variable under test.
+
+   Costs one render. Saves the sprint.
+
+4. **Base prompt.** Build it from `visual_direction` and the Brand Translation
    Sheet, in the clause order from `prompt-construction.md`: subject and action,
    composition, environment, light, style, colour, **on-image text**, technical.
    The on-image clause carries `copy_architecture.hook` and `.cta` **quoted
    verbatim**, set with `visual_direction.typography`. Only `.primary_text` and
    `.description` stay out: those two are Ads Manager fields and are testable
    without a re-render.
-4. **Slot.** Express the isolated variable as one clause, in the same position
+5. **Slot.** Express the isolated variable as one clause, in the same position
    for every cell.
-5. **Avoid list.** Use the model's `negative_prompt` field if it has one.
+6. **Avoid list.** Use the model's `negative_prompt` field if it has one.
    Otherwise phrase it positively: "plain seamless backdrop", not "no clutter".
-6. **Expected limits.** Write down what this model will likely get wrong for
+7. **Expected limits.** Write down what this model will likely get wrong for
    this asset: hands on product, small label text, object counts, legibility at
    thumbnail size. This is how expectations get set before the render, not
    explained away after it.
-7. **QA checks.** One check per hard lock from Stage 1, each `qa_requirements`
+8. **QA checks.** One check per hard lock from Stage 1, each `qa_requirements`
    item from the brief, and the platform checks below.
 
 ## What "platform-optimised" means

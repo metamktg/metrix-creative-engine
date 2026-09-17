@@ -116,7 +116,8 @@ if [ "$n" -eq 0 ]; then
       const dir=process.argv[2];
       const assets=(kit.brand_assets||[]).filter(a=>a.url);
       if(!assets.length) process.exit(0);
-      console.log(`  refs:   no local images, pulling ${assets.length} from ${kit.brand||"the"} brand kit`);
+      const brandName = kit.identity?.canonical_name || "an unnamed";
+      console.log(`  refs:   no local images, pulling ${assets.length} from the ${brandName} brand kit`);
       assets.forEach((a,i)=>{
         const ext=(a.url.split("?")[0].match(/\.[a-z0-9]+$/i)||[".jpg"])[0];
         const role=String(a.role||"asset").replace(/[^A-Za-z0-9_-]/g,"");

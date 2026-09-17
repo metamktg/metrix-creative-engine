@@ -166,7 +166,13 @@ if ($copied.Count -eq 0) {
     $kit = Get-Content -Raw -LiteralPath $kits[0].FullName | ConvertFrom-Json
     $assets = @($kit.brand_assets | Where-Object { $_.url })
     if ($assets.Count -gt 0) {
-      Write-Host ("  refs:   no local images, pulling " + $assets.Count + " from " + $kit.brand + "'s brand kit") -ForegroundColor Cyan
+      # The kit has no `brand` key - it is identity.canonical_name. Reading the
+      # wrong one printed "pulling 12 from 's brand kit", which tells a reader
+      # nothing about WHICH brand's assets just landed in their sprint. With two
+      # accounts' files having already turned up in one folder today, that is
+      # the one fact the line exists to carry.
+      $brandName = if ($kit.identity.canonical_name) { $kit.identity.canonical_name } else { "an unnamed" }
+      Write-Host ("  refs:   no local images, pulling " + $assets.Count + " from the " + $brandName + " brand kit") -ForegroundColor Cyan
       $j = 0
       foreach ($a in $assets) {
         $j++

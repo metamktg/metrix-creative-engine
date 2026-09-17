@@ -20,6 +20,9 @@ needs them, and the render workflow as selectable prompts. See
 
 Two steps. No build step, nothing to compile.
 
+**Windows: double-click `GO.cmd`.** It does everything below and starts Claude
+Code. Skip to [`sprint/README.md`](sprint/README.md).
+
 **1. Set your key** (get one at <https://kie.ai/api-key>):
 
 ```

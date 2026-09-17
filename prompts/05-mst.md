@@ -127,3 +127,29 @@ next brief was an expensive way to generate a chart.
 Treating the matrix as the product. The matrix is an instrument for answering a
 question. If nobody can state the question it was built to answer, the grid is
 decoration and the spend behind it is a cost with no return.
+
+
+## The subject must be one file, not one description
+
+Core rule 4, restated here because a Matrix Sprint Test is where it costs most.
+
+The grid holds everything constant but the isolated variable. Most models on Kie
+expose no seed, so an identical prompt does NOT return an identical picture: the
+product drifts cell to cell while the words stay locked. A row built that way
+returns numbers that look like a result and cannot be attributed, because the
+artwork moved with the variable.
+
+So before the first cell:
+
+1. Render the hero subject once, on the locked model.
+2. Look at it. This is the one asset every cell inherits, so a flaw here is a
+   flaw in all sixteen.
+3. Pass that file as a reference input to every cell (`image_input` on the
+   nano-banana family; the field name varies by model).
+
+A sprint that skips this has one more uncontrolled variable than it has cells,
+and it is the loudest one in the frame.
+
+Check it at the end too: `04-self-validation.md` row 6 lays the cells side by
+side and asks whether the subject is the same PICTURE, which is the only way the
+drift shows.

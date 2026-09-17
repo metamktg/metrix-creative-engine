@@ -1,0 +1,17 @@
+# ORDER MATTERS: git applies the LAST matching rule, so the catch-all goes
+# FIRST and the specific overrides follow it. Written the other way round the
+# catch-all silently wins and the eol=crlf below does nothing - which is exactly
+# what happened on the first attempt, and a checked-out GO.cmd with LF endings
+# fails on Windows reporting an error about a command nobody typed.
+* text=auto eol=lf
+
+# Windows scripts must arrive with CRLF whatever a machine's core.autocrlf says.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary

@@ -1,66 +1,64 @@
-FIRST TIME ON THIS MACHINE
-==========================
+DOUBLE-CLICK  GO.cmd  IN THE FOLDER ABOVE THIS ONE.
+===================================================
 
-Open Windows PowerShell (the blue one). Paste these four lines, one at a time.
+That is the whole thing. It updates itself, installs what is missing, finds
+your briefs and reference images, and starts Claude Code.
 
-    cd $HOME
+Then paste this one line into Claude Code:
+
+    Read sprint/GO.txt and do exactly what it says.
+
+
+IF YOU HAVE NOT CLONED THE REPO YET
+===================================
+
+Open Command Prompt and paste these, one line at a time:
+
     git clone https://github.com/metamktg/metrix-creative-engine.git
+
     cd metrix-creative-engine
-    powershell -ExecutionPolicy Bypass -File sprint\setup.ps1
+
+    GO.cmd
 
 
-The last line does everything else: asks for your Kie key if this terminal
-does not have one, installs the skills, makes the folders, checks your balance.
+WHERE YOUR FILES GO
+===================
+
+GO.cmd looks in Downloads, Desktop and Documents for the briefs .json and
+copies it in. It identifies a briefs file by reading it, not by its name.
+
+Reference images are NOT taken from those folders - they are junk drawers, and
+sweeping one put 1,381 images into a render set once. Either:
+
+  * put the product images in a folder of their own and run
+        GO.cmd -Source "C:\path\to\that\folder"
+  * or let it pull the brand kit's own verified asset URLs, which is the
+    default when nothing local qualifies.
+
+More than one briefs file lying around? Name the one you want:
+
+    GO.cmd -Briefs "C:\Users\You\Downloads\that_one.json"
 
 
-IF YOU ALREADY CLONED IT BEFORE
+WHY A .cmd AND NOT INSTRUCTIONS
 ===============================
 
-    cd $HOME\metrix-creative-engine
-    git pull
-    powershell -ExecutionPolicy Bypass -File sprint\setup.ps1
+Every failure on 2026-09-16 was a shell or a folder, never the work:
 
+  "fatal: not a git repository"
+  "sprint\setup.ps1 ... does not exist"
+        A new terminal opens in your user profile, not in the repo.
+        GO.cmd goes to its own folder first, so this cannot happen.
 
-COMMON ERRORS
-=============
+  "npm.ps1 cannot be loaded because running scripts is disabled"
+  "claude.ps1 cannot be loaded because running scripts is disabled"
+        PowerShell's execution policy blocks .ps1 wrappers.
+        GO.cmd calls npm.cmd and claude.cmd, which it does not block.
 
-"fatal: not a git repository"
-    You are not inside the repo folder. Run the cd line first.
+  "The term 'it' is not recognized"
+        A paste dropped its first character: "git" arrived as "it".
+        PowerShell disables PSReadLine when it detects a screen reader.
+        Double-clicking a file pastes nothing, so this cannot happen.
 
-"The argument 'sprint\setup.ps1' ... does not exist"
-    Same cause. You are not inside the repo folder.
-
-"powershell: command not found"
-    You are in a Linux shell (Replit, WSL, Git Bash). Use the Windows
-    PowerShell window instead, or run:  bash sprint/setup.sh
-
-"The term 'it' is not recognized" / "Cannot process argument transformation
-on parameter 'test'"
-    Your paste dropped the first character: git arrived as "it", and PowerShell
-    read "It" as a Pester cmdlet. This happens when PSReadLine is disabled,
-    which PowerShell does automatically if it detects a screen reader.
-    Fix it either way:
-      - run  Import-Module PSReadLine  and paste again, or
-      - use Command Prompt (cmd.exe) instead, which does not have the problem.
-    Either way, check the first character of a pasted line before you press
-    Enter.
-
-"git is not recognized"
-    Install Git: https://git-scm.com/download/win
-    Then close the window, open a new one, and start again.
-
-
-THEN
-====
-
-setup.ps1 finds your briefs and images by itself. It looks in Downloads,
-Desktop and Documents for a .json that really is a briefs file (it reads the
-contents, it does not trust the filename), and takes the images sitting beside
-it.
-
-If your files are somewhere else, point it there:
-
-    .\sprint\load.ps1 C:\path\to\that\folder
-
-Then start Claude Code in the metrix-creative-engine folder and paste the
-contents of sprint\GO.txt. That is the only prompt you type.
+  Explorer opened Documents instead of the folder asked for
+        $HOME does not expand in cmd.exe. GO.cmd uses no variables.
