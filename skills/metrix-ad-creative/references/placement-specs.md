@@ -19,14 +19,14 @@ without being cropped. 1:1 is the safe choice when one asset must serve feed and
 carousel both.
 
 These ratios are stable. Exact pixel minimums, file size caps and maximum video
-durations are not — Meta revises them. Check the current spec sheet at
+durations are not, Meta revises them. Check the current spec sheet at
 <https://www.facebook.com/business/ads-guide> before a launch; do not treat the
 pixel column above as authoritative on the day.
 
 ## Safe zones
 
-Stories and Reels overlay UI on the creative. Keep anything that must be read —
-a logo, a product, on-image text, a face — inside the middle band:
+Stories and Reels overlay UI on the creative. Keep anything that must be read,
+a logo, a product, on-image text, a face, inside the middle band:
 
 - top: leave roughly the first 14% clear
 - bottom: leave roughly the last 20% clear
@@ -43,16 +43,18 @@ the frame, which is where composition usually lives. Two options:
 
 1. Generate per ratio. In a matrix this means the ratio is locked per row and
    each row is its own test. Cleanest.
-2. Generate at 9:16 and crop down to 4:5 and 1:1 in post. Safe only if the
-   subject is centred with headroom.
+2. Generate once at 9:16 with a centred subject and headroom, then compose 4:5
+   and 1:1 deliberately: for video in `metrix-video-assembly`, for a static by
+   repositioning proof and type for that canvas. A plain post crop is not an
+   option, because it can remove the subject, proof or readable text.
 
 Never mix: a matrix row whose cells are different ratios is not a test of the
 isolated variable, it is a test of the ratio.
 
 ## Duration
 
-Take it from `creative_specifications.duration`. Where the brief does not state
+Take it from `creative_specifications.duration_seconds`. Where the brief does not state
 one, most Kie video models offer a small fixed set of lengths rather than an
-arbitrary number — check `model-routing.md` for the model's allowed values
+arbitrary number, check `model-routing.md` for the model's allowed values
 and pick the shortest that carries the idea. Longer costs more credits and
 rarely improves a hook test, which is decided in the first seconds.

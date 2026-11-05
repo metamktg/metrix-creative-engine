@@ -35,7 +35,7 @@ inside a running Matrix Sprint Test does it become a base with a slot per cell.
 ```json
 {
   "brief_id": "",
-  "mode": "matrix | general",
+  "mode": "standard | matrix",
   "matrix_row": "C1",
   "isolated_variable": "HK_",
 
@@ -137,9 +137,10 @@ nothing.
 - Stories and Reels: the subject sits in the middle band, clear of the UI.
   Prompt for a centred subject with headroom, because models cannot be told to
   respect safe zones.
-- One asset for several placements: generate at the tallest ratio with a
-  centred subject and crop down, or generate per ratio. Never mix ratios within
-  a matrix row.
+- One asset for several placements: generate per ratio, or generate once with a
+  centred subject and headroom and compose each placement deliberately,
+  repositioning proof and type for that canvas. Never merely crop a finished ad.
+  Never mix ratios within a matrix row.
 
 **3. The attention window.** Translate the platform's attention pattern into
 visual instructions:
@@ -189,5 +190,5 @@ of the prompt. Record PASS or FAIL per `qa_checks` item, with the reason.
 - [ ] One model for the whole batch, and its id is written in this spec
 - [ ] Avoid list mapped to the right method for this model
 - [ ] Logo approach and clear space stated
-- [ ] MST name ready for every cell
+- [ ] A name ready for every output: descriptive by default, an MST name only inside a live matrix
 - [ ] Credits checked and estimate stated

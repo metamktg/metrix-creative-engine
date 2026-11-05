@@ -43,6 +43,7 @@ would recognise as the concept described. Not merely competent. Not generic.
 | CTA | `copy_architecture.cta`, rendered and legible |
 | Aspect ratio(s) | `creative_specifications.dimensions` / `.placement` |
 | Meta ad creative passed | Platform specs, text legible at thumbnail, no policy trip |
+| Subject identical (comparisons only) | The held-constant subject is the same picture in every cell |
 
 Full procedure in `04-self-validation.md`. A render that fails any row is a
 revision, not a delivery. Creator-led UGC/video also requires its current
@@ -82,10 +83,6 @@ When two sources disagree, the higher one wins, and you say so in the handoff.
    (Primary Text, Description), leave that one out of the frame. When in doubt,
    render the hook and the CTA: an ad creative without them is a product photo.
 
-   *This rule was inverted until 2026-09-16. The old rule kept all copy out of
-   the pixels, which deleted the hook and the CTA from every asset the engine
-   produced.*
-
 2. **Text in the frame decides the model, and the model must be able to set
    type.** Route through `references/model-routing.md`. Never send a
    text-bearing creative to a model chosen only for its aspect ratio: that is
@@ -109,11 +106,6 @@ When two sources disagree, the higher one wins, and you say so in the handoff.
    prompt returns a different picture every time. "Same subject, byte-identical
    base prompt" therefore holds the WORDS constant and lets the PIXELS vary, and
    the product becomes the loudest uncontrolled variable in the test.
-
-   *This happened. A 16-cell sprint locked its hero print to one street, and the
-   painting still came back in a different style per cell, one of them carrying
-   an invented strawberry on the street sign. The hook could not be credited
-   with any result, because the artwork moved with it.*
 
    Before the batch: render the subject, look at it, and only then fan out. The
    one render costs a few credits; a matrix that cannot be attributed costs the

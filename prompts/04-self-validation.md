@@ -33,7 +33,7 @@ listening acceptance before dependent lip-sync spend.
 
 Runs after the render, never before. The brief is IAP-validated, so this stage
 does not ask whether the brief was right; it asks whether the asset is what the
-brief specified. Five rows, each PASS or FAIL with a one-line reason. Do not
+brief specified. Six rows, each PASS or FAIL with a one-line reason; row 6 applies to comparisons only. Do not
 average them into a score that hides which one failed.
 
 | # | Check | Passes when |
@@ -49,11 +49,6 @@ Row 6 is the one that is invisible cell by cell and only shows when the set is
 laid out together, so it is the one most likely to be skipped. A matrix whose
 subject drifts cannot attribute a result to anything: whatever the numbers say,
 the artwork moved too. Core rule 4 prevents it; this row catches it.
-
-Row 2 and row 3 were structurally impossible to pass before 2026-09-16:
-the engine stripped `copy_architecture` out of the prompt, so no asset carried a
-hook or a CTA and nothing checked for their absence. If either fails now, it is a
-revision.
 
 ## The confidence gate
 

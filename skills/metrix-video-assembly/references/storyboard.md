@@ -7,7 +7,7 @@ folder unless absolute.
 ```json
 {
   "name": "skyline-print-gift-hook-4x5",
-  "brief_id": "ECAS-VID-001",
+  "brief_id": "VID-001",
   "format": { "ratio": "4:5", "width": 1080, "height": 1350, "fps": 30 },
   "duration": 12,
   "tone": "polished",
@@ -40,7 +40,7 @@ folder unless absolute.
   ],
   "audio": {
     "music": { "file": "media/bed.mp3", "start": 0, "volume": 0.32, "fade_in": 0.2, "fade_out": 0.8,
-               "licence": "client-supplied, licence ref ECAS-2026-03" },
+               "licence": "client-supplied, licence ref LIC-2026-03" },
     "sfx": [
       { "file": "C:/.../assets/sfx/impact/impactSoft_medium_001.ogg", "at": 2.5, "volume": 0.6 },
       { "file": "C:/.../assets/sfx/interface/drop_001.ogg", "at": 6.8, "volume": 0.55 }

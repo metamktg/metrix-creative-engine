@@ -8,8 +8,8 @@ was designed for, and the render must execute in that medium. A brief written
 for a carousel is not satisfied by a beautiful static, because the idea was
 built to unfold across cards. This table is the handoff contract between them.
 
-Model facts below are a historical **2026-09-14** snapshot from docs.kie.ai,
-not a live eligibility catalog. Verify the selected model's current fields,
+Model facts below are a **2026-09-14** snapshot from docs.kie.ai plus dated
+production observations, not a live eligibility catalog. Verify the selected model's current fields,
 ratio, duration, reference roles, availability and cost before submission.
 Do not infer that no current model supports a ratio or capability because an
 older table omitted it. Craft for each format lives in
@@ -22,13 +22,13 @@ older table omitted it. Craft for each format lives in
 | `static` | `static.md` | `google/nano-banana`, `nano-banana-2`, `nano-banana-pro`, `bytedance/seedream-v4-text-to-image`, `seedream/5-pro-text-to-image`, `flux-2/pro-text-to-image`, `google/imagen4-ultra`, `gpt-image-2-text-to-image`, `z-image` | ratio; resolution where offered |
 | `static` with on-image text | `static.md` | `ideogram/v3-text-to-image`, `nano-banana-2`, `gpt-image-2-text-to-image` | ratio; `negative_prompt` where offered |
 | `carousel` | `carousel.md` | one model from `static`, locked across every card | ratio `1:1`; seed where offered |
-| `video` | `video.md` | `veo-3-1`, `kling-3.0/video`, `kling/v2-5-turbo-text-to-video-pro`, `bytedance/seedance-2-5`, `bytedance/v1-pro-text-to-video`, `minimax-h3/text-to-video`, `wan/2-7-text-to-video`, `hailuo/02-text-to-video-pro`, `runway` | ratio; `duration` |
+| `video` | `video.md` | `veo-3-1`, `kling-3.0/video`, `kling/v2-5-turbo-text-to-video-pro`, `bytedance/seedance-2-5`, `bytedance/v1-pro-text-to-video`, `bytedance/v1-lite-text-to-video`, `minimax-h3/text-to-video`, `wan/2-7-text-to-video`, `hailuo/02-text-to-video-pro`, `runway` | ratio; `duration` |
 | `video` from an approved still | `video.md` | `kling/v2-1-master-image-to-video`, `kling-3.0-omni/image-to-video`, `bytedance/v1-pro-image-to-video`, `hailuo/2-3-image-to-video-pro`, `minimax-h3/image-to-video`, `wan/2-7-image-to-video`, `veo-3-1` (`image_urls`) | image input; `duration` |
 | `ugc` | `ugc.md` | any `video` model, prompted for phone-camera characteristics | ratio `9:16`; `duration` |
 | `ai_ugc` (talking head) | `ugc.md` | one-take avatar: `kling/ai-avatar-standard`, `kling/ai-avatar-pro`, `omnihuman-1-5`, `infinitalk/from-audio`; two-step: `kling/v2-1-standard` (silent base) then `volcengine/video-to-video-lip-sync`; native audio for short beats: `veo-3-1`, `bytedance/seedance-2-5`, `kling-3.0-omni/image-to-video` | identity still as the image input; accepted dry voice as the audio input; route, live price and fallback recorded in the render spec. Routes and dated observations: `skills/ugc-creator-edit/references/lip-sync-routing.md`. **Fetch the model page and the live charge before every dependent submission** |
 | `motion_graphic` | `motion-graphic.md` | `wan/2-7-text-to-video`, `bytedance/seedance-2-5`, `kling-3.0/video`, plus a static model for designed frames | ratio; `duration` |
 | `claymation` | `claymation.md` | any `static` or `video` model; the look is prompted, not a separate model | ratio; `duration` for motion |
-| anything else | **none** | **stop** | — |
+| anything else | **none** | **stop** | – |
 
 ## Unmapped asset types
 
@@ -62,7 +62,7 @@ The set is eligible; the choice is yours to make and to state.
    supported, generate a suitable source composition and assemble the final
    placement deliberately; do not merely crop away text or proof. Image
    inputs eliminate text-only routes, and duration limits govern source shots.
-2. **Then the brief's demand.** On-image text pushes toward Ideogram. Product
+2. **Then the brief's demand.** On-image text pushes toward `nano-banana-2`, which sets type and holds 4:5, or toward Ideogram when 4:5 is not needed. Product
    fidelity from references pushes toward models taking many reference images
    (`nano-banana-2` at 14, `seedream/4.5-edit` at 14). Native audio pushes
    toward `veo-3-1` or the Seedance family.

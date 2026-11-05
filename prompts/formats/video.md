@@ -18,10 +18,10 @@ Go straight to text-to-video only for cheap exploration, or when the brief says 
 
 ## Ratio and length
 
-- **Ratio:** 9:16 for Reels and Stories, 16:9 for in-stream. No video model
-  offers 4:5. Generate clips at 9:16 with a centred subject and let
-  `metrix-video-assembly` render the 4:5 feed cut, with its type set at 4:5
-  rather than cropped from 9:16.
+- **Ratio:** 9:16 for Reels and Stories, 16:9 for in-stream. Check the selected
+  model's current ratios; where it does not offer 4:5, generate clips at 9:16
+  with a centred subject and let `metrix-video-assembly` render the 4:5 feed cut,
+  with its type set at 4:5 rather than cropped from 9:16.
 - **Duration:** a parameter with a fixed set of allowed values per model. Check
   the routing table, and take the shortest that carries the idea. A hook test is
   decided early; extra seconds add cost, not signal.

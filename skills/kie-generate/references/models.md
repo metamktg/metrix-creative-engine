@@ -1,6 +1,6 @@
 # Models
 
-Read from the specs at `docs.kie.ai`, **2026-09-14**. Kie changes these often —
+Read from the specs at `docs.kie.ai`, **2026-09-14**. Kie changes these often,
 on a validation error, check the model's live page (append `.md` to its docs URL
 for the raw spec). The full catalog is `docs/MODEL_CATALOG.md` in the
 metrix-creative-engine repo.
@@ -9,10 +9,10 @@ metrix-creative-engine repo.
 
 | Want | Model | Notes |
 | --- | --- | --- |
-| Image, general | `google/nano-banana` | 11 ratios incl. `4:5` and `9:16`. Default choice |
+| Image, general or cheap iteration | `google/nano-banana` | 11 ratios incl. `4:5` and `9:16`. Small prompt budget. For a Metrix feed static the default is `nano-banana-2`, see `metrix-ad-creative` |
 | Image, 4K / max quality | `nano-banana-2` | No prefix. 4K, 14 ref images |
 | Image, product realism | `bytedance/seedream-v4-text-to-image` | No 4:5 |
-| Image with legible text | `ideogram/v3-text-to-image` | Best text rendering; real `negative_prompt` |
+| Image with legible text | `ideogram/v3-text-to-image` | Best text rendering; real `negative_prompt`; no 4:5, so use `nano-banana-2` for a 4:5 text static |
 | Image, cheap and fast | `z-image` | No prefix. Only 5 ratios |
 | Edit an image | `google/nano-banana-edit` | Up to 10 input URLs |
 | Inpaint a region | `ideogram/v3-edit` | Needs a `mask_url` matching image dims |
@@ -44,7 +44,7 @@ metrix-creative-engine repo.
 Required `prompt` (5000) and `image_urls` (array, max 10, jpeg/png/webp, 10MB
 each). Optional `aspect_ratio`, `output_format`.
 
-### `nano-banana-2` — no `google/` prefix
+### `nano-banana-2` · no `google/` prefix
 
 Required `prompt` (max 20000). Optional `image_input` (array, max 14, 30MB),
 `aspect_ratio` (15 values, default `auto`), `resolution` (`1K` `2K` `4K`),
@@ -71,7 +71,7 @@ Required `prompt`. Optional `style` (`AUTO` `GENERAL` `REALISTIC` `DESIGN`),
 `rendering_speed` (`TURBO` `BALANCED` `QUALITY`), `negative_prompt`, `seed`,
 `image_size`, `num_images` (**string**: `"1"`–`"4"`).
 
-### `z-image` — no prefix
+### `z-image` · no prefix
 
 `prompt` (max 1000) **and** `aspect_ratio` (`1:1` `4:3` `3:4` `16:9` `9:16`)
 both required.
@@ -101,7 +101,7 @@ Use `kie_create_task` + `kie_wait_for_task`, or a large `timeoutSeconds`.
 
 `generation_type`: `TEXT_2_VIDEO`, `FIRST_AND_LAST_FRAMES_2_VIDEO`,
 `REFERENCE_2_VIDEO` (1–3 images, 8s only). 4K costs roughly double. **No 4:5 or
-1:1** — crop from 9:16 for feed.
+1:1.** Compose the feed cut from 9:16 in `metrix-video-assembly` rather than cropping.
 
 ### Kling
 
@@ -120,7 +120,7 @@ Pro adds `tail_image_url` for a last frame.
 `aspect_ratio`, `resolution` (`480p` `720p` `1080p`), `duration` (`"5"` `"10"`
 as strings), `camera_fixed`, `seed`.
 
-The `-image-to-video` variants take `image_url` and drop `aspect_ratio` — the
+The `-image-to-video` variants take `image_url` and drop `aspect_ratio`, the
 image sets it.
 
 `bytedance/seedance-2-5` documents 4–30 second durations and takes
@@ -153,7 +153,7 @@ marked discontinued.
 
 With `custom_mode: true` and `instrumental: false`, `prompt` is used **verbatim
 as lyrics** and `style` + `title` become required. For an ad bed use
-`instrumental: true` — vocals fight voiceover and on-screen copy.
+`instrumental: true` · vocals fight voiceover and on-screen copy.
 
 ## Speech
 
