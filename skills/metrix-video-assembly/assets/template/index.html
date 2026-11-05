@@ -1,0 +1,62 @@
+<!doctype html>
+<!--
+  Starter composition for metrix-video-assembly. Copy this folder to
+  <run>/composition/, copy scripts/runtime.js beside it, then replace the
+  scenes. Times here must match storyboard.json exactly: the storyboard is the
+  contract the checks read, this file is how it looks.
+
+  Rules that keep the render deterministic:
+  - No CSS animation, transition, setTimeout or rAF loop. Motion comes from
+    data-* attributes or Motion.on((t) => ...), both pure functions of t.
+  - Fonts and images are local files in this folder. A remote URL can fail
+    mid-render and leave a fallback face in some frames and not others.
+  - Every line a viewer must read carries data-text="<id from storyboard>".
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  /* Brand tokens: replace from the brand kit (palette, type), never invent. */
+  :root {
+    --bg: #f4efe6;
+    --ink: #101010;
+    --accent: #8a5a2b;
+    --display: "Display", Georgia, serif;
+    --body: "Body", Helvetica, Arial, sans-serif;
+  }
+  /* @font-face { font-family: "Display"; src: url("fonts/display.woff2"); } */
+  html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; background: var(--bg); }
+  /* Sizes in vw so the same file renders 9:16, 4:5 and 1:1 without edits. */
+  section[data-scene] { position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 0 7vw; box-sizing: border-box; }
+  .media { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .scrim { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.0) 35%, rgba(0,0,0,.55)); }
+  /* text-wrap: balance stops a lone word stranding on the last line. */
+  .hook { font: 700 8.4vw/1.05 var(--display); color: var(--ink); margin: 0; position: relative; text-wrap: balance; }
+  .line { font: 500 5vw/1.2 var(--body); color: var(--ink); margin: 2vw 0 0; position: relative; text-wrap: balance; }
+  .on-image { color: #fff; text-shadow: 0 .3vw 1.2vw rgba(0,0,0,.45); }
+  .cta { font: 700 5.4vw/1 var(--body); color: var(--bg); background: var(--ink);
+    padding: 3vw 6vw; border-radius: 99vw; margin-top: 5vw; position: relative; }
+  .logo { width: 46vw; position: relative; }
+</style>
+</head>
+<body>
+
+<section data-scene="s1" data-start="0" data-end="2.5" data-trans-in="cut" data-trans-out="dip">
+  <h1 class="hook" data-text="hook" data-in="0" data-out="2.5" data-enter="none">Hook copy, verbatim</h1>
+</section>
+
+<section data-scene="s2" data-start="2.5" data-end="6" data-trans-in="dip" data-trans-out="dip">
+  <img class="media" data-ken data-from="1" data-to="1.08" src="media/product.jpg" alt="">
+  <div class="scrim"></div>
+  <p class="line on-image" data-text="show" data-in="2.7" data-out="6" data-enter="rise">The product, doing its job</p>
+</section>
+
+<section data-scene="s3" data-start="6" data-end="9" data-trans-in="dip" data-trans-out="cut">
+  <img class="logo" src="media/logo.png" alt="" data-in="6.1" data-enter="fade">
+  <div class="cta" data-text="cta" data-in="6.3" data-out="9" data-enter="pop">CTA, verbatim</div>
+</section>
+
+<script src="runtime.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+{
+  "identity": {
+    "canonical_name": "Metrix",
+    "product_name": "Metrix IAP",
+    "positioning_line": "Performance intelligence for marketers who need to move faster.",
+    "positioning_evidence": "sign-in page of the app (artifacts/metrix-iap), seen 2026-10-23"
+  },
+  "palette": {
+    "source": "artifacts/marketing/src/index.css :root",
+    "bg_deep": "#020711",
+    "bg_main": "#050b18",
+    "cyan": "#16d9ff",
+    "blue": "#155dff",
+    "text": "#f5f8ff",
+    "text_soft": "#c6d2e5",
+    "text_muted": "#9ba8bc"
+  },
+  "typography": {
+    "family": "Inter",
+    "source": "artifacts/marketing/index.html Google Fonts link"
+  },
+  "logo": {
+    "file": "metrix-logo.png",
+    "construction": "icon plus lowercase 'metrix' in Inter extrabold, letter-spacing -0.02em (components/BrandMark.tsx)"
+  },
+  "claims": {
+    "approved": [
+      "Stop Guessing Which Ads Actually Work.",
+      "Know which hooks actually drive revenue",
+      "Not more dashboards. Better decisions.",
+      "Actionable, evidence-backed recommendations delivered directly in your command center."
+    ],
+    "forbidden_until_evidenced": [
+      "3.4x Avg. ROAS Lift",
+      "-47% Wasted Spend",
+      "+245k Data Points",
+      "the Jordan Ellis / Elevate Digital Agency testimonial",
+      "Early Access, 200 Max Accepted",
+      "top 1% marketer strategic clarity",
+      "$571 / 62.3% from dashboard-screenshot.png"
+    ],
+    "why": "No source for any of these was found in the repository on 2026-10-23. They are on the live marketing site; that is not evidence."
+  },
+  "disclosure": {
+    "screen_label": "Synthetic demo data",
+    "rule": "Every scene that shows product figures carries this label. The figures come from the Metrix Demo fixture, not a client."
+  }
+}

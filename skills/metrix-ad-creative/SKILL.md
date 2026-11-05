@@ -261,6 +261,28 @@ variable against another.
 The isolation discipline exists only to protect a running Matrix Sprint Test,
 and applying it where no test exists costs you range for nothing.
 
+## Video and motion graphics: hand off to assembly
+
+
+
+For `video`, `motion_graphic` and captioned `ugc` briefs, what this skill
+
+generates are layers: approved stills, one-action clips, a type-free motion
+
+bed, a music bed. The ad that runs is assembled by `metrix-video-assembly`,
+
+which sets the hook and CTA as type, sequences the shots, mixes the sound,
+
+bakes the poster as frame 0 and renders the brief's ratio, 4:5 included. Do not
+
+prompt a video model for on-screen text, and do not deliver a raw clip as the
+
+ad when the brief puts a hook or CTA in frame.
+
+
+
+For creator-led UGC, apply `ugc-creator-edit` and its production/review standard before presenting the finished export. Retain approved product/B-roll library originals when the presenter changes, verify the new identity and voice separately, and choose proof handling for the actual brief and format. Generated layers are source inventory until the actual assembled export is reviewed. Exact project treatments and temporary exceptions do not become engine defaults.
+
 ## What this skill will not do
 
 - Invent a brief, an ICP, a pillar or a variable stack. Those come from

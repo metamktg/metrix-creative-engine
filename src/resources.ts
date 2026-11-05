@@ -6,14 +6,16 @@
  * and went stale in two places at once. As resources they are read from the one
  * source at the moment they are needed.
  *
- * Both are DATED reference, not truth: Kie adds and renames models often, and
- * each document says when it was read. A validation error on a model id means
- * check the live page, not that the call was malformed.
+ * Provider catalogs are dated reference, not live truth: a model validation
+ * error means check the current provider page. The production standard is a
+ * separate local release contract; it does not change provider API schemas.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import modelCatalog from "../docs/MODEL_CATALOG.md";
 import formatRouting from "../skills/metrix-ad-creative/references/format-routing.md";
+import productionStandard from "../docs/UGC_PRODUCTION_STANDARD.md";
+import ugcCreativePlaybook from "../docs/UGC_CREATIVE_PLAYBOOK.md";
 
 interface KieResource {
   name: string;
@@ -24,6 +26,22 @@ interface KieResource {
 }
 
 export const KIE_RESOURCES: readonly KieResource[] = [
+  {
+    name: "kie-production-review-standard",
+    uri: "kie://production-review-standard",
+    title: "UGC and video production review standard",
+    description:
+      "The evergreen production and presentation gate: audio, music rights, pacing, B-roll quality, technical and IAP variables, messaging, plain-language sound check, editorial peer review and a separate blind review. Agent-side evidence, not provider-side enforcement.",
+    body: productionStandard,
+  },
+  {
+    name: "kie-ugc-creative-playbook",
+    uri: "kie://ugc-creative-playbook",
+    title: "UGC creative direction and feedback playbook",
+    description:
+      "The detailed UGC and video creative standard: performance, voice, music, captions, B-roll, editing, scoped negative prompts and evidence-based review. Read on demand alongside the short creative-direction prompt; this resource is not injected wholesale into every generation.",
+    body: ugcCreativePlaybook,
+  },
   {
     name: "kie-model-catalog",
     uri: "kie://model-catalog",

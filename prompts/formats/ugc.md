@@ -26,12 +26,30 @@ whole matrix, so "UGC feel" is not a hidden variable between cells.
 - No real people, public figures or lookalikes.
 - Keep the same person description in the locked base across a row. A different
   face per cell is an uncontrolled variable.
+- Cast before generating: persona brief, product match, identity-still spec and
+  voice are in `skills/ugc-creator-edit/references/casting.md`. Reuse B-roll and
+  graphics, never the actor, and treat the presenter as a demonstrator.
 
 ## Product in hand
 
 - Product references are required.
 - Hands holding products are where artefacts concentrate. Zoom in on fingers,
   grip and the label on every render.
+- One hand action per shot. No on-camera eating, drinking or applying; end on a
+  hold-and-show. Keep the label readable and the hero detail uncovered.
+- Across clips, consistency comes only from repeating the accepted still file and
+  the same wardrobe, setting and light sentences verbatim.
+
+## Script, hook and delivery
+
+Before any voice or motion spend, write the script for the mouth with a per-line
+delivery map and run `skills/ugc-creator-edit/scripts/check_script.py`. Rules and
+format: `skills/ugc-creator-edit/references/script-and-delivery.md` and
+`hooks.md`. Plan at about 2.4 words a second under the brief's duration mode
+(exact, maximum or range); never speed speech to fit. A synthetic presenter
+demonstrates and never reports experience. Direction is not spoken text, and no
+breaths or imperfections are inserted. The negative sheet and the voice, shot
+and editor blocks are in `kie://ugc-creative-playbook`.
 
 ## Honesty and disclosure
 
@@ -60,10 +78,28 @@ Treat it as a video asset (`formats/video.md`) with extra checks: mouth
 movement against the voiceover, and eye-line consistency. Voiceover is generated
 separately from the routing table's speech model, not asked of the video model.
 
+Choose the route by input and record it, the live price and a fallback in
+`render_spec.json` before the first paid call: a one-take avatar (accepted still
+plus accepted dry voice), a two-step silent base clip then a video-to-video
+lip-sync pass, or a native-audio model for short beats. Accept the still, then
+the full dry voice by listening, then one representative motion proof, then the
+full take. Face beats only get lip sync. Routes, dated observations and the
+outage protocol: `skills/ugc-creator-edit/references/lip-sync-routing.md`.
+
 ## QA checks to add
+
+`kie_render_ugc` loads both `06-production-review.md` and the complete shared
+`docs/UGC_PRODUCTION_STANDARD.md`. The latter also reads back through
+`kie://production-review-standard`. Use its performance, soundtrack, UI timing,
+transition, recovery and five-gate evidence requirements on the actual export.
+The checklist below is additive and cannot certify an unheard or unwatched cut.
 
 - [ ] Reads as phone-captured, not studio
 - [ ] Hands and grip are anatomically correct
 - [ ] Product label matches the reference
 - [ ] Same person description across every cell in the row
 - [ ] Disclosure requirement flagged in the handoff
+- [ ] `check_script.py` passes on the delivery map before voice spend
+- [ ] Full dry voice accepted by human listening before any lip-sync spend
+- [ ] Rendered take transcribed and compared with the script (`--transcript`)
+- [ ] Last two seconds of every clip inspected for drift and intruding objects

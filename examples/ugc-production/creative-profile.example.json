@@ -1,0 +1,98 @@
+{
+  "profile_version": 1,
+  "purpose": "Illustrative private production sidecar. This is not an engine or provider API schema. Replace placeholders and keep completed client records outside public instructions.",
+  "run_id": "REPLACE_WITH_STABLE_RUN_ID",
+  "brief_reference": "REPLACE_WITH_APPROVED_BRIEF_REFERENCE",
+  "advertiser": null,
+  "audience_and_context": null,
+  "offer_and_evidence": [],
+  "claim_conflicts_to_resolve": [],
+  "client_exclusions": [],
+  "deliverables": {
+    "authorized_count": null,
+    "placements": [],
+    "aspect_ratio": null,
+    "duration": { "mode": "REPLACE_WITH_exact_maximum_OR_range", "seconds": null },
+    "comparison_locks": []
+  },
+  "copy": {
+    "hook": null,
+    "body": null,
+    "cta": null,
+    "destination": null,
+    "conditions": [],
+    "verbatim_locks": [],
+    "allowed_edits": [],
+    "pronunciation_map": {},
+    "line_direction": [
+      {
+        "line_id": "REPLACE_WITH_LINE_ID",
+        "spoken_text": null,
+        "intent": null,
+        "emotion": null,
+        "selective_emphasis": [],
+        "pause_and_breath_opportunities": null,
+        "gaze_gesture_and_posture": null,
+        "estimated_duration_seconds": null,
+        "measured_source_range": null
+      }
+    ]
+  },
+  "creator": {
+    "casting_and_styling": null,
+    "approved_identity_reference_and_hash": null,
+    "camera_and_framing": null,
+    "voice_identity_and_accepted_file_hash": null,
+    "acoustic_profile": {
+      "mic_and_distance": null,
+      "room": null,
+      "delivery_reference": null,
+      "measured_mix_targets_for_this_run": null
+    }
+  },
+  "source_inventory_and_rights": [],
+  "beat_plan": [
+    {
+      "beat_id": "REPLACE_WITH_BEAT_ID",
+      "spoken_cue": null,
+      "viewer_question_answered": null,
+      "picture_action_and_native_source_range": null,
+      "timeline_start_end_and_timebase": null,
+      "ui_overlay_or_fullscreen_and_reading_load": null,
+      "caption_group_and_position": null,
+      "transition_and_audio_continuity": null,
+      "acceptance_check": null
+    }
+  ],
+  "music": {
+    "source_and_rights_evidence": null,
+    "permitted_placements": [],
+    "source_cue": null,
+    "entrance_relative_to_spoken_cue": null,
+    "envelope_and_speech_clearance": null
+  },
+  "generation_gaps": [],
+  "authorization_and_budget": {
+    "session_authorization_reference": null,
+    "buckets_by_unit": [],
+    "outstanding_job_ids": [],
+    "completion_and_repair_reserve": null,
+    "paid_repair_limit": null,
+    "local_refinement_limit_and_stop_criteria": null
+  },
+  "reviews": {
+    "canonical_gate_record": "production-review.json",
+    "accepted_components_and_scope": [],
+    "required_review_methods": [],
+    "explicit_deferrals": [],
+    "current_export_path_and_hash": null,
+    "blockers": [],
+    "optional_notes": []
+  },
+  "retention": {
+    "immutable_revision_id": null,
+    "current_pointer": null,
+    "index_reference": "retention-index.json",
+    "protected_sources_and_pins": []
+  }
+}

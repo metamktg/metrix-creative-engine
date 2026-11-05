@@ -1,12 +1,15 @@
 # Model routing for ad creative
 
-Read from the specs at `docs.kie.ai`, **2026-09-14**. Verify against the live
-page on a validation error. Full catalog: `docs/MODEL_CATALOG.md` in the
-metrix-creative-engine repo.
+Historical routing baseline from `docs.kie.ai`, **2026-09-14**. The following
+tables, model IDs, limits and recommendations are not current capability or
+price verification. Inspect the selected model's live official schema and
+cost before a paid call, rather than waiting for a validation error. Full
+historical catalog: `docs/MODEL_CATALOG.md` in the engine repo.
 
 ## The ratio problem, first
 
-Meta's feed default is **4:5**. Most models do not offer it.
+The brief's placement decides the final ratio. The dated table below recorded
+4:5 support at that time; recheck current models before eliminating a route.
 
 | Model | Offers 4:5 |
 | --- | --- |
@@ -18,9 +21,10 @@ Meta's feed default is **4:5**. Most models do not offer it.
 | `ideogram/*` | no |
 | `veo-3-1` (video) | no, 16:9 and 9:16 only |
 
-So for feed statics, **`nano-banana-2`** unless you have a reason otherwise.
-Everything else means generating 1:1 or 9:16 and cropping, which costs you
-composition at the exact edges where the subject usually sits.
+The snapshot favored `nano-banana-2` for feed statics. Use that recommendation
+only after current requirements, reference fidelity and cost are verified.
+An unsupported native ratio can be solved by deliberate assembly or a valid
+current model; automatic cropping may remove the subject or proof.
 
 ### The text-and-ratio bind, and how it is resolved
 
@@ -46,8 +50,9 @@ iteration where neither text nor 4K matters.
 **`aspect_ratio` defaults to `auto` on `nano-banana-2`. Set it explicitly every
 time** or the ratio you get is whatever the model inferred.
 
-For video there is no 4:5 anywhere. Generate 9:16 for Reels and Stories, 16:9
-for in-stream, and treat feed video as a crop from 9:16.
+For video, inspect current native ratios. Generate suitable source shots and
+use assembly to compose each final placement, including 4:5 when requested.
+Reposition proof and type for that canvas rather than cropping a finished ad.
 
 ## Routing by asset type
 
@@ -59,12 +64,14 @@ for in-stream, and treat feed video as a crop from 9:16.
 | Static, text where ratio is free | `ideogram/v3-text-to-image` | Strong text and a real `negative_prompt`, but **no 4:5**: only when the placement is 1:1 or 9:16 |
 | Product-led static | `bytedance/seedream-v4-text-to-image` | Product realism; no 4:5 |
 | Carousel | `nano-banana-2` at `1:1` | One model across all cards, or they will not sit together |
-| UGC / AI-UGC still | `nano-banana-2` | Caption bars are on-image text |
+| UGC / AI-UGC still | `nano-banana-2` | Caption bars are on-image text; the identity still is also the lip-sync source, so mouth closed, no shadow on the lower face, no logos or screens |
+| AI-UGC talking head, one take | `kling/ai-avatar-standard` | Accepted still plus accepted dry voice in, one coherent take out. Quoted 10.1 credits a second on 2026-11-05. Every image-plus-audio avatar model on Kie was down for a day on 2026-11-02, so record the fallback before the first call |
+| AI-UGC talking head, two-step fallback | `kling/v2-1-standard` then `volcengine/video-to-video-lip-sync` (`lite`) | Silent talking base clip (eyes on camera, mouth visible) then the sync pass on the accepted voice. Worked on 2026-11-02 and 2026-11-05; the base clip price doubled between those dates (50 to 101 credits per 10 s), so read the live charge before the dependent pass |
 | Video from a still | `kling/v2-1-master-image-to-video` | Approve the frame, then animate |
 | Video, top quality | `veo-3-1` | 1080p/4K with native audio |
 | Video, cheap iteration | `bytedance/v1-lite-text-to-video` | |
 | Music bed | `ai-music-api/generate`, `instrumental: true` | |
-| Voiceover | `elevenlabs/text-to-speech-multilingual-v2` | |
+| Voiceover | `elevenlabs/text-to-speech-multilingual-v2` | Per-word timestamps for caption timing. Alternate `google/gemini-3-8-flash-tts` with a per-turn `style`: it produced the accepted voice on 2026-11-02 while both ElevenLabs routes timed out upstream all afternoon |
 | Final upscale | `topaz/image-upscale` | After approval only |
 
 **Not on Kie: Sora, Midjourney.** If a brief names one, say so and route to the

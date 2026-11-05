@@ -8,9 +8,12 @@ was designed for, and the render must execute in that medium. A brief written
 for a carousel is not satisfied by a beautiful static, because the idea was
 built to unfold across cards. This table is the handoff contract between them.
 
-Model facts are dated (**2026-09-14**, from the specs at docs.kie.ai). Craft for
-each format lives in `prompts/formats/<asset_type>.md`. This file is the
-mechanical mapping only.
+Model facts below are a historical **2026-09-14** snapshot from docs.kie.ai,
+not a live eligibility catalog. Verify the selected model's current fields,
+ratio, duration, reference roles, availability and cost before submission.
+Do not infer that no current model supports a ratio or capability because an
+older table omitted it. Craft for each format lives in
+`prompts/formats/<asset_type>.md`; this file is a routing baseline only.
 
 ## The routing table
 
@@ -22,7 +25,7 @@ mechanical mapping only.
 | `video` | `video.md` | `veo-3-1`, `kling-3.0/video`, `kling/v2-5-turbo-text-to-video-pro`, `bytedance/seedance-2-5`, `bytedance/v1-pro-text-to-video`, `minimax-h3/text-to-video`, `wan/2-7-text-to-video`, `hailuo/02-text-to-video-pro`, `runway` | ratio; `duration` |
 | `video` from an approved still | `video.md` | `kling/v2-1-master-image-to-video`, `kling-3.0-omni/image-to-video`, `bytedance/v1-pro-image-to-video`, `hailuo/2-3-image-to-video-pro`, `minimax-h3/image-to-video`, `wan/2-7-image-to-video`, `veo-3-1` (`image_urls`) | image input; `duration` |
 | `ugc` | `ugc.md` | any `video` model, prompted for phone-camera characteristics | ratio `9:16`; `duration` |
-| `ai_ugc` (talking head) | `ugc.md` | `kling/ai-avatar-pro`, `kling/ai-avatar-standard`, `omnihuman-1-5`, `infinitalk/from-audio`, `volcengine/video-to-video-lip-sync` | **parameters unverified: fetch the model page before first use** |
+| `ai_ugc` (talking head) | `ugc.md` | one-take avatar: `kling/ai-avatar-standard`, `kling/ai-avatar-pro`, `omnihuman-1-5`, `infinitalk/from-audio`; two-step: `kling/v2-1-standard` (silent base) then `volcengine/video-to-video-lip-sync`; native audio for short beats: `veo-3-1`, `bytedance/seedance-2-5`, `kling-3.0-omni/image-to-video` | identity still as the image input; accepted dry voice as the audio input; route, live price and fallback recorded in the render spec. Routes and dated observations: `skills/ugc-creator-edit/references/lip-sync-routing.md`. **Fetch the model page and the live charge before every dependent submission** |
 | `motion_graphic` | `motion-graphic.md` | `wan/2-7-text-to-video`, `bytedance/seedance-2-5`, `kling-3.0/video`, plus a static model for designed frames | ratio; `duration` |
 | `claymation` | `claymation.md` | any `static` or `video` model; the look is prompted, not a separate model | ratio; `duration` for motion |
 | anything else | **none** | **stop** | — |
@@ -54,9 +57,11 @@ the nearest mapped type as a **question**, not a default.
 
 The set is eligible; the choice is yours to make and to state.
 
-1. **Hard constraints first.** Ratio eliminates models outright: only the Nano
-   Banana family offers 4:5, and no video model does. Image inputs eliminate
-   text-only models. Duration ceilings eliminate models for long clips.
+1. **Hard constraints first.** Use the selected live model's actual ratio,
+   input and duration constraints. Where the required final ratio is not
+   supported, generate a suitable source composition and assemble the final
+   placement deliberately; do not merely crop away text or proof. Image
+   inputs eliminate text-only routes, and duration limits govern source shots.
 2. **Then the brief's demand.** On-image text pushes toward Ideogram. Product
    fidelity from references pushes toward models taking many reference images
    (`nano-banana-2` at 14, `seedream/4.5-edit` at 14). Native audio pushes
@@ -82,12 +87,12 @@ models use `aspect_ratio`; Seedream v3/v4 use `image_size` with named sizes
 `image_size`. The wrong key is silently ignored and you get the default, which
 is how a whole matrix renders at the wrong ratio without anyone noticing.
 
-## Not available on Kie
+## Unavailable in the dated snapshot
 
-`sora`, `sora-2`, `midjourney`, `mmaudio`. If a brief names one, say so and
-route to an eligible model as a stated substitution. A model swap is not a
-format swap: the medium is unchanged, so this is a note in the handoff, not a
-stop.
+The snapshot listed `sora`, `sora-2`, `midjourney` and `mmaudio` as unavailable.
+Check current provider documentation before treating that list as a present
+constraint. If a requested route is still unavailable, state a valid
+substitution within the user's scope; preserve the requested medium.
 
 ## Brand kit to generation
 

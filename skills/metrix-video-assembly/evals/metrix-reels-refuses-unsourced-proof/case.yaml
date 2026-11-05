@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: metrix-reels-refuses-unsourced-proof
+expected_outcome: |
+  An 8 second 1080x1920 MP4 that does not show '3.4x', 'ROAS lift', the Jordan Ellis quote or any rating; the report explains that the kit lists those as unsourced until evidenced and offers a sourced alternative. Readable copy clear of the Reels bands, CTA verbatim, thumbnail equal to frame 0, loudness near -14 LUFS, no double exposures.
+context:
+  scaffold_script: place-files.sh

@@ -1,5 +1,7 @@
 # metrix-creative-engine
 
+For UGC/video production, read [the consolidated production standard](docs/UGC_PRODUCTION_STANDARD.md) and [workflow reconciliation](docs/WORKFLOW_RECONCILIATION.md). The runtime UGC/video prompts and production-review resource load that same standard. Keep brand/project design references in their private briefs; a particular UI-overlay layout is not an engine-wide template. Installed skills are synchronized from this canonical checkout, and a previously running MCP server needs to reload a rebuilt bundle to receive changes. `npm run verify` includes standard-document drift and review-record checks.
+
 Generate ad creative through [Kie.ai](https://kie.ai) from inside Claude Code.
 
 **Skills** that know how to prompt each model family, and how to turn a Metrix

@@ -1,0 +1,4 @@
+interface:
+  display_name: "UGC Creator Edit"
+  short_description: "Brief-aligned UGC with reuse and credit controls"
+  default_prompt: "Use $ugc-creator-edit to produce the authorized UGC deliverables from this Metrix brief, reusing accepted assets and staying within our approved credit budget."

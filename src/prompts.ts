@@ -22,6 +22,9 @@ import core from "../prompts/00-core.md";
 import brandIntake from "../prompts/01-brand-intake.md";
 import renderBridge from "../prompts/02-render-bridge.md";
 import selfValidation from "../prompts/04-self-validation.md";
+import productionReview from "../prompts/06-production-review.md";
+import productionStandard from "../docs/UGC_PRODUCTION_STANDARD.md";
+import ugcCreativeDirection from "../prompts/07-ugc-creative-direction.md";
 import mst from "../prompts/05-mst.md";
 import carousel from "../prompts/formats/carousel.md";
 import claymation from "../prompts/formats/claymation.md";
@@ -36,6 +39,11 @@ const FORMAT_MODULES: Record<string, { title: string; module: string }> = {
   carousel: { title: "carousel", module: carousel },
   video: { title: "video", module: video },
   ugc: { title: "UGC", module: ugc },
+  // A talking head generated end to end is its own asset type in the brief
+  // gate, and it needs the same production review as creator-led UGC. It
+  // shares the UGC format module, which carries the script, casting and
+  // lip-sync routing rules.
+  ai_ugc: { title: "AI-UGC talking head", module: ugc },
   motion_graphic: { title: "motion graphic", module: motionGraphic },
   claymation: { title: "claymation", module: claymation },
 };
@@ -61,14 +69,23 @@ function userMessage(text: string) {
 
 export function registerKiePrompts(server: McpServer): void {
   for (const [assetType, { title, module }] of Object.entries(FORMAT_MODULES)) {
+    const requiresProductionReview = assetType === "ugc" || assetType === "ai_ugc" || assetType === "video";
     server.registerPrompt(
       `kie_render_${assetType}`,
       {
         title: `Render a ${title}`,
-        description: `The full render workflow for a brief whose asset_type is "${assetType}": the core rules, the render bridge, the ${title} format module, and the final pass. Use the prompt that matches the brief's declared format; the brief decides the medium, not the renderer.`,
+        description: `The full render workflow for a brief whose asset_type is "${assetType}": the core rules, the render bridge, the ${title} format module, and the final pass.${requiresProductionReview ? " Includes the shared finishing standard and five evidence-bound presentation gates." : ""} Use the prompt that matches the brief's declared format; the brief decides the medium, not the renderer.`,
         argsSchema: briefArg,
       },
-      ({ brief }) => userMessage(withBrief(joined(core, renderBridge, module, selfValidation), brief)),
+      ({ brief }) => {
+        // Finished creator-led and video assets need evidence beyond a successful
+        // provider render. Load the release gates in the actual prompt, not only
+        // in a discoverable skill that the caller might never read.
+        // The short creative-direction module rides last; the full playbook stays an
+        // on-demand resource (kie://ugc-creative-playbook), not part of every request.
+        const review = requiresProductionReview ? [productionReview, productionStandard, ugcCreativeDirection] : [];
+        return userMessage(withBrief(joined(core, renderBridge, module, selfValidation, ...review), brief));
+      },
     );
   }
 
