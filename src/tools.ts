@@ -16,6 +16,7 @@ import { ASSET_TYPES, formatVerdict, validateBrief } from "./brief.js";
 import type { KieClient, PollUpdate } from "./client.js";
 import { appendLedger, formatLedger, readLedger } from "./ledger.js";
 import { RESULT_RETENTION_NOTE, summarizeTask, type TaskRecord } from "./protocol.js";
+import { inspectUgcPacket, submitUgcPacket } from "../skills/metrix-ad-creative/scripts/ugc-preflight.mjs";
 import {
   createOutputShape,
   creditsOutputShape,
@@ -190,6 +191,40 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
           warnings: verdict.warnings,
         });
       }),
+  );
+
+  server.registerTool(
+    "kie_validate_ugc_preproduction",
+    {
+      title: "Check UGC preproduction dependencies without spending",
+      description: "Validate a local version-1 UGC preproduction packet, exact source hashes, locked copy, presenter/voice/scene acceptance records, proof roles and current request/capability/budget bindings. Does not certify listening or performance. Optional observed duration detects returned-duration changes that require replanning.",
+      inputSchema: { packetPath: z.string().min(1), observedDurationSeconds: z.number().positive().optional() },
+      outputSchema: briefVerdictShape,
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    async ({ packetPath, observedDurationSeconds }) => guarded(async () => {
+      const { ok, errors, warnings } = await inspectUgcPacket(packetPath, { observedDurationSeconds });
+      return text([ok ? "UGC dependencies are current. Perceptual and final reviews remain separate." : `UGC preflight blocked:\n${errors.join("\n")}`], { ok, errors, warnings });
+    }),
+  );
+
+  server.registerTool(
+    "kie_create_ugc_lipsync",
+    {
+      title: "Submit approved-voice UGC lip sync after dependency checks",
+      description: "Use for dependent creator lip-sync production. Loads exact model/input from the private packet, revalidates current hashes/acceptance and creates an exclusive durable submission receipt before one provider call. A submitted or uncertain receipt blocks duplicate calls; recover the recorded task. Raw generation tools remain raw and do not provide this guard. No account-wide atomic budget or media-quality guarantee.",
+      inputSchema: { packetPath: z.string().min(1) },
+      outputSchema: { ...createOutputShape, receiptPath: z.string(), warnings: z.array(z.string()) },
+      annotations: { readOnlyHint: false, openWorldHint: true },
+    },
+    async ({ packetPath }) => guarded(async () => {
+      const result = await submitUgcPacket(packetPath, async ({ model, input }) => {
+        const taskId = await client.createTask({ model, input });
+        await record("created", { taskId, model, param: input });
+        return taskId;
+      });
+      return text([`UGC task created: ${result.taskId}. Preserve its receipt and wait on the same taskId.`, ...(result.warning ? [result.warning] : [])], { taskId: result.taskId, model: result.model, receiptPath: result.receiptPath, warnings: result.warning ? [result.warning] : [] });
+    }),
   );
 
   server.registerTool(

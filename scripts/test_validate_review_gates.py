@@ -143,6 +143,31 @@ class ReviewGateTests(unittest.TestCase):
     def test_complete_hashed_synthetic_fixture(self):
         self.verdict("READY")
 
+    def test_preproduction_binding_is_rehashed_without_new_artifact_role(self):
+        binding = write_artifact(self.root, "private/preproduction.json", {"fixture": "record only"})
+        self.record["production"]["preproduction"] = binding
+        rebind(self.record)
+        self.verdict("READY")
+        (self.root / binding["path"]).write_text("changed packet", encoding="utf-8")
+        self.verdict("FAIL")
+
+    def test_required_preproduction_binding_cannot_be_omitted(self):
+        self.record["artifacts"]["profile"] = write_artifact(self.root, "artifacts/profile.bin", {
+            "creator_preproduction_required": True,
+            "sound_check_required_facts": {key: ["fixture"] for key in gate.FACTS},
+        })
+        rebind(self.record)
+        self.verdict("NOT_CHECKED")
+
+    def test_all_preproduction_operation_bindings_are_rehashed(self):
+        one = write_artifact(self.root, "private/one.json", {"fixture": "one"})
+        two = write_artifact(self.root, "private/two.json", {"fixture": "two"})
+        self.record["production"]["preproduction"] = [one, two]
+        rebind(self.record)
+        self.verdict("READY")
+        (self.root / two["path"]).write_text("stale second packet", encoding="utf-8")
+        self.verdict("FAIL")
+
     def test_pending_reviews_are_not_quality_passes_or_failures(self):
         self.record["gates"] = {name: {"status": "PENDING"} for name in gate.GATE_CHECKS}
         self.verdict("NOT_CHECKED")

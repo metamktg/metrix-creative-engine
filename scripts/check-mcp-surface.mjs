@@ -155,6 +155,8 @@ try {
   // and this check exists to catch a tool that stopped being registered.
   const EXPECTED_TOOLS = [
     "kie_validate_brief",
+    "kie_validate_ugc_preproduction",
+    "kie_create_ugc_lipsync",
     "kie_get_credits",
     "kie_create_task",
     "kie_get_task",
@@ -173,17 +175,24 @@ try {
   );
   const typed = tools.filter((tool) => tool.outputSchema);
   check("every tool declares an outputSchema", typed.length === tools.length, `${typed.length}/${tools.length}`);
+  const ugcMissing = await rpc("tools/call", { name: "kie_validate_ugc_preproduction", arguments: { packetPath: path.join(downloadDir, "missing-packet.json") } });
+  check("UGC offline preflight returns typed blocked evidence for missing packet", ugcMissing.result?.structuredContent?.ok === false && ugcMissing.result?.structuredContent?.errors?.length > 0);
+  const ugcBlocked = await rpc("tools/call", { name: "kie_create_ugc_lipsync", arguments: { packetPath: path.join(downloadDir, "missing-packet.json") } });
+  check("UGC guarded submit refuses missing dependencies", ugcBlocked.result?.isError === true);
 
   console.log("\n== Resources ==");
   const resources = (await rpc("resources/list", {})).result?.resources ?? [];
-  const expectedResources = ["kie://model-catalog", "kie://format-routing", "kie://production-review-standard", "kie://ugc-creative-playbook"];
+  const expectedResources = ["kie://model-catalog", "kie://format-routing", "kie://production-review-standard", "kie://ugc-creative-playbook", "kie://ugc-preproduction"];
   const resourceUris = resources.map((resource) => resource.uri);
   check(
-    "all four reference documents are listed, with no substitution",
+    "all five reference documents are listed, with no substitution",
     resourceUris.length === expectedResources.length && expectedResources.every((uri) => resourceUris.includes(uri)),
     resourceUris.join(", "),
   );
   const catalog = await rpc("resources/read", { uri: "kie://model-catalog" });
+  const preproduction = await rpc("resources/read", { uri: "kie://ugc-preproduction" });
+  const preproductionText = preproduction.result?.contents?.[0]?.text ?? "";
+  check("preproduction contract and incomplete template are readable without repository access", preproductionText.includes("kie_create_ugc_lipsync") && preproductionText.includes('"accepted_bindings"') && preproductionText.includes("INCOMPLETE TEMPLATE"));
   const catalogText = catalog.result?.contents?.[0]?.text ?? "";
   check(
     "the catalog reads back inlined, not empty",

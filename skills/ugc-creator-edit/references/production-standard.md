@@ -2,7 +2,9 @@
 
 Use this reference with the approved brief, current asset map and the parent UGC workflow. It governs production choices before the five presentation gates. It does not authorize additional deliverables, spend or publication.
 
-Three companion references govern the choices made before footage exists, and the finishing rules below assume they were followed: [script-and-delivery.md](script-and-delivery.md) (spoken register, length as a budget, the per-line delivery map and the `check_script.py` gate), [casting.md](casting.md) (the persona brief from the ICP, identity-still spec, voice as part of the persona, reuse means B-roll not actors) and [lip-sync-routing.md](lip-sync-routing.md) (the three talking-head routes, dated model observations, the outage protocol). [hooks.md](hooks.md) holds the hook patterns, the one-variable hook test and the hook log.
+The [preproduction director](preproduction-director.md) connects the existing [script-and-delivery.md](script-and-delivery.md), [casting.md](casting.md), [hooks.md](hooks.md) and [lip-sync-routing.md](lip-sync-routing.md) owners before new creator performance. Keep one canonical approved monologue, exact locks, reasoned hook treatment, credible cast/voice/scene fit, thought-level intention/emotion/behavior, truthful proof sources and current provider handoff. New performers need fresh acceptance; unchanged appropriate B-roll/UI sources retain their rights and reuse scope. Dated provider recipes are not live capabilities or universal creative policy.
+
+Approved-full-voice Kie lip sync uses a current versioned packet, offline `kie_validate_ugc_preproduction` / client `ugc-check` and guarded `kie_create_ugc_lipsync` / client `ugc-start`. Structural validation cannot hear the full voice, establish acting quality, prove remote uploads or certify release. Native-audio routes need separate qualification and cannot borrow a standalone voice pass. Continue to apply the existing five exact-export reviews.
 
 ## Plan the sound
 

@@ -6,6 +6,19 @@ This stage governs `kie_render_ugc` (including AI-UGC briefs) and
 acceptance criteria and local validation command. Do not substitute a successful
 provider job or a brief-input verdict for finished-asset acceptance.
 
+For creator production, load the current canonical script and preproduction
+packet before reviewing. Compare intended thought/emotion/behavior with the
+actual delivered take; a direction label or structural preflight PASS is not
+perceptual acceptance. Rerun the offline preflight after material dependency
+changes. Keep performance context in existing script/profile/production context
+bindings; do not invent a new final artifact role. New creator runs set
+`profile.creator_preproduction_required: true` and bind the current packet as
+`production.preproduction` to one `{path, sha256}` descriptor or a nonempty
+array of actual operation-packet descriptors. A manifest proxy is insufficient.
+The final validator rehashes listed packets and binds them to context; it does not rerun Node
+preflight or recursively inspect every nested source. Rerun offline preflight
+on the current packet before final review.
+
 ## Produce an intentional edit
 
 Keep the accepted performance and useful existing footage. A duration maximum

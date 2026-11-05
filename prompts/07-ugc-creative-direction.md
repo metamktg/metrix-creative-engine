@@ -1,8 +1,16 @@
 # Creator-led creative direction and negative constraints
 
+For new creator lip-sync work, read `kie://ugc-preproduction` (or the bundled
+`preproduction-director.md`) for the implemented packet contract and incomplete
+anonymous template. Use the guarded submit path; the full reference stays on demand.
+
 Apply the relevant parts to the brief's declared format. For creator-led video, read `kie://ugc-creative-playbook` or `docs/UGC_CREATIVE_PLAYBOOK.md` at planning/review; load only the current stage's details. These rules supplement the render bridge and production review. They do not grant spend/publication permission or replace current user instructions.
 
 Before spending, lock the actual advertiser, audience, supported promise, exact hook/body/CTA, destination/conditions, duration mode, accepted references and acoustic profile. Keep casting, geography, client exclusions, chosen voice/music and numerical settings in the private run profile. Preserve earlier authorization and component acceptance. Do not silently change a locked word to repair tone.
+
+For new creator performance or a changed script/presenter, build the versioned preproduction packet described in `skills/ugc-creator-edit/references/preproduction-director.md`. Keep one canonical `script.json`: whole approved monologue, permitted wording changes, hook-treatment rationale, source/claim links and line-level thought, intention, emotion and observable behavior. Bind actual cast/voice/scene fit, complete accepted voice and current provider capability evidence. Requested emotion is direction; observed delivery and acceptance require the actual media. A new presenter invalidates performer approval while suitable B-roll/UI originals retain their source/rights acceptance.
+
+Before dependent lip sync, run offline `kie_validate_ugc_preproduction` (CLI `ugc-check`) and submit through `kie_create_ugc_lipsync` (CLI `ugc-start`). These paths validate current file/request bindings before creating a task; raw task tools remain general generation primitives and do not provide this guard. Do not bypass the guarded creator route to evade missing evidence. The approved-full-voice guard does not accept native-audio production; that architecture needs its own explicitly qualified contract. A structural pass cannot hear a voice, certify acting, reserve provider funds atomically or replace the five final reviews.
 
 Target a composed, conversational person with natural thought groups and selective emphasis. Reject announcer projection, forced hook lift, identical clause attacks, unlimited-breath delivery, clipped tails, fake breaths/imperfections and inconsistent room/mic sound. Keep speaking lips synchronized; inspect/listen before expensive dependent work under the actual review agreement.
 

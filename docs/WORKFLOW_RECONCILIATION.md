@@ -34,3 +34,38 @@ Declare each choice as engine-wide, brand/project or run-specific and bind an ac
 The local review validators check contained paths, records, hashes, selected production context, identities and required attestations. Technical measurements, decoder checks and transition detectors supplement actual listening and normal-speed review. They cannot establish naturalness, audience comprehension or a person's perception by themselves. Each final export has a current exact-file binding; edited context makes affected verdicts stale.
 
 The assembly renderer's gain, ducking and loudness defaults remain implementation settings. Select the approved delivery profile and inspect the encoded output. Model ratio, duration, voice and price facts must be checked against the current selected provider operation; dated routing documents are not a live catalog.
+
+## Preproduction integration, 2026-11-05
+
+The current checkout already contained the creative playbook and focused
+casting/script/hook references added after the source audit. This upgrade
+extends those owners instead of importing a parallel set of vendor skills or
+copying the earlier proposed pack verbatim.
+
+- The existing short direction module and playbook now require the connected
+  preproduction stage. The new `preproduction-director.md` reference specifies
+  the current private packet, exact script/claim locks, hook treatment,
+  cast/voice/scene fit, thought-level direction, real proof limits, actual full
+  voice acceptance and provider request/capability/budget bindings.
+- Offline `kie_validate_ugc_preproduction` / client `ugc-check` and guarded
+  `kie_create_ugc_lipsync` / client `ugc-start` provide an approved-full-voice
+  Kie path. The shared helper is shipped with existing generating clients.
+  Raw task APIs remain general primitives, not an automatic preproduction gate.
+- The guard validates local records and dependencies and holds a per-packet
+  submission receipt for recovery. It does not perceive acting/listening,
+  certify remote upload fidelity, reserve provider spending atomically or
+  authorize publication. Native-audio routes need separate qualification.
+- Script/casting/hook instructions now separate exact copy and claim failures
+  from style/timing estimates, remove universal model/audition/demographic
+  recipes, and preserve a locked long hook at its actual natural duration.
+  New presenters need fresh performer acceptance; suitable original B-roll/UI
+  retain source/rights scope. Project-specific UI geometry remains private.
+- Assembly keeps one storyboard timeline and existing scene roles. The five
+  final review roles and actual-media evidence contract remain authoritative.
+  Preflight PASS cannot substitute for final review or a human listening pass.
+
+Source pins, public method comparisons and proposed-to-actual decisions are
+recorded in the audit deliverables. Verification output, installed-copy sync,
+running-process reload and actual production qualification are separate claims.
+Use the implementation receipt for checks actually run; do not infer a media
+pilot or a provider quality benchmark from documentation or a build.

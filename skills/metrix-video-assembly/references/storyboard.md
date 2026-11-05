@@ -78,3 +78,27 @@ The composition mirrors this: each scene is a `section` with the same
 `data-scene`, `data-start` and `data-end`; each text item an element with the
 same `data-text`, `data-in`, `data-out`, `data-enter` and `data-dur`. The
 layout check fails any line whose on-screen text differs from `copy`.
+
+## Creator performance and proof handoff
+
+For creator-led production the current preproduction packet binds canonical
+`script.json`, actual accepted full-voice timing, cast/voice/scene and proof
+sources before dependent lip sync. Keep this storyboard as the sole composition
+timeline. Link scene/shot IDs, exact script lines, accepted audio ranges and
+proof sources in `ugc-production.json`; do not maintain a second editable
+timeline or add undocumented role values to this contract.
+
+Existing scene roles remain `hook`, `show`, `proof`, `offer`, `cta`. Creator
+delivery, UI demonstration, B-roll bridge and feature illustration describe the
+source/presentation within that scene, not new role enums. Record initial state,
+actual captured action, final state, deliberate change and cut reason where
+useful. A screenshot moving inside a composition is still an illustration; it
+does not prove a click or uncaptured interface behavior.
+
+Build caption and scene times from the accepted measured read, preserving one
+canonical narration master. Returned provider duration changes require a new
+coverage/handle/caption/reading-hold plan. Passing the storyboard checker proves
+only its encoded timing/text rules; it cannot assess delivered emotion, actual
+UI behavior, listening or the five final review gates. Preserve project-specific
+creator/UI geometry in the private bound reference, without a global card or
+motion template.

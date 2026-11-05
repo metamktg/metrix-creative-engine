@@ -7,7 +7,9 @@ This repository standard is composed from the UGC skill references. It governs p
 
 Use this reference with the approved brief, current asset map and the parent UGC workflow. It governs production choices before the five presentation gates. It does not authorize additional deliverables, spend or publication.
 
-Three companion references govern the choices made before footage exists, and the finishing rules below assume they were followed: [script-and-delivery.md](script-and-delivery.md) (spoken register, length as a budget, the per-line delivery map and the `check_script.py` gate), [casting.md](casting.md) (the persona brief from the ICP, identity-still spec, voice as part of the persona, reuse means B-roll not actors) and [lip-sync-routing.md](lip-sync-routing.md) (the three talking-head routes, dated model observations, the outage protocol). [hooks.md](hooks.md) holds the hook patterns, the one-variable hook test and the hook log.
+The [preproduction director](preproduction-director.md) connects the existing [script-and-delivery.md](script-and-delivery.md), [casting.md](casting.md), [hooks.md](hooks.md) and [lip-sync-routing.md](lip-sync-routing.md) owners before new creator performance. Keep one canonical approved monologue, exact locks, reasoned hook treatment, credible cast/voice/scene fit, thought-level intention/emotion/behavior, truthful proof sources and current provider handoff. New performers need fresh acceptance; unchanged appropriate B-roll/UI sources retain their rights and reuse scope. Dated provider recipes are not live capabilities or universal creative policy.
+
+Approved-full-voice Kie lip sync uses a current versioned packet, offline `kie_validate_ugc_preproduction` / client `ugc-check` and guarded `kie_create_ugc_lipsync` / client `ugc-start`. Structural validation cannot hear the full voice, establish acting quality, prove remote uploads or certify release. Native-audio routes need separate qualification and cannot borrow a standalone voice pass. Continue to apply the existing five exact-export reviews.
 
 ### Plan the sound
 
@@ -106,6 +108,17 @@ Finish the authorized edit, then create a local evidence bundle. Retain the exac
 Use relative local paths inside the run. The registry is an approved JSON snapshot with `approved_codes`, pinned to its authoritative source in the source map. Do not turn a regex extraction, code template or remembered prefix into an allowed-code list. IAP identifiers and technical media variables are separate.
 
 The profile declares expected format/timing, placement/safe regions, sound/delivery requirements, and `sound_check_required_facts` for message, benefit, action and essential conditions. These facts are declared before the lay review. Where no material condition exists, state that explicitly instead of inventing one.
+
+New creator runs set `creator_preproduction_required: true` in that profile and
+bind `production.preproduction` to one `{path, sha256}` descriptor or a nonempty
+array listing every actual operation packet directly. A manifest proxy does not
+bind indirectly referenced packet contents.
+Before final review rerun the offline Node preflight defined in
+[preproduction-director.md](preproduction-director.md). The final Python
+validator rehashes the packet and includes its descriptor in review context;
+it does not rerun preflight or recursively inspect nested files. Missing a
+required packet is NOT_CHECKED, and a changed packet invalidates the bound
+review context. Existing artifact roles and all five gates remain unchanged.
 
 Include the brief-specific production criteria from `production-standard.md` in the profile and evidence: coherent narration/phrase consistency, audible subordinate music and its entrance, matching spoken/product beats, format-appropriate proof treatment, clean image handoffs, gaze/action continuity and readable holds. Bind any accepted treatment reference and its decision scope rather than imposing an inherited layout. No single numeric loudness threshold or final mix normalization certifies these judgments. Each final placement or captioned/clean export needs its own versioned record bound to its exact master; shared component evidence needs an explicit current-export binding.
 

@@ -22,3 +22,9 @@ Keep completed client profiles, copy, asset bindings and receipts in gitignored
 examples and fixtures stay anonymous; never populate the committed example
 with client records. These workflow instructions add no spend or publishing
 authority and do not change the raw generation API.
+
+Before dependent approved-voice creator lip sync, validate the current private
+preproduction packet with `kie_validate_ugc_preproduction` and submit through
+`kie_create_ugc_lipsync`, or the bundled client's `ugc-check` / `ugc-start`.
+The separate script check precedes voice spend. These guards validate local
+bindings, not actual listening or final approval; raw task tools are unguarded.

@@ -18,21 +18,22 @@ reader skips.
 
 - **Read every line aloud.** If you would not say it to one person across a
   table, rewrite it.
-- **Contractions are not optional.** "It's", "here's", "doesn't", "you'll".
-  Their absence is the fastest way to sound like a press release read out.
+- **Use the speaker's natural register.** Contractions often help, but formal
+  wording or exact approved copy can be appropriate. No filler quota makes a
+  performance conversational.
 - **Start on the point.** No greeting, no self-introduction, no "in this video".
   The first words are the hook.
 - **Short sentences, one idea each.** Long clauses lose the listener and the
   lip sync.
-- **Write numbers as spoken words in the script.** "Forty dollars", not "$40".
-  The written form belongs on screen and in `pronunciation_map`.
+- **Plan how numbers are pronounced.** Authorized new spoken copy can spell
+  them as spoken words. Preserve exact canonical locked wording and keep any
+  synthesis alias in the documented pronunciation/voice settings contract.
 - **Specific over vague.** "Took about ten seconds" beats "works really well".
   Test: could this sentence sit in a competitor's script with the name swapped?
   If yes, it says nothing.
 - **One brand mention is usually enough.** Two at most.
-- **Include a reservation** where the brief allows one. "It's not cheap", "it
-  won't work on varnished wood". A script with no downside reads as an advert,
-  and a named limitation is a substantiated statement.
+- **Use a reservation only when relevant and supported.** A limitation is a
+  factual claim, not a mandatory realism device. Never invent a downside.
 - **Avoid marketing words**: innovative, premium, utilise, in order to,
   additionally, limited time only, life-changing. The check warns on them.
 - **Exact means exact.** A tone repair never replaces a locked verb, qualifier,
@@ -57,8 +58,9 @@ first-person experience pattern when the identity is a synthetic one.
 
 ## 3. Length is a budget decision
 
-Natural conversational pace is about 2.3 to 2.6 words a second. Plan at 2.4 and
-time the read; everyone overestimates what fits. Declare the duration mode
+Use the existing 2.4 words-per-second default only as a labeled planning estimate
+until an actual complete read exists. Pace varies by speaker, content and
+pauses. Declare the duration mode
 before writing, from the latest instruction: **exact** (the read lands within
 about 1.5 s of the target), **maximum** (a ceiling, never a slot to fill), or an
 approved **range**. Cut setup and repeated explanation before extending, and
@@ -72,13 +74,14 @@ never speed the speech to fit.
 | 20 s | about 48 | three tight beats |
 | 30 s | about 72 | a full short ad |
 
-Pauses are part of the length. A 45-word script read in about 19 s and met a
-25 to 35 s range only with deliberate thought pauses and a short end hold, which
-was the right fix. Record pauses in the delivery map so the estimate includes them.
+Pauses are part of the length. Record intended pauses in the delivery map, then
+replace provisional timing with the measured accepted audio and purposeful
+reading holds. Do not pad with dead air or report an estimate as a measured read.
 
-Only face beats pay for lip sync. A line carried by B-roll uses the same voice at
-a fraction of the cost, and a talking face held longer than about 8 to 10 s per
-beat is where sync drifts and attention leaves. Plan the cutaway while writing.
+Only face beats need dependent lip sync. A line carried by B-roll can use the
+same accepted voice without new speaking motion. Plan coverage from the thought,
+actual supported duration and usable source; ten seconds is a review warning,
+not a universal point where sync or attention fails.
 
 ## 4. The shape
 
@@ -90,7 +93,8 @@ beat is where sync drifts and attention leaves. Plan the cutaway while writing.
 16 to 18 s  ACTION      one thing to do, casually
 ```
 
-A starting shape. The brief's `copy_architecture` decides the words that are
+A starting shape, not a three-second complete-hook limit. A long exact opener
+can earn attention early and finish naturally later. The brief's `copy_architecture` decides the words that are
 locked (hook, CTA, any `spoken_opening_locked`); the map decides how they are
 said. Decide the two things the audience must understand before writing: with
 five messages the viewer takes none. Remove a second hook metaphor late in the
@@ -130,7 +134,7 @@ Direction never goes in it.
     {
       "id": "L2", "role": "substance",
       "text": "Open the app, pick the step you need, follow it, then check your work.",
-      "intent": "walk them through it like a friend who has done it",
+      "intent": "clarify the supported steps without claiming personal experience",
       "emotion": "matter_of_fact", "intensity": 1, "energy": 1,
       "emphasis": "check your work",
       "breath_opportunity": true, "pause_after": 0.3,
@@ -144,18 +148,28 @@ Direction never goes in it.
 | Field | Meaning | Rule |
 | --- | --- | --- |
 | `role` | `hook`, `stakes`, `substance`, `proof`, `reservation`, `action`, `bridge` | First line is `hook`, last is `action` |
-| `locked`, `lock_source` | The brief fixed these exact words, and where | Text must match the brief verbatim after `pronunciation_map` |
+| `locked`, `lock_source` | The brief fixed these exact words, and where | Complete approved `spoken_script` covers exact lines. An explicit `lock_source` must equal the whole named source field, never a substring. The text checker permits explicit pronunciation mapping and whitespace normalization; guarded production keeps canonical speech exact and synthesis aliases separate |
 | `intent` | The thought behind the line, in plain words | Required; "sell it" is not an intent |
 | `emotion` | `calm`, `warm`, `curious`, `wry`, `surprised`, `reassuring`, `matter_of_fact`, `concerned`, `pleased`, `deadpan` | One per line; affect that matches the words, never frantic or fixed |
-| `intensity` | 1 understated, 2 clear, 3 strong | Never 3 on every line |
-| `energy` | 0 to 4, the pace and lift of the delivery | Flat baseline with one lift reads human; sustained high energy reads as an ad |
+| `intensity` | 1 understated, 2 clear, 3 strong | Sustained intensity is a review warning, not proof of a failed natural performance |
+| `energy` | 0 to 4, intended pace and lift | Select for the thought; a composed neutral baseline is valid |
 | `emphasis` | The one word or short phrase that carries the line | Must appear in `text`; at most one per line; selective, not every benefit |
 | `breath_opportunity` | A thought-group end where a breath is comfortable | A phrasing note. It never asks for a breath sound to be added |
 | `pause_after` | Silence in seconds after the line | 0 to 3 |
-| `gaze` | `lens`, `product`, `work`, `away_then_back` | Mostly product or work, meet the lens briefly; a locked lens stare for the whole take reads staged |
-| `gesture` | `none`, `hold_product`, `turn_product`, `glance_to_screen`, `nod`, `hands_rest`, `small_laugh`, `push_hair` | One per line, none on most lines; one human-friction beat per script at most |
+| `gaze` | `lens`, `product`, `work`, `away_then_back` | Follow the thought and task; comfortable sustained direct address can be appropriate |
+| `gesture` | `none`, `hold_product`, `turn_product`, `glance_to_screen`, `nod`, `hands_rest`, `small_laugh`, `push_hair` | At most one feasible action per line; no required friction, laugh or hair-touch beat |
 | `on_camera` | Whether the face carries this line | Off-camera lines are the same recording event: same voice, same room |
 | `cutaway_after` | What the picture cuts to | Plan it here, not in the edit |
+
+The guarded approved-voice preflight additionally requires nonempty
+`viewer_thought`, `emotion_entry`, `emotion_exit` and `observable_behavior` on
+every line. Retain `intent` as the action toward the viewer, rather than creating
+a competing intention field. Describe one credible cue and an optional change
+in feeling; neutral/unchanged affect is valid. These are planned direction,
+separate from delivered observation and review evidence. `check_script.py`
+alone checks the legacy delivery-map shape; the separate preflight enforces
+this complete production handoff. A line needing visible proof can set
+`proof_required: true` and link its source/limits through the packet.
 
 A run that also keeps the playbook's creative profile
 (`examples/ugc-production/creative-profile.example.json`) holds one copy of the
@@ -168,15 +182,14 @@ plus `gesture`, and `intent` and `emotion` carry over unchanged.
 
 ### Direction rules the map enforces
 
-- **Vary the energy; do not sustain it.** Give the take a flat, offhand baseline
-  and let one moment carry a genuine reaction. A dry aside beats four enthusiastic
-  lines. Deadpan is valid and under-used.
+- **Let energy follow the argument.** A neutral or calm explanation can remain
+  steady. Change intensity only for a real turn in thought; do not decorate
+  every line with enthusiasm or a forced dry aside.
 - **Gaze follows the thought.** Look at the product or the work while explaining,
   meet the lens on the promise and the action. Do not write blink instructions
   into short clips; they render as darting eyes.
-- **One friction beat at most**: a small false start, pushing hair back, a quick
-  "is this recording" glance. Never a fumble with the product, and never stacked
-  with a camera move inside a short clip.
+- **No friction beat is required.** Preserve genuine behavior when useful;
+  do not script a stumble, hair touch or fake recording error as proof of humanity.
 - **One grip or weight cue** when a product is in hand: "turns it in her hand,
   pauses when the light catches the label, shifts her grip". Never "rotates slowly
   to catch the light", which is the motorised-turntable recipe.
@@ -205,14 +218,13 @@ a documented pause tag.
 
 | Provider route | How the map reaches it |
 | --- | --- |
-| ElevenLabs multilingual v2 on Kie | Text only. Starting points to set in the run profile and confirm by listening, not defaults: lower stability to reduce monotone, similarity near the default, a little style for personality, speed 1.0. Never a maximum-stability setting: that is the monotone robot tell |
-| ElevenLabs v3 or text-to-dialogue on Kie | Documented emotion tags built from the line's `emotion`, one per line at most; emphasis as a short sentence of its own |
-| Gemini TTS on Kie | A per-turn `style` string built from the presenter register plus the line's `intent` and `emotion`. This route produced an accepted voice on 2026-11-02 when both ElevenLabs routes timed out upstream |
-| Native-audio video models | The line text in the model's dialogue syntax (see `lip-sync-routing.md`); emotion as one bold modifier ("warm voice"), never a paragraph of acting notes |
+| Text-only speech operation | Canonical words or documented synthesis aliases; omit unsupported direction fields. Actual listening determines suitability |
+| Operation with documented direction/tags | Translate intent, affect and emphasis only into supported controls. Verify tags are not spoken; settings are voice/model-specific |
+| Native-audio video operation | Exact speech and supported identity/performance controls under a separately qualified route. It cannot inherit standalone full-voice acceptance or bypass an approved-audio requirement |
 
-Voice choice is part of casting (`casting.md`): audition three candidates on the
-first two lines, listen, pick by fit to the presenter and the room, then keep
-that voice and those settings for every retake. Never substitute an old audition
+Voice choice is part of casting (`casting.md`): audition only relevant candidates
+when selection is unresolved, listen, choose by actual presenter/scene fit, then
+keep that voice and those settings for retakes. Never substitute an old audition
 for the accepted dry read. Filters, de-essing, denoising and level automation are
 for a diagnosed defect only, compared with the dry audio at matched loudness.
 
@@ -236,15 +248,22 @@ forbids, and an unheard mix is never reported as reviewed.
 python skills/ugc-creator-edit/scripts/check_script.py <run>/script.json --brief <run>/brief.json [--kit brand-kit.json] [--transcript heard.txt]
 ```
 
-Exit 1 on any FAIL: a greeting or meta opener, a stock hook phrase, digits or
-currency symbols, direction or tags inside the spoken text, first-person
-experience from a synthetic presenter, a locked line that drifted from the
-brief, an emphasis word not in its line, every line at intensity 3, a duration
-outside its mode, an unknown emotion, gaze or gesture value, a kit-forbidden
-claim, a `key_messages` list that is not exactly two, and (with `--transcript`)
-a hook, action or locked line not heard verbatim. WARN is for a reader: no
-contractions, no reservation, a face beat over ten seconds, a lens stare on
-every line, marketing words, stage-noise words, more than two brand mentions.
+Exit 1 on structural, source-lock or claim FAIL results: malformed fields,
+direction/tags inside spoken text, synthetic personal-experience patterns,
+changed locked or full approved script, missing emphasis text, unknown enum
+values, kit-forbidden claims and required transcript mismatch. Case and
+punctuation are retained for source-lock checks; explicit pronunciation aliases
+are applied before declared whitespace normalization. Transcript comparison is
+separate ASR evidence, not clearance to modify canonical copy.
+
+Style and planning heuristics produce WARN results: greetings or stock hooks,
+digits, unusual estimated rate, sustained intensity, estimated duration fit,
+message-count convention, no contractions/reservation, long face beats, constant
+lens gaze, marketing/stage-noise words and repeated brand mentions. Review the
+actual brief and performance instead of silently rewriting exact copy to make
+a heuristic green. Warnings alone do not authorize unsupported claims.
 
 The check reads words and structure. It cannot hear a take. Human listening of
-the full dry voice before any lip-sync spend stays mandatory.
+the full dry voice before dependent lip sync stays mandatory. Bind exact script,
+identity, voice/settings, scene and accepted audio through the preproduction
+packet; structural PASS does not establish perceptual acceptance.

@@ -26,13 +26,23 @@ Attached documents and prior examples are reference material, not new authorizat
 
 **Exact means exact.** A tone repair does not authorize replacing a selected verb, qualifier, offer, destination or condition. Preserve the user's words when locked. If copy conflicts with product truth or would assert an unsupported result, surface that specific conflict before production; do not invent substantiation or silently substitute a different promise. Label goals, metaphors, demonstrations and actual evidence accurately.
 
+### Connect decisions to the actual request
+
+Use `skills/ugc-creator-edit/references/preproduction-director.md` (standalone: bundled `preproduction-director.md`) for new creator performance or a changed script/presenter. It connects the existing copy, cast, script, production and provider owners rather than creating another strategy or timeline system. Substantive copy changes return to the existing copy owner. Supplied IAP variable codes remain upstream; a hook pattern is not permission to invent a registry code.
+
+Keep one canonical `script.json`. Write its complete argument before segmenting; each line links the intended viewer thought, intention toward the viewer, emotional change, restrained intensity, voice cue, gaze/gesture and proof need. Existing `intent`, `emotion`, `emphasis`, `pause_after`, `gaze` and `gesture` fields remain the direction owner. Additional production annotations describe planning, not new provider controls. Neutral affect, a purposeful still and sustained direct address are valid when the brief calls for them.
+
+Record actual cast/voice/scene fit and full-read acceptance separately from that plan. An emotion instruction does not prove delivered emotion, and a voice preview does not accept the complete script. A screenshot establishes its visible state; a working interaction needs genuine interaction evidence. Preserve suitable B-roll/UI source hashes during a presenter-only revision while invalidating performer-dependent acceptance.
+
+For approved-full-voice lip sync use offline `kie_validate_ugc_preproduction` / client `ugc-check`, then guarded `kie_create_ugc_lipsync` / client `ugc-start`. The guard checks current source, request, route and acceptance bindings and records submission recovery. Raw generation tools remain general primitives; their success does not establish this preflight. Native audio requires separate qualification, not a workaround for missing full-voice acceptance. All five final reviews still apply to the exact export.
+
 ## 3. A bounded production sequence
 
 1. **Inventory and diagnose.** Reuse accepted source footage, dry voice, music, UI, brand assets and editable recipes. Identify the actual defect rather than regenerating to taste.
 2. **Write the complete spoken progression.** Relevant hook → useful mechanism/proof → specific benefit → one action. Remove filler, repeated metaphors and redundant setup. Make the click destination and offer unambiguous.
-3. **Plan the recording and beats.** Specify one credible action per generated shot, camera/framing, source ranges, recording perspective, spoken cue, UI treatment and enough trim handles. Let thought changes and reading time determine cuts.
+3. **Plan the recording and beats.** Record hook rationale/payoff and cast/voice/scene fit. Specify one credible action per generated shot, thought intention/emotional change, camera/framing, source ranges, recording perspective, spoken cue, UI proof/treatment and trim handles. Let thought changes and reading time determine cuts.
 4. **Resolve the smallest uncertainty.** Use an accepted reference, a phone-size frame or one representative motion proof before expensive dependent work. Hear the complete voice performance before new lip sync, subject to the actual review agreement.
-5. **Quote and reserve.** Inspect the live quote and normalized settings before any paid submission. Save inputs, reservation and returned job ID. One operator owns the run budget.
+5. **Quote, preflight and reserve.** Inspect the live quote and supported settings before paid submission. For dependent lip sync validate the exact packet/request and current complete-voice acceptance through the guarded route. Save inputs, reservation and returned job ID. One operator owns the run budget.
 6. **Generate only the gap.** A short wording change may need one pickup, not another whole performance or avatar. Prefer a continuous read when pickups actually sound disconnected.
 7. **Assemble and refine.** Keep speaking lips synchronized. Match voice perspective and phrase levels; make music audible below speech; align evidence and captions to the actual words. Review a rough cut as a skeptical viewer, then repair specific defects.
 8. **Review the actual encoded file.** Check full normal-speed playback, listening, phone-size muted comprehension, every cut, complete closing words and the final frame using reviewers with those capabilities. Bind evidence to the current export.

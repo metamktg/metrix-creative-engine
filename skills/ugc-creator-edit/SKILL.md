@@ -17,6 +17,7 @@ This is a production orchestration skill. It uses existing provider tools or the
 - These bundled copies work without the repository or MCP. When their `docs/UGC_CREATIVE_PLAYBOOK.md` or `kie://ugc-creative-playbook` pointer is unavailable, use the bundled playbook; resolve its production/review-standard references through this skill's existing [finishing standard](references/production-standard.md) and [review gates](references/review-gates.md). Keep completed client profiles and receipts in the repository's gitignored `out/` or `renders/`, or an external private run directory. Reusable instructions and committed examples stay anonymous.
 - Read [casting](references/casting.md) before generating a presenter: the persona brief from the ICP, the product-to-persona match, the identity-still spec a lip-sync pass can use, voice as part of the persona, and the rule that reuse means B-roll and graphics, never the actor.
 - Read [script and delivery](references/script-and-delivery.md) before writing or voicing a talking-head line. It holds the spoken register, length as a budget, the per-line delivery map (intent, emotion, emphasis, pause, gaze, gesture) and the `scripts/check_script.py` gate that runs before any voice spend.
+- Read [preproduction director](references/preproduction-director.md) before new creator performance, changed copy or presenter replacement. It connects the existing script, casting, provider and review records to the versioned offline preflight and guarded lip-sync submission; it does not add a second timeline or a copywriting owner.
 - Read [hooks](references/hooks.md) when the brief tests openings or the ad gets impressions without watch time: three-layer hooks, twelve patterns mapped to `HK_` codes, the one-variable hook test and the hook log.
 - Read [lip-sync routing](references/lip-sync-routing.md) before a talking-head render: the three routes by input type, dated observations of what worked and what was down, the price-check rule, the outage protocol and input QA.
 - Read [mandatory review gates](references/review-gates.md) before preparing any finished UGC/video for client presentation. It defines the five reviews, anonymity, evidence bindings and release check.
@@ -41,6 +42,8 @@ For each gap, state the deliverable/shot it serves, action, framing, continuity 
 
 Produce the existing engine's `render_spec.json` where applicable. Keep additional UGC tracking in `ugc-production.json`; its fields are this skill's sidecar convention, not new engine API parameters.
 
+Keep one approved `script.json` and its complete spoken progression. Link selected hook treatment, actor/voice/scene fit, thought-level intention/emotion/behavior and truthful proof requirements from the preproduction packet. Existing copy owners handle authorized rewriting. Preserve user-locked wording and separate estimates from measured read timing.
+
 ## 3. Authorize an affordable path to a finished edit
 
 Record a finite run ceiling and the approved deliverables, provider/account, comparison locks, review gates and finishing allowance. Carry forward existing session authorization. If a ceiling or a material scope choice is missing, prepare the concrete plan and quote before asking once. Available account balance is not authorization to spend it.
@@ -58,6 +61,8 @@ Proceed autonomously within the approved scope, ceiling and review gates. Ask ag
 Reuse an approved reference frame rather than generating another still. If composition or identity is uncertain, approve a still before animation. If motion, pacing or lip sync is uncertain, use one short representative motion proof before dependent expensive work. A still is not evidence that motion works; do not require an unnecessary paid proof when accepted material already answers the question.
 
 Approve the complete vocal performance through human listening before lip sync. Preserve the exact approved voice file and dry source; do not substitute an old audition or change its rate to force pacing. Clearly label temporary performances, excerpts and provisional mixes. Reuse a passing proof in the final edit when it fits.
+
+Validate the current packet with `kie_validate_ugc_preproduction` or the existing client `ugc-check` command, then use `kie_create_ugc_lipsync` or client `ugc-start` for guarded approved-audio submission. Bind the exact request and file hashes, required current acceptance, route capabilities and finite budget evidence. Raw `kie_create_task`/`start` are general primitives, not equivalent guarded submissions. Native generated speech requires a separate qualified route; it cannot borrow a standalone voice pass.
 
 For comparative work, reuse the approved subject file and the same approved footage wherever the test holds them constant. Identical words in prompts do not lock pixels. Inspect the actual outputs together before expanding.
 
