@@ -217,17 +217,20 @@ Each takes an optional `brief` argument, the brief as JSON, which is carried
 into the message.
 
 `kie_render_ugc`, `kie_render_ai_ugc` and `kie_render_video` also load the short
-`07-ugc-creative-direction.md` module after the review standard. It points to
+`07-ugc-creative-direction.md` module after the production-review module. It points to
 `kie://ugc-creative-playbook` for detailed direction. `ai_ugc` shares the UGC
 format module. Other formats, brand intake and MST do not load that
 UGC-specific module or the full playbook.
 
-For UGC/video, the runtime also inlines `06-production-review.md` and the full
-`docs/UGC_PRODUCTION_STANDARD.md` body. That same document is returned by
-`kie://production-review-standard`, so the actual prompt and readable reference
-cannot silently use different revisions. Other format prompts retain their
-existing assembly and validation modules. These are production instructions and
-local evidence checks, not new provider parameters or a backend release lock.
+For UGC/AI-UGC/video, the runtime loads the short `06-production-review.md`
+and `07-ugc-creative-direction.md` modules. The complete finishing contract stays
+available as `kie://production-review-standard`, alongside the on-demand creative
+playbook. Neither complete manual is appended to render prompts. The server's
+initialization instructions route creator work to the matching prompt even
+before a caller selects it. Standalone skills carry the short direction and
+stage-specific playbook references with drift checks. These are production
+instructions and local evidence checks, not new provider parameters or a
+backend release lock. Other formats retain their existing workflow.
 
 After changing these Markdown modules or resources, run `npm run verify` to
 rebuild and check the actual MCP surface. A server process already running keeps

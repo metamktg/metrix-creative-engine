@@ -88,9 +88,10 @@ outage protocol: `skills/ugc-creator-edit/references/lip-sync-routing.md`.
 
 ## QA checks to add
 
-`kie_render_ugc` loads both `06-production-review.md` and the complete shared
-`docs/UGC_PRODUCTION_STANDARD.md`. The latter also reads back through
-`kie://production-review-standard`. Use its performance, soundtrack, UI timing,
+`kie_render_ugc` and `kie_render_ai_ugc` load the short
+`06-production-review.md` and `07-ugc-creative-direction.md` modules. Read the
+complete shared contract on demand through `kie://production-review-standard`
+or `docs/UGC_PRODUCTION_STANDARD.md`. Use its performance, soundtrack, UI timing,
 transition, recovery and five-gate evidence requirements on the actual export.
 The checklist below is additive and cannot certify an unheard or unwatched cut.
 

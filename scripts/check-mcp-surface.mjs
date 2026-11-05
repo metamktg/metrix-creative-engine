@@ -144,6 +144,10 @@ try {
   check("advertises tools", Boolean(capabilities.tools));
   check("advertises resources", Boolean(capabilities.resources));
   check("advertises prompts", Boolean(capabilities.prompts));
+  const instructions = init.result?.instructions ?? "";
+  check("handshake routes creator workflows to prompts and on-demand references",
+    ["kie_render_ugc", "kie_render_ai_ugc", "kie_render_video", "kie://ugc-creative-playbook", "kie://production-review-standard"].every((route) => instructions.includes(route)));
+  check("handshake keeps workflow routing concise", instructions.length > 0 && instructions.length < 1000);
 
   console.log("\n== Tools ==");
   const tools = (await rpc("tools/list", {})).result?.tools ?? [];
@@ -243,7 +247,7 @@ try {
         "prompts/00-core.md", "prompts/02-render-bridge.md", `prompts/formats/${formatFile}.md`,
         "prompts/04-self-validation.md", "prompts/06-production-review.md",
       ].map((file) => readFile(path.join(repoRoot, file), "utf8")));
-      const previousPrompt = [...previousSections, standardText].join("\n\n---\n\n");
+      const previousPrompt = previousSections.join("\n\n---\n\n");
       check(
         `${format} adds exactly the short module to the preserved baseline assembly`,
         text === `${previousPrompt}\n\n---\n\n${creativeDirection}`,
@@ -255,8 +259,8 @@ try {
       check(`${format} points to the detailed review resource`, text.includes("kie://production-review-standard"));
     }
     check(
-      `${format} inlines the exact shared production resource only when applicable`,
-      standardText.length > 500 && text.includes(standardText) === requiresProductionReview,
+      `${format} keeps the complete production standard on demand`,
+      standardText.length > 500 && !text.includes(standardText),
     );
   }
 

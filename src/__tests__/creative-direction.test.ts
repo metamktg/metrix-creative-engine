@@ -6,6 +6,11 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import creativeDirection from "../../prompts/07-ugc-creative-direction.md";
 import creativePlaybook from "../../docs/UGC_CREATIVE_PLAYBOOK.md";
 import productionReview from "../../prompts/06-production-review.md";
+import productionStandard from "../../docs/UGC_PRODUCTION_STANDARD.md";
+import adDirection from "../../skills/metrix-ad-creative/references/creative-direction.md";
+import adPlaybook from "../../skills/metrix-ad-creative/references/ugc-creative-playbook.md";
+import creatorDirection from "../../skills/ugc-creator-edit/references/creative-direction.md";
+import creatorPlaybook from "../../skills/ugc-creator-edit/references/ugc-creative-playbook.md";
 import { registerKiePrompts } from "../prompts.js";
 import { registerKieResources } from "../resources.js";
 
@@ -36,6 +41,7 @@ describe("UGC creative direction over MCP", () => {
     expect(text).toContain(brief);
     expect(text).toContain("kie://ugc-creative-playbook");
     expect(text).not.toContain(creativePlaybook);
+    expect(text).not.toContain(productionStandard);
   });
 
   it.each(["static", "carousel", "motion_graphic", "claymation", "brand_intake", "mst_sprint"])("%s does not load UGC-specific direction or the full playbook", async (format) => {
@@ -44,7 +50,16 @@ describe("UGC creative direction over MCP", () => {
     const text = result.messages[0]?.content.type === "text" ? result.messages[0].content.text : "";
     expect(text).not.toContain(creativeDirection);
     expect(text).not.toContain(creativePlaybook);
+    expect(text).not.toContain(productionStandard);
     expect(text).not.toContain("kie://ugc-creative-playbook");
+  });
+
+  it.each([
+    ["metrix-ad-creative", adDirection, adPlaybook],
+    ["ugc-creator-edit", creatorDirection, creatorPlaybook],
+  ])("%s ships the canonical short direction and on-demand playbook for standalone use", (_name, direction, playbook) => {
+    expect(direction).toBe(creativeDirection);
+    expect(playbook).toBe(creativePlaybook);
   });
 
   it("lists and serves the complete playbook as an independent markdown resource", async () => {

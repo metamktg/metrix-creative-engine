@@ -55,10 +55,10 @@ In a single long session, load all three stages at once and let the core's
 stage table route between them. In a pipeline, load one stage per call.
 
 The MCP render prompts for `ugc`, `ai_ugc` and `video` additionally load
-`06-production-review.md`, the composed production standard and
-`07-ugc-creative-direction.md`. The detailed `docs/UGC_CREATIVE_PLAYBOOK.md` is
-served as `kie://ugc-creative-playbook` for focused reading; it is not appended
-to each generation prompt.
+the short `06-production-review.md` and `07-ugc-creative-direction.md` modules.
+The complete production standard and creative playbook remain available as
+`kie://production-review-standard` and `kie://ugc-creative-playbook` for focused
+stage-specific reading. Neither full manual is appended to render prompts.
 
 Relative `references/...` paths in the prompts resolve to
 `skills/metrix-ad-creative/references/`. The brief's `asset_type` routes to a

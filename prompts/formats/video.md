@@ -67,9 +67,9 @@ estimate before the batch.
 
 ## QA checks to add
 
-`kie_render_video` loads both `06-production-review.md` and the complete shared
-`docs/UGC_PRODUCTION_STANDARD.md`, also exposed as
-`kie://production-review-standard`. Apply its evidence-bound soundtrack,
+`kie_render_video` loads the short `06-production-review.md` and
+`07-ugc-creative-direction.md` modules. Read the complete contract on demand
+through `kie://production-review-standard` or `docs/UGC_PRODUCTION_STANDARD.md`. Apply its evidence-bound soundtrack,
 narration, visual timing, source-reuse and review contract before approved
 presentation. Technical encoding checks do not replace full playback/listening.
 

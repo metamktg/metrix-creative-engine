@@ -42,6 +42,22 @@ Reconciliation between the playbook and this work:
 - Numeric voice settings are starting points for the run profile, not defaults.
 - The playbook and 07 module referred to a retention utility that exists only in a separate vendor copy. Those references now say that this engine has none yet.
 
+## Prompt loading refinement
+
+A second pass changed how the UGC, AI-UGC and video prompts load, after the first commit:
+
+- The full production standard is no longer inlined into render prompts. They carry the short
+  `06-production-review.md` and `07-ugc-creative-direction.md` modules; the standard and the playbook
+  stay on demand as `kie://production-review-standard` and `kie://ugc-creative-playbook`. The assembled
+  UGC and AI-UGC prompt fell from 66,334 to 39,635 characters and the video prompt from 64,661 to 37,951
+  (JavaScript string lengths, not tokenizer counts). The trade is that the prompt text and the readable
+  standard are no longer the same bytes, so the five gate names and the music decision stay in module 06,
+  where the surface check still asserts them.
+- The server's initialization instructions route creator work to the matching render prompt.
+- `AGENTS.md` and `CLAUDE.md` at the repository root route production sessions to the short direction.
+- `metrix-ad-creative` and `ugc-creator-edit` bundle the direction and the playbook for use without
+  this checkout; a test keeps the copies byte-identical to the canonical files.
+
 ## What was deliberately not changed
 
 - The Zod brief schema. `script.json` is a sidecar, so no API contract moved.

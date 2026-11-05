@@ -4,9 +4,9 @@ One prompt per media format. Give it a brief, it gives you a named asset.
 
 ## UGC and video production review
 
-`kie_render_ugc` (including AI-UGC) and `kie_render_video` explicitly inline the
-mandatory production-review stage and the complete shared production standard.
-The same standard is available from the bundled
+`kie_render_ugc`, `kie_render_ai_ugc` and `kie_render_video` load the short
+mandatory production-review and creative-direction modules. Read the complete
+shared standard on demand from the bundled
 `kie://production-review-standard` resource, or
 [`UGC_PRODUCTION_STANDARD.md`](UGC_PRODUCTION_STANDARD.md), before finishing.
 It defines music selection and rights, speech-first mixing, deliberate cuts,

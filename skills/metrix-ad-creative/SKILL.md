@@ -8,6 +8,28 @@ description: Render Metrix IAP creative briefs into actual ad assets through Kie
 Bridges `metrix-brief-builder` (which produces briefs) and Kie.ai (which
 produces pixels). The brief is the specification; this skill is the execution.
 
+## UGC and video direction
+
+For `ugc`, `ai_ugc` or `video` briefs, read the bundled
+[creative direction](references/creative-direction.md) before planning or
+spending. At planning/review, read only the current stage's details in the
+bundled [UGC playbook](references/ugc-creative-playbook.md). Apply creator,
+voice and caption details only where the declared format uses them. Reuse
+relevant instructions already in context; send providers only shot-specific
+direction and supported fields, never the entire playbook.
+
+The bundled references work without a repository checkout or MCP connection.
+Use them when the short module's `kie://ugc-creative-playbook` or
+`docs/UGC_CREATIVE_PLAYBOOK.md` pointer is unavailable. For finished creator-led
+edits, use the available `ugc-creator-edit` production/review contract and its
+local references. Missing review evidence remains pending; do not invent a
+validator path or claim an unavailable review ran.
+
+Keep completed client profiles and receipts in the repository's gitignored
+`out/` or `renders/`, or an external private run directory. Keep reusable
+instructions and examples anonymous; never fill the committed example with
+client records. Carry forward existing authorization and component acceptance.
+
 ## How to actually run a generation
 
 Two paths. **Check which you have before doing anything else.**

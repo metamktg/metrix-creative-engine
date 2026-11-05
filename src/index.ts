@@ -26,6 +26,8 @@ export async function main(): Promise<void> {
   const server = new McpServer({
     name: "kie-ai-mcp-server",
     version: "0.1.0",
+  }, {
+    instructions: "For finished creator-led UGC, AI-UGC or video, load the matching kie_render_ugc, kie_render_ai_ugc or kie_render_video prompt before creative work. Read kie://ugc-creative-playbook and kie://production-review-standard only for the needed stage; do not send full manuals to providers. Keep completed client profiles and media in ignored/private run directories. Raw task tools remain generation primitives, not evidence of creative approval.",
   });
 
   registerKieTools(server, {

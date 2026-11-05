@@ -23,7 +23,6 @@ import brandIntake from "../prompts/01-brand-intake.md";
 import renderBridge from "../prompts/02-render-bridge.md";
 import selfValidation from "../prompts/04-self-validation.md";
 import productionReview from "../prompts/06-production-review.md";
-import productionStandard from "../docs/UGC_PRODUCTION_STANDARD.md";
 import ugcCreativeDirection from "../prompts/07-ugc-creative-direction.md";
 import mst from "../prompts/05-mst.md";
 import carousel from "../prompts/formats/carousel.md";
@@ -83,7 +82,7 @@ export function registerKiePrompts(server: McpServer): void {
         // in a discoverable skill that the caller might never read.
         // The short creative-direction module rides last; the full playbook stays an
         // on-demand resource (kie://ugc-creative-playbook), not part of every request.
-        const review = requiresProductionReview ? [productionReview, productionStandard, ugcCreativeDirection] : [];
+        const review = requiresProductionReview ? [productionReview, ugcCreativeDirection] : [];
         return userMessage(withBrief(joined(core, renderBridge, module, selfValidation, ...review), brief));
       },
     );
