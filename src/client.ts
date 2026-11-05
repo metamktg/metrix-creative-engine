@@ -119,7 +119,7 @@ export class KieClient {
   }
 
   /**
-   * The API key goes on the Authorization header and nowhere else — never into
+   * The API key goes on the Authorization header and nowhere else, never into
    * a URL, a log line, or an error message.
    */
   async #request<T>(pathname: string, init: RequestInit & { query?: Record<string, string> }): Promise<T> {
@@ -170,7 +170,7 @@ export class KieClient {
     return assertOk<T>(envelope, response.status);
   }
 
-  /** POST /api/v1/jobs/createTask — returns the new task's id. */
+  /** POST /api/v1/jobs/createTask, returns the new task's id. */
   async createTask(task: CreateTaskInput): Promise<string> {
     const body: Record<string, unknown> = { model: task.model, input: task.input };
     if (task.callBackUrl) body.callBackUrl = task.callBackUrl;
@@ -193,7 +193,7 @@ export class KieClient {
     return toTaskRecord(data, taskId);
   }
 
-  /** GET /api/v1/chat/credit — `data` is the remaining credit count itself. */
+  /** GET /api/v1/chat/credit, `data` is the remaining credit count itself. */
   async getCredits(): Promise<number> {
     const data = await this.#request<unknown>(CREDIT_PATH, {});
     const credits = typeof data === "number" ? data : Number(data);
@@ -252,7 +252,7 @@ export class KieClient {
    * Download one result URL into `destDir`.
    *
    * The URL is remote input, so the protocol is checked and the filename is
-   * derived through `safeFilenameFromUrl` — the response can never pick the
+   * derived through `safeFilenameFromUrl`, the response can never pick the
    * write location.
    */
   async downloadResult(

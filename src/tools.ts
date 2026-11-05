@@ -4,7 +4,7 @@
  * Kie.ai's Market API is one generic job endpoint: `model` picks the model and
  * `input` is whatever THAT model documents. Each model's parameters differ
  * (https://docs.kie.ai/market/quickstart says so explicitly), so `input` is a
- * pass-through object rather than a per-model schema invented here — a schema
+ * pass-through object rather than a per-model schema invented here, a schema
  * we made up would reject valid calls the day Kie adds a model or a field.
  */
 import { z } from "zod";
@@ -127,7 +127,7 @@ const modelArg = z
 const inputArg = z
   .record(z.unknown())
   .describe(
-    "Model-specific input object, passed through to Kie.ai unchanged. The accepted fields differ per model — check that model's page on docs.kie.ai.",
+    "Model-specific input object, passed through to Kie.ai unchanged. The accepted fields differ per model, check that model's page on docs.kie.ai.",
   );
 
 export function registerKieTools(server: McpServer, deps: ToolDeps): void {
@@ -320,7 +320,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
           });
         }
         const prefix = timedOut
-          ? `Still running after ${polls} polls — the timeout passed, not the task. Wait again with the same taskId.`
+          ? `Still running after ${polls} polls, the timeout passed, not the task. Wait again with the same taskId.`
           : `Settled after ${polls} polls.`;
         return taskResult(settled, { task: settled, timedOut, polls }, prefix);
       }),

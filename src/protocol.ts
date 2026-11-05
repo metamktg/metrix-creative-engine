@@ -52,7 +52,7 @@ export type TaskState = (typeof TASK_STATES)[number];
 /**
  * A state we did not recognise. Deliberately NOT terminal: an unfamiliar state
  * means the task is still in flight as far as we can tell, and the caller's
- * timeout — not a guess here — is what stops the wait.
+ * timeout, not a guess here, is what stops the wait.
  */
 export type ObservedState = TaskState | "unknown";
 
@@ -182,7 +182,7 @@ export function assertOk<T>(envelope: KieEnvelope<T> | null, httpStatus: number)
   const parts = [`Kie.ai request failed (HTTP ${httpStatus}, code ${code ?? "none"})`];
   if (msg) parts.push(msg);
   if (hint) parts.push(hint);
-  throw new KieApiError(parts.join(" — "), { httpStatus, code });
+  throw new KieApiError(parts.join(" · "), { httpStatus, code });
 }
 
 /** Map an arbitrary `state` value onto a known state, or "unknown". */
@@ -192,14 +192,14 @@ export function normalizeState(raw: unknown): ObservedState {
   return (TASK_STATES as readonly string[]).includes(text) ? (text as TaskState) : "unknown";
 }
 
-/** Only `success` and `fail` end a wait. "unknown" does not — see ObservedState. */
+/** Only `success` and `fail` end a wait. "unknown" does not, see ObservedState. */
 export function isTerminalState(state: ObservedState): boolean {
   return state === "success" || state === "fail";
 }
 
 /**
  * `resultJson` is a JSON string whose contents vary per model. Parse it when we
- * can and hand back the raw value when we cannot — a malformed payload is never
+ * can and hand back the raw value when we cannot, a malformed payload is never
  * a thrown error, because the rest of the record is still useful.
  */
 export function parseResultJson(resultJson: unknown): unknown {

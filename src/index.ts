@@ -1,5 +1,5 @@
 /**
- * kie-ai-mcp-server — an MCP server over the Kie.ai Market job API.
+ * kie-ai-mcp-server · an MCP server over the Kie.ai Market job API.
  *
  * Transport is stdio, which means STDOUT BELONGS TO THE PROTOCOL. Every
  * diagnostic in this process goes to stderr; one stray console.log would

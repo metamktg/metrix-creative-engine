@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * check-mcp-surface — drive the BUILT server over a real stdio MCP session.
+ * check-mcp-surface · drive the BUILT server over a real stdio MCP session.
  *
  * Every other check in this repo tests a function. None of them proves the
  * thing an MCP client actually meets: that the bundle starts, negotiates,
@@ -8,7 +8,7 @@
  * prompts/get and tools/call with the shapes it promised. A tool can be
  * perfectly unit-tested and still be invisible because its capability was never
  * advertised, or unusable because its outputSchema and its structuredContent
- * disagree — the SDK validates that at call time, so it fails in front of a
+ * disagree, the SDK validates that at call time, so it fails in front of a
  * user, not in a test.
  *
  * Kie is stubbed on localhost, so this spends no credits and needs no API key.
@@ -126,7 +126,7 @@ const rpc = (method, params) =>
 
 let failures = 0;
 const check = (label, ok, detail = "") => {
-  console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}${detail ? ` — ${detail}` : ""}`);
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}${detail ? ` · ${detail}` : ""}`);
   if (!ok) failures += 1;
 };
 
