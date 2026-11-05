@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "protectedPaths": ["source", "recipes", "ledgers", "evidence", "stems"],
+  "currentRevisionId": "revision-004",
+  "pinnedRevisionIds": [],
+  "revisions": [
+    {
+      "id": "revision-001",
+      "status": "successful",
+      "completedAt": "2026-01-01T10:00:00Z",
+      "references": ["source/performance.mp4", "recipes/revision-001.json", "stems/voice.wav", "stems/music.wav"],
+      "artifacts": [
+        {"path": "renders/revision-001/master.mp4", "kind": "revision_render", "disposable": true, "references": []},
+        {"path": "source/performance.mp4", "kind": "generated_source", "disposable": false, "references": []},
+        {"path": "evidence/revision-001.json", "kind": "evidence", "disposable": false, "references": []}
+      ]
+    },
+    {
+      "id": "revision-002",
+      "status": "successful",
+      "completedAt": "2026-01-02T10:00:00Z",
+      "references": ["source/performance.mp4", "recipes/revision-002.json", "stems/voice.wav", "stems/music.wav"],
+      "artifacts": [
+        {"path": "renders/revision-002/master.mp4", "kind": "revision_render", "disposable": true, "references": []}
+      ]
+    },
+    {
+      "id": "revision-003",
+      "status": "successful",
+      "completedAt": "2026-01-03T10:00:00Z",
+      "references": ["source/performance.mp4", "recipes/revision-003.json", "stems/voice.wav", "stems/music.wav"],
+      "artifacts": [
+        {"path": "renders/revision-003/master.mp4", "kind": "revision_render", "disposable": true, "references": []}
+      ]
+    },
+    {
+      "id": "revision-004",
+      "status": "successful",
+      "completedAt": "2026-01-04T10:00:00Z",
+      "references": ["source/performance.mp4", "recipes/revision-004.json", "stems/voice.wav", "stems/music.wav"],
+      "artifacts": [
+        {"path": "renders/revision-004/master.mp4", "kind": "revision_render", "disposable": true, "references": []},
+        {"path": "renders/revision-004/review-preview.mp4", "kind": "review_preview", "disposable": true, "references": []}
+      ]
+    }
+  ]
+}

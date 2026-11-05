@@ -16,10 +16,13 @@
     "start": "node ./dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config vitest.config.ts",
-    "verify": "npm run check:production-standard && npm run typecheck && npm run test && npm run build && npm run check:mcp-surface && npm run test:production-review",
+    "verify": "npm run check:copies && npm run check:production-standard && npm run typecheck && npm run test && npm run build && npm run check:mcp-surface && npm run test:production-review && npm run test:retention",
+    "check:copies": "node ./scripts/sync-copies.mjs --check",
+    "sync:copies": "node ./scripts/sync-copies.mjs",
     "check:production-standard": "python -B skills/ugc-creator-edit/scripts/build_standard_doc.py --check --out docs/UGC_PRODUCTION_STANDARD.md",
     "check:mcp-surface": "node ./scripts/check-mcp-surface.mjs",
     "check:production-review": "python scripts/validate_review_gates.py",
+    "test:retention": "python -B -m unittest discover -s scripts -p test_retain_drafts.py -q",
     "test:production-review": "python -B -m unittest discover -s scripts -p test_*review*.py -q"
   },
   "dependencies": {

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "note": "Canonical file first, then every deliberate byte copy derived from it. Edit only the canonical file and run npm run sync:copies. npm run check:copies fails verify when any copy differs.",
+  "copies": [
+    { "source": "docs/UGC_CREATIVE_PLAYBOOK.md", "targets": [
+      "skills/metrix-ad-creative/references/ugc-creative-playbook.md",
+      "skills/ugc-creator-edit/references/ugc-creative-playbook.md" ] },
+    { "source": "prompts/07-ugc-creative-direction.md", "targets": [
+      "skills/metrix-ad-creative/references/creative-direction.md",
+      "skills/ugc-creator-edit/references/creative-direction.md" ] },
+    { "source": "skills/metrix-ad-creative/references/preproduction-director.md", "targets": [
+      "skills/ugc-creator-edit/references/preproduction-director.md" ] },
+    { "source": "skills/metrix-ad-creative/scripts/kie.mjs", "targets": [
+      "skills/kie-generate/scripts/kie.mjs",
+      "skills/kie-tasks/scripts/kie.mjs" ] },
+    { "source": "skills/metrix-ad-creative/scripts/ugc-preflight.mjs", "targets": [
+      "skills/kie-generate/scripts/ugc-preflight.mjs",
+      "skills/kie-tasks/scripts/ugc-preflight.mjs" ] },
+    { "source": "skills/ugc-creator-edit/scripts/validate_review_gates.py", "targets": ["scripts/validate_review_gates.py"] },
+    { "source": "skills/ugc-creator-edit/scripts/prepare_review_record.py", "targets": ["scripts/prepare_review_record.py"] },
+    { "source": "skills/ugc-creator-edit/scripts/check_script.py", "targets": ["scripts/check_script.py"] },
+    { "source": "skills/ugc-creator-edit/scripts/test_validate_review_gates.py", "targets": ["scripts/test_validate_review_gates.py"] },
+    { "source": "skills/ugc-creator-edit/scripts/test_prepare_review_record.py", "targets": ["scripts/test_prepare_review_record.py"] },
+    { "source": "skills/ugc-creator-edit/scripts/test_check_script_review.py", "targets": ["scripts/test_check_script_review.py"] },
+    { "source": "skills/ugc-creator-edit/scripts/test_review_scripts_drift.py", "targets": ["scripts/test_review_scripts_drift.py"] }
+  ]
+}
