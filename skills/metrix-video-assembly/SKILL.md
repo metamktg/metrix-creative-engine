@@ -51,7 +51,7 @@ node scripts/render.mjs <run>/composition --storyboard <run>/storyboard.json --m
 node scripts/render.mjs <run>/composition --storyboard <run>/storyboard.json --mode stills
 node scripts/render.mjs <run>/composition --storyboard <run>/storyboard.json [--draft]
 node scripts/beats.mjs <track> --window 30 --out <run>/work/cues.json
-node scripts/qa-video.mjs <run>/<name>.mp4 --poster <run>/<name>.jpg --ratio 4:5 --duration 12
+node scripts/qa-video.mjs <run>/<name>.mp4 --storyboard <run>/storyboard.json --poster <run>/<name>.jpg
 node scripts/make-row.mjs --base <base-run> --brief brief.json --out <row-dir>     (MST rows only)
 node scripts/make-srt.mjs <run>/storyboard.json --out <run>/captions.srt
 ```
@@ -206,12 +206,19 @@ clears 4:5 can still sit under the Reels overlay at 9:16.
 ### 8. Validate, then report
 
 ```
-node scripts/qa-video.mjs <name>.mp4 --poster <name>.jpg --ratio <ratio> --duration <s> [--silent]
+node scripts/qa-video.mjs <name>.mp4 --storyboard <run>/storyboard.json --poster <name>.jpg [--lufs <approved>]
 ```
 
 It checks the file itself: ratio, duration, an audio stream, loudness within
-1 LU of `--lufs` (default -14; pass the approved target), `--silent` when the
-brief asks for no audio, and `--effects-only` for a mix with no music or voice.
+1 LU of the target, silence when the storyboard has no audio, and `--effects-only`
+for a mix with no music or voice. `--storyboard` supplies the ratio, duration,
+loudness target (`audio.lufs`, default -14) and silent or effects-only mode the
+renderer used, so the file is checked against the same facts it was built from.
+An explicit `--ratio`, `--duration`, `--lufs`, `--silent` or `--effects-only`
+always wins; the output lists where each value came from and notes any override.
+Pass `--lufs` from the approved delivery profile when it differs from the
+storyboard: a QA that only repeats the storyboard's own target cannot catch a
+wrong target.
 No music with present dialogue is still a voiced mix, not effects-only. It
 also checks poster equal to frame 0,
 BT.709 colour tags, and double exposures, a frame that is a mid blend of two
