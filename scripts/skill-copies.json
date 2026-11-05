@@ -8,6 +8,8 @@
     { "source": "prompts/07-ugc-creative-direction.md", "targets": [
       "skills/metrix-ad-creative/references/creative-direction.md",
       "skills/ugc-creator-edit/references/creative-direction.md" ] },
+    { "source": "docs/PROMPTING.md", "targets": [
+      "skills/kie-generate/references/prompting.md" ] },
     { "source": "skills/metrix-ad-creative/references/preproduction-director.md", "targets": [
       "skills/ugc-creator-edit/references/preproduction-director.md" ] },
     { "source": "skills/metrix-ad-creative/scripts/kie.mjs", "targets": [

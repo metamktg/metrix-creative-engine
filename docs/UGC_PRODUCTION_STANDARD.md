@@ -7,7 +7,7 @@ This repository standard is composed from the UGC skill references. It governs p
 
 Use this reference with the approved brief, current asset map and the parent UGC workflow. It governs production choices before the five presentation gates. It does not authorize additional deliverables, spend or publication.
 
-The [preproduction director](preproduction-director.md) connects the existing [script-and-delivery.md](script-and-delivery.md), [casting.md](casting.md), [hooks.md](hooks.md) and [lip-sync-routing.md](lip-sync-routing.md) owners before new creator performance. Keep one canonical approved monologue, exact locks, reasoned hook treatment, credible cast/voice/scene fit, thought-level intention/emotion/behavior, truthful proof sources and current provider handoff. New performers need fresh acceptance; unchanged appropriate B-roll/UI sources retain their rights and reuse scope. Dated provider recipes are not live capabilities or universal creative policy.
+The [preproduction director](../skills/ugc-creator-edit/references/preproduction-director.md) connects the existing [script-and-delivery.md](../skills/ugc-creator-edit/references/script-and-delivery.md), [casting.md](../skills/ugc-creator-edit/references/casting.md), [hooks.md](../skills/ugc-creator-edit/references/hooks.md) and [lip-sync-routing.md](../skills/ugc-creator-edit/references/lip-sync-routing.md) owners before new creator performance. Keep one canonical approved monologue, exact locks, reasoned hook treatment, credible cast/voice/scene fit, thought-level intention/emotion/behavior, truthful proof sources and current provider handoff. New performers need fresh acceptance; unchanged appropriate B-roll/UI sources retain their rights and reuse scope. Dated provider recipes are not live capabilities or universal creative policy.
 
 Approved-full-voice Kie lip sync uses a current versioned packet, offline `kie_validate_ugc_preproduction` / client `ugc-check` and guarded `kie_create_ugc_lipsync` / client `ugc-start`. Structural validation cannot hear the full voice, establish acting quality, prove remote uploads or certify release. Native-audio routes need separate qualification and cannot borrow a standalone voice pass. Continue to apply the existing five exact-export reviews.
 
@@ -114,7 +114,7 @@ bind `production.preproduction` to one `{path, sha256}` descriptor or a nonempty
 array listing every actual operation packet directly. A manifest proxy does not
 bind indirectly referenced packet contents.
 Before final review rerun the offline Node preflight defined in
-[preproduction-director.md](preproduction-director.md). The final Python
+[preproduction-director.md](../skills/ugc-creator-edit/references/preproduction-director.md). The final Python
 validator rehashes the packet and includes its descriptor in review context;
 it does not rerun preflight or recursively inspect nested files. Missing a
 required packet is NOT_CHECKED, and a changed packet invalidates the bound

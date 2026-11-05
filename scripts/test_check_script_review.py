@@ -103,6 +103,27 @@ class CheckScriptTests(unittest.TestCase):
         self.assertIn("L4.experience", rules(run(s), "FAIL"))
         self.assertEqual(s["lines"][3]["text"], "I’ve been using this at home.")
 
+    def test_hook_table_experience_openers_fail_for_a_synthetic_presenter(self):
+        # The mistake, comparison, confession and time-bound rows of hooks.md are fabricated
+        # experience when a synthetic presenter says them, so the check has to see them.
+        for text in ("I was doing this completely wrong.", "I tried three. One worked.",
+                     "I didn't think this would work.", "I didn’t think it could work.",
+                     "Three weeks in, here's what happened."):
+            with self.subTest(text=text):
+                s = good_script()
+                s["lines"][3]["text"] = text
+                self.assertIn("L4.experience", rules(run(s), "FAIL"))
+                s["presenter"]["identity"] = "real_creator"
+                self.assertNotIn("L4.experience", rules(run(s), "FAIL"))
+
+    def test_demonstration_wording_near_those_openers_is_not_an_experience_claim(self):
+        for text in ("Most people try three before one works.", "Here is how to avoid doing this wrong.",
+                     "You might think this wouldn't work, so here is the step.", "Tried and tested steps, in order."):
+            with self.subTest(text=text):
+                s = good_script()
+                s["lines"][3]["text"] = text
+                self.assertNotIn("L4.experience", rules(run(s), "FAIL"))
+
     def test_unknown_identity_is_a_failure_and_treated_as_synthetic(self):
         s = good_script()
         s["presenter"]["identity"] = "friend"

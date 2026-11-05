@@ -53,8 +53,11 @@ presenter's identity in the casting brief (`casting.md`) and write to it.
 | `real_customer` | Their genuine experience, with permission, as they said it | Anything beyond what they actually said |
 
 Write a synthetic presenter's script as a demonstration, not a testimony. A
-disclosure label does not cure a fabricated experience claim. The check fails any
-first-person experience pattern when the identity is a synthetic one.
+disclosure label does not cure a fabricated experience claim. For a synthetic
+identity the check fails a fixed set of first-person experience phrasings (use,
+purchase, personal result, elapsed time, and the mistake, comparison and
+confession openers in `hooks.md`). Other wording can pass it, so the rest is a
+review decision.
 
 ## 3. Length is a budget decision
 
@@ -64,7 +67,10 @@ pauses. Declare the duration mode
 before writing, from the latest instruction: **exact** (the read lands within
 about 1.5 s of the target), **maximum** (a ceiling, never a slot to fill), or an
 approved **range**. Cut setup and repeated explanation before extending, and
-never speed the speech to fit.
+never speed the speech to fit. The mode governs this script check only. The
+assembly storyboard check compares the brief's `duration_seconds` with the
+storyboard and fails a difference above 0.5 s, so a brief whose number is a
+ceiling must be updated to the cut's real length before assembly.
 
 | Duration | Words at 2.4 wps | Fits |
 | --- | --- | --- |
@@ -96,8 +102,9 @@ not a universal point where sync or attention fails.
 A starting shape, not a three-second complete-hook limit. A long exact opener
 can earn attention early and finish naturally later. The brief's `copy_architecture` decides the words that are
 locked (hook, CTA, any `spoken_opening_locked`); the map decides how they are
-said. Decide the two things the audience must understand before writing: with
-five messages the viewer takes none. Remove a second hook metaphor late in the
+said. Aim for two things the audience must understand, decided before writing: with
+five messages the viewer takes none. The check warns on any other count and
+treats that as guidance, not a required number. Remove a second hook metaphor late in the
 ad, filler, and any destination borrowed from the production platform.
 
 ## 5. The delivery map
@@ -155,7 +162,7 @@ Direction never goes in it.
 | `energy` | 0 to 4, intended pace and lift | Select for the thought; a composed neutral baseline is valid |
 | `emphasis` | The one word or short phrase that carries the line | Must appear in `text`; at most one per line; selective, not every benefit |
 | `breath_opportunity` | A thought-group end where a breath is comfortable | A phrasing note. It never asks for a breath sound to be added |
-| `pause_after` | Silence in seconds after the line | 0 to 3 |
+| `pause_after` | Silence in seconds after the line | 0 up to about 3; a negative or non-finite value fails, above 3 warns |
 | `gaze` | `lens`, `product`, `work`, `away_then_back` | Follow the thought and task; comfortable sustained direct address can be appropriate |
 | `gesture` | `none`, `hold_product`, `turn_product`, `glance_to_screen`, `nod`, `hands_rest`, `small_laugh`, `push_hair` | At most one feasible action per line; no required friction, laugh or hair-touch beat |
 | `on_camera` | Whether the face carries this line | Off-camera lines are the same recording event: same voice, same room |
@@ -246,7 +253,14 @@ forbids, and an unheard mix is never reported as reviewed.
 
 ```
 python skills/ugc-creator-edit/scripts/check_script.py <run>/script.json --brief <run>/brief.json [--kit brand-kit.json] [--transcript heard.txt]
+python skills/ugc-creator-edit/scripts/check_script.py <run>/script.json --print-spoken
 ```
+
+The report is JSON: `verdict` (`PASS` or `FAIL`), `fails`, `warns`, `results` (one `rule`, `verdict`
+and `detail` each), `estimate_seconds`, `words`, `scope` (always `text_and_structure_only`) and
+`listening_acceptance` (always `not_assessed`). `--print-spoken` prints the spoken text with pause
+marks and exits 0, which is the exact string to give a voice route. The exit code is 1 on any FAIL and 0
+otherwise; a WARN never fails the run.
 
 Exit 1 on structural, source-lock or claim FAIL results: malformed fields,
 direction/tags inside spoken text, synthetic personal-experience patterns,

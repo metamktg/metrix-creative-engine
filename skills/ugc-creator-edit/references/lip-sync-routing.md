@@ -33,12 +33,12 @@ same accepted voice without a sync pass, at a fraction of the cost.
 | Role | Model | Observed | Notes |
 | --- | --- | --- | --- |
 | A. one-take avatar | `kling/ai-avatar-standard` | quoted 10.1 credits per second, 720p native (2026-11-05) | image_url + audio_url + performance prompt; the route planned for a later run |
-| A. one-take avatar | `kling/ai-avatar-pro`, `omnihuman-1-5`, `infinitalk/from-audio` | all failed with code 500 timeouts for a full day on 2026-11-02, including the provider's own example inputs; uncharged | parameters still marked unverified in `MODEL_CATALOG.md`; fetch the model page before first use |
+| A. one-take avatar | `kling/ai-avatar-pro`, `infinitalk/from-audio`, and per one record `omnihuman-1-5` | failed with code 500 timeouts for a full day on 2026-11-02, including the provider's own example inputs; uncharged. The catalog's record of the same day names `kling/ai-avatar-standard` instead of `omnihuman-1-5`, so treat every image-plus-audio avatar route as unreliable for that day | parameters still marked unverified in `docs/MODEL_CATALOG.md`; fetch the model page before first use |
 | B. base clip | `kling/v2-1-standard` image-to-video, `duration` the string `"10"`, `cfg_scale` 0.5, negative prompt | 50 credits per 10 s clip on 2026-11-02; **101 on 2026-11-05** | the price change broke a budget quoted three days earlier; read the live charge before the dependent sync pass |
 | B. sync pass | `volcengine/video-to-video-lip-sync`, mode `lite` | 8 credits per second, output 25 fps, trimmed or looped to the audio (2026-11-02 and 2026-11-05) | "server is busy" (500) seen twice; a retry succeeded once and was unaffordable once |
 | voice | `elevenlabs/text-to-speech-multilingual-v2` | 12 credits per 1,000 characters (2026-11-05); upstream timeouts all afternoon on 2026-11-02 | per-word timestamps available for caption timing |
 | voice | `elevenlabs/text-to-dialogue-v3` | same outage on 2026-11-02 | multi-speaker; bracket tags for delivery |
-| voice | `google/gemini-3-8-flash-tts` | worked throughout 2026-11-02 at under one credit per take | per-turn `style`; the route that produced an accepted voice while the others were down |
+| voice | `google/gemini-3-8-flash-tts` | worked throughout 2026-11-02 at under one credit per take | per-turn `style`; the route that produced an accepted voice while the others were down. The catalog's enum lists `google/gemini-3-1-flash-tts`, so confirm the id on the model page |
 | identity still | `nano-banana-2` | 12 credits per image (2026-11-05) | 9:16, 2K, `aspect_ratio` set explicitly |
 | upscale | `topaz/video-upscale` | 8 credits per second (2026-11-05) | only on documented need |
 
@@ -85,13 +85,13 @@ does not authorize a native route for an approved-voice assignment.
 
 | Model | Dialogue syntax | Observed constraints |
 | --- | --- | --- |
-| Veo 3.x text-to-video | `She says: Okay, wait...` colon form, **no quotation marks** (quotes burn subtitles); add "no subtitles, no text, no captions" | audio reliable in text-to-video, generally absent in image-to-video; keep each line under about 20 words |
+| Veo 3.x text-to-video | `She says: Okay, wait...` colon form, **no quotation marks** (quotes burn subtitles); add "no subtitles, no text, no captions" | audio reliable in text-to-video; with an image input, confirm the audio is actually produced before relying on it; keep each line under about 20 words |
 | Sora 2 | labelled `Dialogue:` block, quotes allowed | 4 to 20 s steps |
 | Seedance 2.x | prose dialogue, `@Image1` references, audio generated in one pass | rejects real faces as input; "fast" is the biggest documented quality degrader |
 | Kling 3.0 Omni | state who speaks and when; tone as one bold modifier ("warm voice") | dual-image person plus product; real faces allowed; aspect inherited from the input image |
 | Hailuo, Seedance 1.0 | no speech; dub separately | route B or A instead |
 
-Not every model on that table is on Kie; `format-routing.md` lists the eligible
+Not every model on that table is on Kie; `skills/metrix-ad-creative/references/format-routing.md` lists the eligible
 set and the catalogue carries the IDs.
 
 Provider roles are engine policy, not a model ranking. Kie is the default

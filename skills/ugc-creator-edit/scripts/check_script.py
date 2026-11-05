@@ -48,7 +48,11 @@ EXPERIENCE_CLAIMS = re.compile(
     r"|\bmy\s+\w+\s+(has|have)\s+(completely\s+)?(changed|cleared|improved|transformed)\b"
     r"|\b(three|two|four|five|six|a few|several)\s+(weeks|months|years|days)\s+(in|later|on)\b"
     r"|\bsince\s+i\s+started\b"
-    r"|\bchanged\s+my\s+(life|skin|sleep|routine)\b",
+    r"|\bchanged\s+my\s+(life|skin|sleep|routine)\b"
+    # The example wording of the mistake, comparison and confession hook patterns (hooks.md).
+    r"|\bi\s+was\s+doing\s+(this|it|that)\s+(completely\s+|totally\s+|all\s+)?wrong\b"
+    r"|\bi\s+tried\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten|a\s+few|several|everything|all)\b"
+    r"|\bi\s+(didn'?t|did\s+not)\s+(think|believe|expect)\s+(this|it|that)\s+(would|could|was\s+going\s+to)\s+work\b",
     re.IGNORECASE,
 )
 MARKETING_WORDS = re.compile(

@@ -19,7 +19,7 @@ opening permits visual and delivery treatment, not substitute words.
 
 | Layer | Owner | Rule |
 | --- | --- | --- |
-| Text on screen | The brief, set in post | One primary opening message: the brief's hook, a deliberately chosen headline, or none. No large headline plate stacked on full captions that say a competing hook. Readable early, never over the face |
+| Text on screen | The brief, set in post | One primary opening message: the brief's hook or a deliberately chosen headline. The assembly storyboard check fails a hook scene with no text, so no opening text is not an option today. No large headline plate stacked on full captions that say a competing hook. Readable early, never over the face |
 | First thing we see | The still and the base prompt | Already in motion: mid-sentence, product already in hand, action under way at frame one. "No lead-in" removes the slow push-in the model gives by default. When the brief calls for direct address, the creator addresses the camera; do not replace the hook with random activity |
 | First thing we hear | Line one of the delivery map | Starts on the point, no greeting; a verbal cold open ("okay, wait", a flat claim) carries energy without speed |
 
@@ -52,12 +52,15 @@ permit them. They have no universal performance advantage established here.
 fabricated experience.** Those patterns belong to a real creator's or customer's
 substantiated account, or to a demonstrator framing that reports no personal
 result ("people tell us their [X] kept doing [thing]" needs evidence too). The
-script check fails first-person experience claims for a synthetic presenter
-whatever the pattern.
+script check fails a fixed set of first-person phrasings for a synthetic presenter:
+past or ongoing use, a purchase, a personal result, elapsed time, and the example
+wording of the mistake, comparison, confession and time-bound rows above. A
+paraphrase can pass the check, so keeping fabricated experience out of a synthetic
+presenter's script remains a review decision.
 
 ## 3. Writing the spoken hook
 
-- Earn the first two seconds with a line that contradicts what the viewer
+- Earn the opening seconds with a line that contradicts what the viewer
   assumes, names their situation exactly, or promises a specific supported payoff.
 - Earn attention in the opening seconds, then let the full thought land at a
   natural measured pace. A three-second attention window is not a maximum
