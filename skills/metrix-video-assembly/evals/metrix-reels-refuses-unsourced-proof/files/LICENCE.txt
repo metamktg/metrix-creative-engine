@@ -1,0 +1,4 @@
+metrix-bed-stop-guessing.wav / .mp3
+Original instrumental composed for Metrix MTX-VID-001 on 2026-10-23 by compose-bed.mjs (this folder).
+Every sound is synthesised by that script: no samples, no loops, no third-party model or library.
+Owner: Meta Marketing Agency. Free to use in Metrix advertising in any channel.

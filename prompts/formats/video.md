@@ -19,7 +19,9 @@ Go straight to text-to-video only for cheap exploration, or when the brief says 
 ## Ratio and length
 
 - **Ratio:** 9:16 for Reels and Stories, 16:9 for in-stream. No video model
-  offers 4:5, so feed video is a crop from a 9:16 render with a centred subject.
+  offers 4:5. Generate clips at 9:16 with a centred subject and let
+  `metrix-video-assembly` render the 4:5 feed cut, with its type set at 4:5
+  rather than cropped from 9:16.
 - **Duration:** a parameter with a fixed set of allowed values per model. Check
   the routing table, and take the shortest that carries the idea. A hook test is
   decided early; extra seconds add cost, not signal.
@@ -39,12 +41,13 @@ Go straight to text-to-video only for cheap exploration, or when the brief says 
 - Generate each shot separately.
 - Lock style across shots with the same reference frame or product references,
   the same light and palette clauses, and the same model.
-- Assemble, caption and add the logo in post.
+- Assemble, caption and add the logo in post, with `metrix-video-assembly`:
+  storyboard, verbatim hook and CTA as set type, sound, poster as frame 0.
 
 ## Sound
 
 - Assume sound off. The visual must carry the idea without audio.
-- Captions and supers are added in post, never generated.
+- Captions and supers are added in post by `metrix-video-assembly`, never generated.
 - Music beds come from the routing table's music model, instrumental unless
   vocals are the point. Voiceover comes from the speech model.
 
@@ -63,6 +66,12 @@ Create the task and wait on it rather than blocking, and state the credit
 estimate before the batch.
 
 ## QA checks to add
+
+`kie_render_video` loads the short `06-production-review.md` and
+`07-ugc-creative-direction.md` modules. Read the complete contract on demand
+through `kie://production-review-standard` or `docs/UGC_PRODUCTION_STANDARD.md`. Apply its evidence-bound soundtrack,
+narration, visual timing, source-reuse and review contract before approved
+presentation. Technical encoding checks do not replace full playback/listening.
 
 - [ ] Opening frame works as a still and as the thumbnail
 - [ ] Product label and shape stay stable across frames with no morphing

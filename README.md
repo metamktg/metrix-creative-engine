@@ -1,5 +1,9 @@
 # metrix-creative-engine
 
+For UGC/video production, read [the consolidated production standard](docs/UGC_PRODUCTION_STANDARD.md) and [workflow reconciliation](docs/WORKFLOW_RECONCILIATION.md). The runtime UGC/AI-UGC/video prompts load short review/direction modules and point to that same standard as an on-demand resource. Keep brand/project design references in their private briefs; a particular UI-overlay layout is not an engine-wide template. Installed skills are synchronized from this canonical checkout, and a previously running MCP server needs to reload a rebuilt bundle to receive changes. `npm run verify` includes standard-document drift and review-record checks.
+
+UGC/AI-UGC and video workflows also read the short [creative direction](prompts/07-ugc-creative-direction.md) before planning/spend, then only the relevant stage of the [creative playbook](docs/UGC_CREATIVE_PLAYBOOK.md) at planning/review. Both `metrix-ad-creative` and `ugc-creator-edit` bundle these references for standalone use without this checkout or MCP. The UGC/video MCP render prompts include the short direction; the complete playbook stays on demand as `kie://ugc-creative-playbook`. Repository sessions follow [AGENTS.md](AGENTS.md).
+
 Generate ad creative through [Kie.ai](https://kie.ai) from inside Claude Code.
 
 **Skills** that know how to prompt each model family, and how to turn a Metrix

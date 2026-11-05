@@ -1,0 +1,94 @@
+{
+  "brief_metadata": {
+    "brief_id": "MTX-MST1-R1",
+    "mode": "matrix",
+    "asset_type": "video",
+    "confidence": "hypothesis",
+    "voice": "confident, plain, operator-to-operator",
+    "priority": "P1"
+  },
+  "creative_specifications": {
+    "format": "video",
+    "dimensions": "1:1",
+    "duration": 6,
+    "placement": [
+      "Facebook Feed"
+    ],
+    "safe_zones": "keep type 5% clear of every edge"
+  },
+  "copy_architecture": {
+    "hook": null,
+    "product_solution": "Know which hooks actually drive revenue",
+    "proof": "",
+    "cta": "Apply for Demo Access",
+    "headlines": [],
+    "primary_text": "Stop Guessing Which Ads Actually Work."
+  },
+  "copy_sources": "every copy_architecture line is verbatim from artifacts/marketing/src/content.ts",
+  "visual_direction": {
+    "composition": "The real Metrix product in use, from the screens or recordings supplied. Type above the product, never over it.",
+    "style_guide": "Command-deck dark, calm, precise. The product carries the frame.",
+    "color_palette": "#020711 deep ground, #050b18 main, #16d9ff cyan accent, #155dff action blue, #f5f8ff type",
+    "typography": "Inter (Inter-latin.woff2, variable): 800 hook, 600-700 lines, 500 labels",
+    "imagery": "Only the supplied captures of the running app on the Metrix Demo synthetic fixture",
+    "avoid_list": [
+      "ROAS lift, wasted-spend or data-point figures",
+      "the testimonial",
+      "the 200-account cap",
+      "any client name",
+      "AI-generated product imagery"
+    ]
+  },
+  "brand_assets": {
+    "product_references": [],
+    "logo_method": "metrix-logo.png icon with the lowercase wordmark 'metrix' set in Inter 800 beside it",
+    "style_references": []
+  },
+  "qa_requirements": [
+    "Hook verbatim, readable muted by 1s",
+    "CTA verbatim",
+    "Product scenes labelled with the kit's disclosure",
+    "No claim outside the brief and the kit's approved claims"
+  ],
+  "testing_framework": {
+    "isolated_variable": "HK_",
+    "control_reference": "C1A",
+    "locked_variables": [
+      "product screen 01-signal.png",
+      "product_solution line",
+      "CTA end card",
+      "timing",
+      "audio",
+      "ratio 1:1",
+      "duration 6s"
+    ],
+    "matrix_naming_convention": "{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}",
+    "cells": [
+      {
+        "matrix_position": "C1A",
+        "hook": "Stop Guessing Which Ads Actually Work.",
+        "concept_codes": "CN_Design_ProductUI",
+        "angle_codes": "HK_Problem",
+        "unique_id": "001"
+      },
+      {
+        "matrix_position": "C1B",
+        "hook": "Your data isn't helping you make decisions.",
+        "concept_codes": "CN_Design_ProductUI",
+        "angle_codes": "HK_Pain",
+        "unique_id": "002"
+      },
+      {
+        "matrix_position": "C1C",
+        "hook": "Not more dashboards. Better decisions.",
+        "concept_codes": "CN_Design_ProductUI",
+        "angle_codes": "HK_Contrast",
+        "unique_id": "003"
+      }
+    ],
+    "success_criteria": {
+      "minimum_read_window": "7 days or 1,000 impressions per cell",
+      "kpi_threshold": "hook rate (3s views / impressions) beats C1A by 15%"
+    }
+  }
+}

@@ -19,14 +19,13 @@
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { createInterface } from "node:readline";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const bundle = path.join(repoRoot, "dist", "index.js");
-const STUB_PORT = 8799;
 
 // ---------------------------------------------------------------- Kie stub
 let reads = 0;
@@ -68,8 +67,11 @@ const stub = createServer((req, res) => {
 
 await new Promise((resolve, reject) => {
   stub.once("error", reject);
-  stub.listen(STUB_PORT, "127.0.0.1", resolve);
+  stub.listen(0, "127.0.0.1", resolve);
 });
+const stubAddress = stub.address();
+if (!stubAddress || typeof stubAddress === "string") throw new Error("Kie stub did not bind a TCP port");
+const stubPort = stubAddress.port;
 
 // ------------------------------------------------------------- MCP session
 const downloadDir = await mkdtemp(path.join(tmpdir(), "kie-mcp-surface-"));
@@ -77,8 +79,9 @@ const child = spawn("node", [bundle], {
   env: {
     ...process.env,
     KIE_AI_API_KEY: "stub-key-not-a-real-credential",
-    KIE_AI_BASE_URL: `http://127.0.0.1:${STUB_PORT}`,
+    KIE_AI_BASE_URL: `http://127.0.0.1:${stubPort}`,
     KIE_AI_DOWNLOAD_DIR: downloadDir,
+    KIE_AI_LEDGER_PATH: path.join(downloadDir, "tasks.jsonl"),
   },
   stdio: ["pipe", "pipe", "pipe"],
 });
@@ -141,6 +144,10 @@ try {
   check("advertises tools", Boolean(capabilities.tools));
   check("advertises resources", Boolean(capabilities.resources));
   check("advertises prompts", Boolean(capabilities.prompts));
+  const instructions = init.result?.instructions ?? "";
+  check("handshake routes creator workflows to prompts and on-demand references",
+    ["kie_render_ugc", "kie_render_ai_ugc", "kie_render_video", "kie://ugc-creative-playbook", "kie://production-review-standard"].every((route) => instructions.includes(route)));
+  check("handshake keeps workflow routing concise", instructions.length > 0 && instructions.length < 1000);
 
   console.log("\n== Tools ==");
   const tools = (await rpc("tools/list", {})).result?.tools ?? [];
@@ -169,7 +176,13 @@ try {
 
   console.log("\n== Resources ==");
   const resources = (await rpc("resources/list", {})).result?.resources ?? [];
-  check("both reference documents listed", resources.length === 2, resources.map((r) => r.uri).join(", "));
+  const expectedResources = ["kie://model-catalog", "kie://format-routing", "kie://production-review-standard", "kie://ugc-creative-playbook"];
+  const resourceUris = resources.map((resource) => resource.uri);
+  check(
+    "all four reference documents are listed, with no substitution",
+    resourceUris.length === expectedResources.length && expectedResources.every((uri) => resourceUris.includes(uri)),
+    resourceUris.join(", "),
+  );
   const catalog = await rpc("resources/read", { uri: "kie://model-catalog" });
   const catalogText = catalog.result?.contents?.[0]?.text ?? "";
   check(
@@ -177,10 +190,27 @@ try {
     catalogText.includes("google/nano-banana"),
     `${catalogText.length} chars`,
   );
+  const productionStandard = await rpc("resources/read", { uri: "kie://production-review-standard" });
+  const standardText = productionStandard.result?.contents?.[0]?.text ?? "";
+  const productionGates = ["iap_variables", "communications", "sound_check", "editorial_peer", "blind_review"];
+  check(
+    "the production standard resource serves the complete five-gate contract",
+    standardText.length > 500 && productionGates.every((gate) => standardText.includes(gate)),
+    `${standardText.length} chars`,
+  );
+  const creativePlaybook = await rpc("resources/read", { uri: "kie://ugc-creative-playbook" });
+  const playbookText = creativePlaybook.result?.contents?.[0]?.text ?? "";
+  const expectedPlaybook = await readFile(path.join(repoRoot, "docs", "UGC_CREATIVE_PLAYBOOK.md"), "utf8");
+  const creativeDirection = await readFile(path.join(repoRoot, "prompts", "07-ugc-creative-direction.md"), "utf8");
+  check(
+    "the creative playbook resource serves the complete source document",
+    playbookText.length > 1000 && playbookText === expectedPlaybook,
+    `${playbookText.length} chars`,
+  );
 
   console.log("\n== Prompts ==");
   const prompts = (await rpc("prompts/list", {})).result?.prompts ?? [];
-  check("six format prompts plus brand intake and MST", prompts.length === 8, `${prompts.length} listed`);
+  check("seven format prompts plus brand intake and MST", prompts.length === 9, `${prompts.length} listed`);
   const rendered = await rpc("prompts/get", {
     name: "kie_render_static",
     arguments: { brief: '{"asset_type":"static"}' },
@@ -188,6 +218,58 @@ try {
   const promptText = rendered.result?.messages?.[0]?.content?.text ?? "";
   check("a render prompt assembles the whole workflow", promptText.length > 15_000, `${promptText.length} chars`);
   check("the supplied brief reaches the prompt", promptText.includes('"asset_type":"static"'));
+
+  // Read the runtime prompt over MCP, not its source file. Installing a skill
+  // without importing its review stage used to leave these checks invisible.
+  const productionMarker = "# Stage 6: Mandatory production review for UGC and video";
+  for (const format of ["static", "carousel", "motion_graphic", "claymation", "ugc", "ai_ugc", "video"]) {
+    const result = format === "static" ? rendered : await rpc("prompts/get", { name: `kie_render_${format}`, arguments: {} });
+    const text = result.result?.messages?.[0]?.content?.text ?? "";
+    const requiresProductionReview = format === "ugc" || format === "ai_ugc" || format === "video";
+    const description = prompts.find((prompt) => prompt.name === `kie_render_${format}`)?.description ?? "";
+    check(
+      `${format} advertises the additional presentation gates only when applicable`,
+      description.includes("five evidence-bound presentation gates") === requiresProductionReview,
+    );
+    check(
+      `${format} loads the production-review module only when applicable`,
+      text.includes(productionMarker) === requiresProductionReview,
+    );
+    check(
+      `${format} loads the short creative-direction module only when applicable`,
+      creativeDirection.trim().length > 100 && text.includes(creativeDirection) === requiresProductionReview,
+    );
+    check(`${format} does not inject the complete playbook`, !text.includes(expectedPlaybook));
+    if (requiresProductionReview) {
+      // ai_ugc shares the UGC format module; the rest of the assembly keeps its existing order.
+      const formatFile = format === "ai_ugc" ? "ugc" : format;
+      const previousSections = await Promise.all([
+        "prompts/00-core.md", "prompts/02-render-bridge.md", `prompts/formats/${formatFile}.md`,
+        "prompts/04-self-validation.md", "prompts/06-production-review.md",
+      ].map((file) => readFile(path.join(repoRoot, file), "utf8")));
+      const previousPrompt = previousSections.join("\n\n---\n\n");
+      check(
+        `${format} adds exactly the short module to the preserved baseline assembly`,
+        text === `${previousPrompt}\n\n---\n\n${creativeDirection}`,
+        `${previousPrompt.length} -> ${text.length} chars; delta +${text.length - previousPrompt.length}`,
+      );
+      check(`${format} points to the on-demand creative playbook`, text.includes("kie://ugc-creative-playbook"));
+      check(`${format} carries every mandatory gate`, productionGates.every((gate) => text.includes(gate)));
+      check(`${format} requires an explicit background-music decision`, text.includes("Make an explicit background-music decision."));
+      check(`${format} points to the detailed review resource`, text.includes("kie://production-review-standard"));
+    }
+    check(
+      `${format} keeps the complete production standard on demand`,
+      standardText.length > 500 && !text.includes(standardText),
+    );
+  }
+
+  for (const name of ["kie_brand_intake", "kie_mst_sprint"]) {
+    const result = await rpc("prompts/get", { name, arguments: {} });
+    const text = result.result?.messages?.[0]?.content?.text ?? "";
+    check(`${name} does not load UGC-specific creative direction`, !text.includes(creativeDirection));
+    check(`${name} does not inject the complete playbook`, !text.includes(expectedPlaybook));
+  }
 
   console.log("\n== Brief gate ==");
   // The gate that protects spend. Exercised through the JSON-string path,
@@ -207,11 +289,11 @@ try {
     name: "kie_validate_brief",
     arguments: {
       brief: JSON.stringify({
-        brief_metadata: { brief_id: "ECAS_C1A_001", asset_type: "static_4x5", mode: "MST_matrix_cell", confidence: "medium" },
+        brief_metadata: { brief_id: "creative-001", asset_type: "static_4x5", mode: "MST_matrix_cell", confidence: "medium" },
         creative_specifications: { placement: "Feed" },
-        visual_direction: { composition: "Framed print on a panelled wall", imagery: "Painted city scene, legible street nameplate" },
+        visual_direction: { composition: "Approved subject in a neutral setting", imagery: "Accurate reference details and clear visual hierarchy" },
         testing_framework: { isolated_variable: "HK_Problem" },
-        brand_assets: [{ role: "product_front", url: "https://cdn.example/print.png" }],
+        brand_assets: [{ role: "product_front", url: "https://cdn.example/reference.png" }],
       }),
     },
   });

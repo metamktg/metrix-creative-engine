@@ -1,0 +1,1 @@
+01 to 09 are 2880x1800 captures of the real Metrix app on the Metrix Demo synthetic fixture: 01 Signal, 02 metric breakdown, 03 Signal with the finding tile, 04 the finding opened, 05 evidence and method, 06 Analysis, 07 Creative, 08 Strategy, 09 Action queue.

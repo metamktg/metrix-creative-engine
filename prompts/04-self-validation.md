@@ -20,6 +20,15 @@ The exceptions are the ones that are not judgment calls: credits exhausted, a
 blocked brief (product references listed under `brand_assets.missing`), or the
 revision budget spent. Those stop and report.
 
+For UGC, AI-UGC and video, uninterrupted production does not waive the required
+component decisions and five presentation reviews in `06-production-review.md`
+and `kie://production-review-standard`. Continue independent work within the
+existing authorization and keep unaccepted cuts labeled internal/review-required.
+An explicitly deferred review remains NOT REVIEWED with its scope, reason and
+resume condition. It is not a PASS or a permanent policy change. Approved client
+presentation requires current-export evidence; preserve required full-voice
+listening acceptance before dependent lip-sync spend.
+
 ## The brief-alignment check
 
 Runs after the render, never before. The brief is IAP-validated, so this stage

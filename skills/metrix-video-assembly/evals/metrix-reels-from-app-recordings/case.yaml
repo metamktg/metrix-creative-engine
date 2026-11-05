@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: metrix-reels-from-app-recordings
+expected_outcome: |
+  A 10 second 1080x1920 MP4 cut from both recordings with their motion intact, the hook 'Know which hooks actually drive revenue' readable within the first second, 'Apply for Demo Access' verbatim at the end, the synthetic-data disclosure, readable copy clear of the Reels bands, a music bed with a nameable licence at about -14 LUFS, thumbnail equal to frame 0, no double exposures.
+context:
+  scaffold_script: place-files.sh

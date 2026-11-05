@@ -1,0 +1,1 @@
+clip-signal-open-finding.mp4 (5.3s) and clip-analysis-scroll.mp4 (4.0s) are screen recordings of the real Metrix app on the Metrix Demo synthetic fixture, 1440x900, no audio. First: Signal, the top finding opened and added to the tray. Second: Analysis overview scrolled from the totals to spend over time.

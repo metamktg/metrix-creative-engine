@@ -32,6 +32,8 @@ before credits are spent.
 | `03-handoff.md` | **Q1:** how files and rationale are presented so the user understands the why |
 | `04-self-validation.md` | The final pass: confidence gate, bounded revision, polish, naming |
 | `05-mst.md` | **Optional.** What a Matrix Sprint Test is, when to run one, building it with or without account data, and what happens after |
+| `06-production-review.md` | UGC/video only: intentional edit, music decision and the five presentation gates |
+| `07-ugc-creative-direction.md` | Short creative direction for UGC/video, pointing to the full `kie://ugc-creative-playbook` resource |
 | `formats/static.md` | Single-image statics |
 | `formats/ugc.md` | UGC and AI-UGC, including disclosure |
 | `formats/video.md` | Video, still-first workflow |
@@ -51,6 +53,12 @@ System prompt = core + stage + one format module per `asset_type` in the brief.
 
 In a single long session, load all three stages at once and let the core's
 stage table route between them. In a pipeline, load one stage per call.
+
+The MCP render prompts for `ugc`, `ai_ugc` and `video` additionally load
+the short `06-production-review.md` and `07-ugc-creative-direction.md` modules.
+The complete production standard and creative playbook remain available as
+`kie://production-review-standard` and `kie://ugc-creative-playbook` for focused
+stage-specific reading. Neither full manual is appended to render prompts.
 
 Relative `references/...` paths in the prompts resolve to
 `skills/metrix-ad-creative/references/`. The brief's `asset_type` routes to a

@@ -4,6 +4,8 @@
  * is a way that answer went wrong when the ledger did not exist.
  */
 import { describe, expect, it } from "vitest";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 import { RESULT_TTL_MS, foldLedger, formatLedger, resolveLedgerPath } from "../ledger.js";
 
@@ -106,7 +108,8 @@ describe("the report", () => {
 
 describe("where the ledger lives", () => {
   it("is on by default, beside the downloads", () => {
-    expect(resolveLedgerPath({}, "/tmp/out")).toBe("/tmp/out/kie-ledger.jsonl");
+    const outputDir = join(tmpdir(), "render-out");
+    expect(resolveLedgerPath({}, outputDir)).toBe(join(outputDir, "kie-ledger.jsonl"));
   });
 
   it("can be switched off explicitly", () => {
@@ -114,6 +117,7 @@ describe("where the ledger lives", () => {
   });
 
   it("honours an explicit path", () => {
-    expect(resolveLedgerPath({ KIE_AI_LEDGER_PATH: "/var/kie.jsonl" }, "/tmp/out")).toBe("/var/kie.jsonl");
+    const explicitPath = join(tmpdir(), "custom-ledger.jsonl");
+    expect(resolveLedgerPath({ KIE_AI_LEDGER_PATH: explicitPath }, join(tmpdir(), "render-out"))).toBe(explicitPath);
   });
 });

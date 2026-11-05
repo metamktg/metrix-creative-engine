@@ -1,6 +1,6 @@
 # MCP tools
 
-Six tools over Kie's job API, two reference resources, and eight prompts.
+Eight tools over Kie's job API, four reference resources, and nine prompts.
 Reference for what each takes and when to reach for it.
 
 ## What the server advertises
@@ -13,7 +13,7 @@ all three server primitives.
 | Primitive | What it carries |
 | --- | --- |
 | **Tools** | The eight below. Every one declares an `outputSchema` and returns `structuredContent` |
-| **Resources** | The model catalog and the format routing table, inlined at build time |
+| **Resources** | The model catalog, format routing, production-review standard and UGC creative playbook, inlined at build time |
 | **Prompts** | One per media format, plus brand intake and the optional MST |
 
 **Structured output.** A tool that declares an `outputSchema` must return
@@ -196,8 +196,10 @@ they resolve wherever the server is launched from.
 | --- | --- |
 | `kie://model-catalog` | Every model id read from Kie's embedded OpenAPI specs, with the per-model aspect-ratio and image-input field names, the known docs bugs, and what is not on the platform |
 | `kie://format-routing` | The handoff contract: which model set each brief `asset_type` routes to, the required parameters per format, and the rule that an unmapped type stops rather than falling back |
+| `kie://production-review-standard` | Evergreen finishing, anonymous review evidence and the five mandatory UGC/video presentation gates |
+| `kie://ugc-creative-playbook` | The detailed UGC/video creative and feedback standard, read on demand rather than injected in full into generation prompts |
 
-Both are dated reference, not truth. Kie renames models often; each document
+The model and routing documents are dated reference, not current model truth. Kie renames models often; each document
 says when it was read. A validation error on a model id means check the live
 page, not that the call was malformed.
 
@@ -207,12 +209,34 @@ The render workflow, assembled in the order it has to be applied.
 
 | Prompt | What it loads |
 | --- | --- |
-| `kie_render_static`, `_carousel`, `_video`, `_ugc`, `_motion_graphic`, `_claymation` | The core rules, the render bridge, that format's module and the final pass |
+| `kie_render_static`, `_carousel`, `_video`, `_ugc`, `_ai_ugc`, `_motion_graphic`, `_claymation` | The core rules, the render bridge, that format's module and the final pass |
 | `kie_brand_intake` | Establishing and uploading the product references a render needs. Run it BEFORE generating |
 | `kie_mst_sprint` | Building a Matrix Sprint Test. Optional, and not a stage every run passes through |
 
 Each takes an optional `brief` argument, the brief as JSON, which is carried
 into the message.
+
+`kie_render_ugc`, `kie_render_ai_ugc` and `kie_render_video` also load the short
+`07-ugc-creative-direction.md` module after the production-review module. It points to
+`kie://ugc-creative-playbook` for detailed direction. `ai_ugc` shares the UGC
+format module. Other formats, brand intake and MST do not load that
+UGC-specific module or the full playbook.
+
+For UGC/AI-UGC/video, the runtime loads the short `06-production-review.md`
+and `07-ugc-creative-direction.md` modules. The complete finishing contract stays
+available as `kie://production-review-standard`, alongside the on-demand creative
+playbook. Neither complete manual is appended to render prompts. The server's
+initialization instructions route creator work to the matching prompt even
+before a caller selects it. Standalone skills carry the short direction and
+stage-specific playbook references with drift checks. These are production
+instructions and local evidence checks, not new provider parameters or a
+backend release lock. Other formats retain their existing workflow.
+
+After changing these Markdown modules or resources, run `npm run verify` to
+rebuild and check the actual MCP surface. A server process already running keeps
+its loaded bundle until its client reloads/restarts it; a changed source file
+does not update an existing process automatically. Do not interrupt another
+active production session merely to refresh its tools.
 
 There is one prompt per format and no general "render anything" prompt, on
 purpose: the format is the brief's to declare and the engine's to obey, so the

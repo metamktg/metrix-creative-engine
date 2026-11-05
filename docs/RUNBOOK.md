@@ -2,13 +2,53 @@
 
 One prompt per media format. Give it a brief, it gives you a named asset.
 
+## UGC and video production review
+
+`kie_render_ugc`, `kie_render_ai_ugc` and `kie_render_video` load the short
+mandatory production-review and creative-direction modules. Read the complete
+shared standard on demand from the bundled
+`kie://production-review-standard` resource, or
+[`UGC_PRODUCTION_STANDARD.md`](UGC_PRODUCTION_STANDARD.md), before finishing.
+It defines music selection and rights, speech-first mixing, deliberate cuts,
+native pacing, documented B-roll speed changes and motion-source quality.
+
+The current private brief and its production reference decide the creative
+treatment, audience, offer, voice, model changes and source reuse. A technique
+that worked in one edit is not a compulsory overlay, full-screen, transition or
+music recipe for every brand. Preserve accepted source files; replacing a
+presenter creates new identity/performance acceptance while suitable independent
+B-roll and real UI remain reusable inventory.
+
+Before approved client presentation, all five gates must pass against the
+current master and review context: `iap_variables`, `communications`,
+`sound_check` (the "12-Year-Old Sound Check"), `editorial_peer` and
+`blind_review`. Their evidence must describe actual checks and reviewer roles;
+an automated technical pass cannot claim human listening. Failed, pending,
+unavailable or stale evidence blocks presentation. Clearly labeled internal
+previews and independent preparation may continue within existing authority.
+
+Use the standard's local validation command and release-record schema. The
+validator is an agent-side eligibility check, not a provider backend control.
+Reusable SOPs, fixtures and reports use anonymous neutral IDs and avoid
+client-, industry- or niche-specific examples. The approved private brief
+remains authoritative for actual creative content and product evidence.
+
+Run `npm run verify` after changes: it includes engine tests, the rebuilt MCP
+surface and production-review record tests. These tests do not create perceptual
+acceptance for an actual video. Existing server processes need their normal
+client reload/restart to load the rebuilt bundle; do not stop another session's
+active server without coordinating its work.
+
 ## Before any run, twice
 
 1. **Check the brief.** `kie_validate_brief`, or ask for it in words. Free,
    offline, and it refuses an unrenderable brief before a credit is spent.
-2. **Upload the brand kit.** `node scripts/kie.mjs upload ./product.png` per
-   file, and put the returned URL in the brief. Skip this and the model invents
-   a plausible generic product: right category, wrong brand, unusable.
+2. **Inventory the brand kit and accepted sources.** Reuse appropriate local
+   B-roll/UI in assembly. Upload only the references a missing generation
+   actually consumes, through the existing skill's `scripts/kie.mjs upload`
+   command; record the returned URL and asset role. Existing reference material
+   must reach the generator in the correct input role rather than being replaced
+   with an invented product.
 
 ## The table
 
@@ -16,9 +56,9 @@ One prompt per media format. Give it a brief, it gives you a named asset.
 | --- | --- | --- | --- | --- | --- |
 | Single image | `static` | `kie_render_static` | ◆ brief, ▲ placement | ■ product refs, ◇ on-image text | 1 image |
 | Carousel | `carousel` | `kie_render_carousel` | ◆ brief, ▲ card structure | ■ product refs | 3–5 images, one system |
-| Video | `video` | `kie_render_video` | ◆ brief, ▲ duration | ■ approved still ✦, ■ product refs | 1 clip |
-| UGC | `ugc` | `kie_render_ugc` | ◆ brief, ▲ duration | ■ product refs | 1 clip, 9:16 |
-| AI-UGC ✱ | `ai_ugc` | `kie_render_ugc` | ◆ brief, ▲ duration, ▲ script or audio | ■ avatar ref | 1 talking-head clip |
+| Video | `video` | `kie_render_video` | ◆ brief, ▲ duration | ■ approved still ✦, ■ product refs | source shots, then assembled required exports |
+| UGC | `ugc` | `kie_render_ugc` | ◆ brief, ▲ duration | ■ product refs | sources, then the finished edit and required layouts |
+| AI-UGC ✱ | `ai_ugc` | `kie_render_ugc` | ◆ brief, ▲ duration, ▲ script or audio | ■ avatar ref | accepted presenter sources, then finished edit |
 | Motion graphic | `motion_graphic` | `kie_render_motion_graphic` | ◆ brief, ▲ duration | ■ logo, ■ type spec | frames, or 1 clip |
 | Claymation | `claymation` | `kie_render_claymation` | ◆ brief, ▲ ratio | ■ real props or set refs | 1 image or clip |
 | — | Brand kit setup | `kie_brand_intake` | ◆ brief | ■ any client asset | uploaded URLs |

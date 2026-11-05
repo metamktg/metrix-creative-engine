@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: metrix-feed-4x5-product-journey
+expected_outcome: |
+  A 12 second 1080x1350 MP4 built from the real Metrix screens, with the hook 'Your data isn't helping you make decisions.' readable within the first second, 'Apply for Demo Access' verbatim at the end, the synthetic-data disclosure on product scenes, a music bed it can name a licence for at about -14 LUFS, a thumbnail equal to frame 0 and no double exposures.
+context:
+  scaffold_script: place-files.sh

@@ -1,0 +1,55 @@
+{
+  "brief_metadata": {
+    "brief_id": "MTX-VID-003",
+    "mode": "general",
+    "asset_type": "video",
+    "confidence": "directional",
+    "voice": "confident, plain, operator-to-operator",
+    "priority": "P1"
+  },
+  "creative_specifications": {
+    "format": "video",
+    "dimensions": "9:16",
+    "duration": 8,
+    "placement": [
+      "Instagram Reels",
+      "Facebook Stories"
+    ],
+    "safe_zones": "top 14% and bottom 20% clear of type"
+  },
+  "copy_architecture": {
+    "hook": "Stop Guessing Which Ads Actually Work.",
+    "problem_agitation_or_value_setup": "",
+    "product_solution": "Not more dashboards. Better decisions.",
+    "proof": "",
+    "cta": "Apply for Demo Access",
+    "headlines": [],
+    "primary_text": "Not more dashboards. Better decisions."
+  },
+  "copy_sources": "every copy_architecture line is verbatim from artifacts/marketing/src/content.ts",
+  "visual_direction": {
+    "composition": "The real Metrix product in use, from the screens or recordings supplied. Type above the product, never over it.",
+    "style_guide": "Command-deck dark, calm, precise. The product carries the frame.",
+    "color_palette": "#020711 deep ground, #050b18 main, #16d9ff cyan accent, #155dff action blue, #f5f8ff type",
+    "typography": "Inter (Inter-latin.woff2, variable): 800 hook, 600-700 lines, 500 labels",
+    "imagery": "Only the supplied captures of the running app on the Metrix Demo synthetic fixture",
+    "avoid_list": [
+      "ROAS lift, wasted-spend or data-point figures",
+      "the testimonial",
+      "the 200-account cap",
+      "any client name",
+      "AI-generated product imagery"
+    ]
+  },
+  "brand_assets": {
+    "product_references": [],
+    "logo_method": "metrix-logo.png icon with the lowercase wordmark 'metrix' set in Inter 800 beside it",
+    "style_references": []
+  },
+  "qa_requirements": [
+    "Hook verbatim, readable muted by 1s",
+    "CTA verbatim",
+    "Product scenes labelled with the kit's disclosure",
+    "No claim outside the brief and the kit's approved claims"
+  ]
+}

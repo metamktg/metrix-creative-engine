@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: metrix-mst-hook-row
+expected_outcome: |
+  Three 6 second 1080x1080 MP4s named by the brief's MST convention, each with its own hook verbatim, identical in everything else, silent, with thumbnails equal to frame 0 and no double exposures.
+context:
+  scaffold_script: place-files.sh

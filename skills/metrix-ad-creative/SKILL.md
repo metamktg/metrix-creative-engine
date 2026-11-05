@@ -8,6 +8,28 @@ description: Render Metrix IAP creative briefs into actual ad assets through Kie
 Bridges `metrix-brief-builder` (which produces briefs) and Kie.ai (which
 produces pixels). The brief is the specification; this skill is the execution.
 
+## UGC and video direction
+
+For `ugc`, `ai_ugc` or `video` briefs, read the bundled
+[creative direction](references/creative-direction.md) before planning or
+spending. At planning/review, read only the current stage's details in the
+bundled [UGC playbook](references/ugc-creative-playbook.md). Apply creator,
+voice and caption details only where the declared format uses them. Reuse
+relevant instructions already in context; send providers only shot-specific
+direction and supported fields, never the entire playbook.
+
+The bundled references work without a repository checkout or MCP connection.
+Use them when the short module's `kie://ugc-creative-playbook` or
+`docs/UGC_CREATIVE_PLAYBOOK.md` pointer is unavailable. For finished creator-led
+edits, use the available `ugc-creator-edit` production/review contract and its
+local references. Missing review evidence remains pending; do not invent a
+validator path or claim an unavailable review ran.
+
+Keep completed client profiles and receipts in the repository's gitignored
+`out/` or `renders/`, or an external private run directory. Keep reusable
+instructions and examples anonymous; never fill the committed example with
+client records. Carry forward existing authorization and component acceptance.
+
 ## How to actually run a generation
 
 Two paths. **Check which you have before doing anything else.**
@@ -260,6 +282,28 @@ variable against another.
 
 The isolation discipline exists only to protect a running Matrix Sprint Test,
 and applying it where no test exists costs you range for nothing.
+
+## Video and motion graphics: hand off to assembly
+
+
+
+For `video`, `motion_graphic` and captioned `ugc` briefs, what this skill
+
+generates are layers: approved stills, one-action clips, a type-free motion
+
+bed, a music bed. The ad that runs is assembled by `metrix-video-assembly`,
+
+which sets the hook and CTA as type, sequences the shots, mixes the sound,
+
+bakes the poster as frame 0 and renders the brief's ratio, 4:5 included. Do not
+
+prompt a video model for on-screen text, and do not deliver a raw clip as the
+
+ad when the brief puts a hook or CTA in frame.
+
+
+
+For creator-led UGC, apply `ugc-creator-edit` and its production/review standard before presenting the finished export. Retain approved product/B-roll library originals when the presenter changes, verify the new identity and voice separately, and choose proof handling for the actual brief and format. Generated layers are source inventory until the actual assembled export is reviewed. Exact project treatments and temporary exceptions do not become engine defaults.
 
 ## What this skill will not do
 

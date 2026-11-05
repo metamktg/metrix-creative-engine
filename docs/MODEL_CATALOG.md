@@ -225,6 +225,17 @@ the richest reference support: `reference_image_urls`, `reference_video_urls`,
   `omnihuman-1-5`, `infinitalk/from-audio`,
   `volcengine/video-to-video-lip-sync` [enum] — ids confirmed, parameters not
   extracted. Fetch the page before first use.
+  Observed in production (dates matter, these are not current facts):
+  2026-11-02, every image-plus-audio model above (`ai-avatar-pro`,
+  `ai-avatar-standard`, `infinitalk/from-audio`) returned code 500 timeouts for a
+  working day, including the provider's own example inputs, uncharged;
+  `kling/v2-1-standard` image-to-video (`duration` the string `"10"`,
+  `cfg_scale` 0.5) then `volcengine/video-to-video-lip-sync` mode `lite`
+  (8 credits a second, output 25 fps, trimmed or looped to the audio) worked
+  instead. 2026-11-05, `kling/ai-avatar-standard` quoted at 10.1 credits a
+  second, 720p native; `kling/v2-1-standard` charged 101 credits per 10 s clip
+  where it had charged 50 three days earlier. Routing and the outage protocol:
+  `skills/ugc-creator-edit/references/lip-sync-routing.md`.
 
 ---
 
@@ -283,6 +294,15 @@ Optional: `stability` (0–1, default 0.5), `similarity_boost` (0–1, default
 `elevenlabs/audio-isolation` [enum] strips background noise from `audio_url`.
 
 Also `google/gemini-2-5-pro-tts`, `google/gemini-3-1-flash-tts` [enum].
+
+Observed in production: on 2026-11-02 both `elevenlabs/text-to-speech-multilingual-v2`
+and `elevenlabs/text-to-dialogue-v3` returned "upstream API service timed out"
+for every task all afternoon, including the provider's example input, uncharged;
+`google/gemini-3-8-flash-tts` (per-turn `style`, inline `<breath>` and
+`<short pause>` marks) worked throughout at under one credit a take and produced
+the accepted voice. On 2026-11-05 multilingual v2 was quoted at 12 credits per
+1,000 characters. Delivery direction for either route comes from the script's
+delivery map (`skills/ugc-creator-edit/references/script-and-delivery.md`).
 
 ---
 

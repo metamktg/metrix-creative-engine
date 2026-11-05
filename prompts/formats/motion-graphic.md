@@ -15,8 +15,9 @@ number frame to frame. Text warps, shapes wobble, marks drift.
 So there are two routes, and choosing the wrong one wastes the budget:
 
 **Route A, designed frames plus animation in post.** Generate the frames as
-statics, where type and geometry are controllable, then animate in After
-Effects, Canva or similar. Slower, and the result is correct.
+statics, where type and geometry are controllable, then animate them with
+`metrix-video-assembly` (or After Effects, Canva or similar by hand). Slower,
+and the result is correct.
 
 **Route B, generated motion.** Prompt an abstract or textural motion bed with no
 type in it, then composite type over it in post. The generated layer carries
@@ -51,6 +52,8 @@ no text, no logos, no geometric overlays
 
 Then in the render spec, state the composite plan: what type lands where, in
 which face, and what clear space the generated layer must hold.
+`metrix-video-assembly` executes that plan: the bed becomes a `data-clip`
+layer and the type is set over it.
 
 ## On-image text
 

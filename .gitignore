@@ -2,6 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 .vitest-downloads/
+.cache/
 
 # Generated creative. Assets are large and regenerable; keep them out of git
 # and let KIE_AI_DOWNLOAD_DIR point wherever you actually want them.
@@ -18,3 +19,6 @@ renders/
 # inlined kit runs past 3MB of base64 that git cannot diff. Rebuild, do not store.
 brand-kits/**/*.source.html
 brand-kits/**/*.pdf
+
+# Project-local open-source video editor
+.tools/kdenlive-26.08.2/
