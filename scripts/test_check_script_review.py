@@ -192,6 +192,38 @@ class CheckScriptTests(unittest.TestCase):
                 s["lines"][0]["text"] = changed
                 self.assertIn("L1.locked", rules(run(s, brief), "FAIL"))
 
+    def test_locked_copy_cannot_omit_offer_conditions_or_other_words(self):
+        brief = {"copy_architecture": {"cta": "Get it today. Subscription renews for $40 every month."}}
+        for text in ("Get it today.", "Subscription renews for forty dollars every month.",
+                     "renews for forty dollars", "."):
+            with self.subTest(text=text):
+                s = good_script()
+                s["pronunciation_map"] = {"$40": "forty dollars"}
+                s["lines"][4].update(text=text, locked=True, lock_source="copy_architecture.cta")
+                report = run(s, brief)
+                self.assertIn("L5.locked", rules(report, "FAIL"))
+                self.assertEqual(report["verdict"], "FAIL")
+
+    def test_lock_source_accepts_each_complete_declared_alternative(self):
+        alternatives = ["Get it today.", "Have a look at the guide."]
+        for source in (alternatives, {"primary": alternatives[0], "secondary": alternatives[1]}):
+            for text in alternatives:
+                with self.subTest(source=source, text=text):
+                    s = good_script()
+                    s["lines"][4].update(text=text, locked=True, lock_source="copy_architecture.cta")
+                    brief = {"copy_architecture": {"cta": source}}
+                    self.assertNotIn("L5.locked", rules(run(s, brief), "FAIL"))
+
+    def test_splitting_a_locked_source_does_not_implicitly_approve_partial_lines(self):
+        brief = {"copy_architecture": {"cta": "Get it today. Subscription renews for $40 every month."}}
+        s = good_script()
+        s["pronunciation_map"] = {"$40": "forty dollars"}
+        s["lines"][3].pop("emphasis", None)
+        s["lines"][3].update(text="Get it today.", locked=True, lock_source="copy_architecture.cta")
+        s["lines"][4].update(text="Subscription renews for forty dollars every month.",
+                             locked=True, lock_source="copy_architecture.cta")
+        self.assertTrue({"L4.locked", "L5.locked"} <= rules(run(s, brief), "FAIL"))
+
     def test_emphasis_must_be_in_the_line(self):
         s = good_script()
         s["lines"][0]["emphasis"] = "secret"

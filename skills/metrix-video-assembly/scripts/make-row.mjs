@@ -7,7 +7,7 @@
  *
  * <base-run-dir> holds storyboard.json (with "slot": {"scene": ...}) and
  * composition/. For each entry in brief.testing_framework.cells, this copies
- * the composition, puts the cell's <field> (default "hook") into the slot
+ * the composition and storyboard audio files, puts the cell's <field> (default "hook") into the slot
  * scene's text item <text-id> (default: the slot scene's first line), both in
  * storyboard.json and in the composition's data-text element, names the cell by
  * testing_framework.matrix_naming_convention, and runs the row check.
@@ -42,6 +42,23 @@ const elRe = new RegExp(`(<([a-zA-Z0-9]+)[^>]*\\bdata-text="${textId}"[^>]*>)([\
 if (!elRe.test(html)) die(`composition has no element with data-text="${textId}"`);
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+// The renderer resolves audio against storyboard.json, not composition/.
+// Package every supported input under the cell, including absolute and ../
+// sources, so moving the row never loses audio or copies outside a cell.
+const template = structuredClone(sb);
+const audio = template.audio;
+const tracks = [audio?.music, audio?.voiceover, ...(audio?.sfx || [])].filter((t) => t?.file);
+const dependencies = tracks.map((track, i) => {
+  const source = path.resolve(base, track.file);
+  try {
+    if (!fs.statSync(source).isFile()) die(`audio input is not a file: ${source}`);
+  } catch (e) {
+    die(`cannot read audio input ${source}: ${e.code}`);
+  }
+  track.file = `_row_audio/${i}-${path.basename(source)}`;
+  return { source, file: track.file };
+});
+
 const made = [];
 cells.forEach((cell, i) => {
   const copy = cell[field];
@@ -55,7 +72,12 @@ cells.forEach((cell, i) => {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.cpSync(path.join(base, "composition"), path.join(dir, "composition"), { recursive: true });
   fs.writeFileSync(path.join(dir, "composition", "index.html"), html.replace(elRe, (_, open, _t, _old, close) => `${open}${esc(copy)}${close}`));
-  const cellSb = structuredClone(sb);
+  for (const { source, file } of dependencies) {
+    const dest = path.join(dir, file);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(source, dest);
+  }
+  const cellSb = structuredClone(template);
   cellSb.name = name;
   Object.assign(cellSb.scenes[slotScene].text[ti], { copy, source: `testing_framework.cells.${i}.${field}` });
   fs.writeFileSync(path.join(dir, "storyboard.json"), JSON.stringify(cellSb, null, 2) + "\n");
