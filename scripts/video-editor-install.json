@@ -5,8 +5,8 @@
   "source": "https://download.kde.org/stable/kdenlive/26.08/windows/kdenlive-26.08.2_standalone.exe",
   "sha256": "43526e50770fb306b12a8d7f6a7bb5829f8ca546390bd169fb3c3cc222874487",
   "checksum_verified": true,
-  "executable": "C:\\Users\\Alex\\metrix-creative-engine\\.tools\\kdenlive-26.08.2\\kdenlive-26.08.2_standalone\\bin\\kdenlive.exe",
-  "launcher": "C:\\Users\\Alex\\metrix-creative-engine\\scripts\\open-video-editor.ps1",
+  "executable": ".tools/kdenlive-26.08.2/kdenlive-26.08.2_standalone/bin/kdenlive.exe",
+  "launcher": "scripts/open-video-editor.ps1",
   "install_scope": "Portable editor inside this repository; no system installer",
   "generation_credit_spend": 0
 }

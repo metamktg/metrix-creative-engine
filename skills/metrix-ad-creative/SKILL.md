@@ -34,7 +34,7 @@ client records. Carry forward existing authorization and component acceptance.
 
 Two paths. **Check which you have before doing anything else.**
 
-**1. The bundled script (default, no install).** Every skill ships
+**1. The bundled script (default, no install).** This skill ships
 `scripts/kie.mjs`. It needs nothing but Node, which Claude Code already runs on,
 and `KIE_AI_API_KEY` in the environment. Works on Windows, macOS and Linux.
 
@@ -57,8 +57,10 @@ On Windows the path is `scripts\kie.mjs`. Use the skill's own directory, which
 in an installed skill is under `.claude/skills/<skill>/`.
 
 **2. MCP tools, if `/mcp` lists `kie-ai`.** `kie_run_task`, `kie_create_task`,
-`kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_download_result`.
-Same API, typed arguments. Prefer these when present; they are not required.
+`kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_ledger` and `kie_download_result`
+for generation, `kie_validate_brief` as a free check before a brief is rendered, and
+`kie_validate_ugc_preproduction` with `kie_create_ugc_lipsync` for creator lip sync
+(see `ugc-creator-edit`). Same API, typed arguments. Prefer these when present; they are not required.
 
 Never tell the user to install anything before generating. If the key is
 missing the script says so and names where to get one.
@@ -149,10 +151,6 @@ Two consequences:
 2. **Check every character** in the output against the brief. One wrong letter
    makes the asset unusable.
 
-*Until 2026-09-16 this section said the opposite, and step 4 below told you to
-build the prompt "never from `copy_architecture`". Between them they deleted the
-hook and the CTA from every asset the engine produced.*
-
 ## Lock the subject as a file, not as a sentence
 
 Where one product, person or scene appears in every asset of a set, render it
@@ -171,7 +169,7 @@ cannot.
 
 1. **Read the brief.** Take `creative_briefs.json`, or a single brief object.
    Identify per brief: `brief_metadata.asset_type`, `brief_metadata.mode`
-   (`matrix` or `general`), `testing_framework.matrix_position`,
+   (`standard` or `matrix`; a brief that says `general` is read as `standard`), `testing_framework.matrix_position`,
    `testing_framework.isolated_variable`, `creative_specifications`,
    `visual_direction`, and `brand_assets` where present (product references,
    logo method, style references). A product-led brief listing product
@@ -190,9 +188,9 @@ cannot.
    varies per model. See "Brand kit to generation" in
    `references/format-routing.md`.
 
-   Do this immediately before generating, not at the start of a batch: the URLs
-   expire in about a day, so the last cells of a long matrix would fail on dead
-   links.
+   Do this immediately before generating, not at the start of a batch: Kie deletes
+   an uploaded file after 3 days, so a URL from an earlier sprint can already be
+   dead.
 
    Skipping this is the failure that looks like success. The model invents a
    generic product of the right category with the wrong label and no branding,
@@ -213,7 +211,7 @@ cannot.
    omit) because most image models handle negations poorly.
 
 6. **Map specs to parameters.** `creative_specifications.dimensions` and
-   `.placement` decide aspect ratio; `.duration` decides video length. The
+   `.placement` decide aspect ratio; `.duration_seconds` decides video length. The
    mapping table is in `references/placement-specs.md`. Never guess an aspect
    ratio from the prompt text.
 
@@ -221,7 +219,7 @@ cannot.
    declared by the brief, not chosen here: route through
    `references/format-routing.md`, pick within the eligible set, and state why.
    An `asset_type` with no route is a stop, never a fallback to the nearest one.
-   Lock the model for the whole matrix — switching mid-matrix is the largest
+   Lock the model for the whole matrix, switching mid-matrix is the largest
    uncontrolled variable available.
 
 8. **Generate.** One `node scripts/kie.mjs run ...` per cell, or `kie_run_task` where MCP is connected. For a row, hold the base constant
@@ -240,7 +238,7 @@ cannot.
    it cannot parse cannot be attributed.
 
 10. **QA before handing over.** Walk `qa_requirements` and the avoid list against
-   what was actually generated — look at the image, do not assume the prompt was
+   what was actually generated, look at the image, do not assume the prompt was
    obeyed. If an MST is running, then hand to `metrix-mst-creative-scan` for the
    matrix-level check and flag any cell where the model ignored a locked
    element, since that cell is not usable as a test. Outside an MST there is no
@@ -285,23 +283,13 @@ and applying it where no test exists costs you range for nothing.
 
 ## Video and motion graphics: hand off to assembly
 
-
-
 For `video`, `motion_graphic` and captioned `ugc` briefs, what this skill
-
 generates are layers: approved stills, one-action clips, a type-free motion
-
 bed, a music bed. The ad that runs is assembled by `metrix-video-assembly`,
-
 which sets the hook and CTA as type, sequences the shots, mixes the sound,
-
 bakes the poster as frame 0 and renders the brief's ratio, 4:5 included. Do not
-
 prompt a video model for on-screen text, and do not deliver a raw clip as the
-
 ad when the brief puts a hook or CTA in frame.
-
-
 
 For creator-led UGC, apply `ugc-creator-edit` and its production/review standard before presenting the finished export. Retain approved product/B-roll library originals when the presenter changes, verify the new identity and voice separately, and choose proof handling for the actual brief and format. Generated layers are source inventory until the actual assembled export is reviewed. Exact project treatments and temporary exceptions do not become engine defaults.
 
@@ -315,10 +303,16 @@ For creator-led UGC, apply `ugc-creator-edit` and its production/review standard
 
 ## References
 
-- `references/prompt-construction.md` — brief field to prompt clause, and the
+- `references/prompt-construction.md`: brief field to prompt clause, and the
   clause order.
-- `references/placement-specs.md` — Meta placement to aspect ratio and duration.
-- `references/format-routing.md` — the brief's `asset_type` to eligible models
+- `references/placement-specs.md`: Meta placement to aspect ratio and duration.
+- `references/format-routing.md`: the brief's `asset_type` to eligible models
   and required parameters. The handoff contract; an unmapped type stops.
-- `references/model-routing.md` — which model per asset type, the parameters
+- `references/model-routing.md`: which model per asset type, the parameters
   that matter, and the 4:5 problem.
+- `references/creative-direction.md`: the short UGC and video direction read
+  before planning or spend. A byte copy of `prompts/07-ugc-creative-direction.md`.
+- `references/ugc-creative-playbook.md`: the detailed UGC and video creative
+  standard, read one stage at a time. A byte copy of `docs/UGC_CREATIVE_PLAYBOOK.md`.
+- `references/preproduction-director.md`: the creator lip-sync packet, the
+  offline check and the guarded submission.

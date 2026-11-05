@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 /**
- * kie.mjs — generate through the Kie.ai Market API. No install, no build, no
+ * kie.mjs · generate through the Kie.ai Market API. No install, no build, no
  * dependencies: Node's global fetch only. Works on Windows, macOS and Linux,
  * which is why this is Node rather than curl+jq (Windows has no jq).
  *
  *   node kie.mjs credits
+ *   node kie.mjs ledger                      (local file; needs no key)
+ *   node kie.mjs upload <file> [--path DIR] [--receipt FILE]
  *   node kie.mjs run   <model> '<input-json>' [--timeout 600] [--out DIR] [--name ID]
+ *   node kie.mjs run   <model> --input-file spec.json
  *   node kie.mjs start <model> '<input-json>'
  *   node kie.mjs poll  <taskId> [--timeout 600] [--out DIR] [--name ID]
+ *   node kie.mjs ugc-check <packet.json> [--observed-duration SECONDS]   (local; needs no key)
+ *   node kie.mjs ugc-start <packet.json>
  *
  * Needs KIE_AI_API_KEY in the environment. Get one at https://kie.ai/api-key
  */

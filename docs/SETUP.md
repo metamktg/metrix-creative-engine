@@ -1,7 +1,7 @@
 # Setup
 
-Two steps. No build, no MCP server, no Node install beyond what Claude Code
-already needs.
+Three short steps: the key, the skills, a check. No build, no MCP server, no Node
+install beyond what Claude Code already needs.
 
 ## 1. Put your Kie key in the environment
 
@@ -81,9 +81,12 @@ A result URL means the whole chain works. That is one image, a few credits.
 
 ## If you prefer the MCP server
 
-Optional. It gives typed tool arguments instead of a shell call; it does not
-unlock anything the script cannot do. It needs a build step, which is why it is
-no longer the default.
+Optional. Generating works fully through the script. The server adds typed tool
+results the model reads instead of parsing, live progress while a task runs, a
+free offline brief check (`kie_validate_brief`, which the script does not have),
+the guarded creator lip-sync tools, the model catalog and routing documents as
+resources, and the render workflow as selectable prompts. It needs a build step,
+which is why it is not the default.
 
 ```
 cd metrix-creative-engine
@@ -95,6 +98,20 @@ claude mcp add kie-ai --scope user --env KIE_AI_API_KEY=your-key -- node <absolu
 
 Skills prefer MCP tools when `/mcp` lists `kie-ai`, and fall back to the script
 otherwise. Either way they work.
+
+To check the server end to end without spending a credit, run
+`pnpm run check:mcp-surface` after a build. It drives the built bundle over a
+real stdio MCP session against a stubbed Kie and asserts the handshake, the
+advertised capabilities, every tool's output schema, the resources, the prompts
+and the progress notifications. The expected tool, resource and prompt lists are
+in that script.
+
+## Optional: open an edit in Kdenlive (Windows)
+
+`scripts/open-video-editor.ps1 [project]` opens a project in a portable Kdenlive kept at
+`.tools/kdenlive-26.08.2/` (git-ignored, no system installer). `scripts/video-editor-install.json`
+records the version, the download URL and the sha256 to verify the download against. The launcher
+stops with a message when the editor is not there. Nothing else in the repository depends on it.
 
 ## Troubleshooting
 
@@ -111,29 +128,36 @@ otherwise. Either way they work.
 
 ## What the script does
 
-`scripts/kie.mjs`, bundled inside every skill:
+`scripts/kie.mjs`, bundled inside the three generating skills (`kie-generate`,
+`kie-tasks` and `metrix-ad-creative`). The copies are byte-identical.
 
 ```
 node scripts/kie.mjs credits
 node scripts/kie.mjs ledger                       # what ran, and what is still downloadable
-node scripts/kie.mjs upload <file>
+node scripts/kie.mjs upload <file> [--path DIR] [--receipt FILE]
 node scripts/kie.mjs run   <model> '<input-json>' [--timeout N] [--out DIR] [--name ID]
+node scripts/kie.mjs run   <model> --input-file spec.json
 node scripts/kie.mjs start <model> '<input-json>'
 node scripts/kie.mjs poll  <taskId> [--timeout N] [--out DIR] [--name ID]
+node scripts/kie.mjs ugc-check <packet.json> [--observed-duration SECONDS]
+node scripts/kie.mjs ugc-start <packet.json>
 ```
 
-`ledger` is the only one that needs no API key, deliberately: it reads a local
-file and it is the path back to an asset whose result URL has expired.
+`ledger` and `ugc-check` need no API key, deliberately: they read local files, and
+the ledger is the path back to an asset whose result URL has expired.
+
+`--input-file` avoids shell quoting, which is the likeliest way a first run fails
+on Windows. `upload --receipt FILE` writes the source hash, the returned URL and its expiry
+to that path, because Kie deletes uploaded files after 3 days and the packet
+binds to that evidence.
+`ugc-check` and `ugc-start` are the script's side of the creator lip-sync guard:
+the same offline packet check and one guarded submission as
+`kie_validate_ugc_preproduction` and `kie_create_ugc_lipsync`. The shared logic is
+`scripts/ugc-preflight.mjs`, also byte-identical across those three skills.
 
 Result URLs on stdout, progress on stderr. No dependencies beyond Node.
 
 ## Where generated files go
-
-To check the server end to end without spending a credit, run
-`pnpm run check:mcp-surface` after a build: it drives the built bundle over a
-real stdio MCP session against a stubbed Kie and asserts the handshake, the
-advertised capabilities, every tool's output schema, both resources, the prompts
-and the progress notifications.
 
 `--out DIR` downloads results and `--name ID` names them; `--name` without `--out`
 writes to `./out` and says so, rather than being dropped after the credits are
@@ -147,12 +171,12 @@ directory you chose.
 Kie documents result URLs as expiring after about **24 hours**. A result URL is not
 storage. Download anything you intend to keep or hand to a client.
 
-
 ## The task ledger
 
 On by default. Every generation this server or the CLI starts appends one line
 to `<KIE_AI_DOWNLOAD_DIR or ./out>/kie-ledger.jsonl`, and another when it
-settles.
+settles. The settle line carries the credits the task consumed when Kie reports
+them, and a task with no recorded cost is unknown, not free.
 
 It exists because Kie's result URLs expire after about 24 hours while the
 `taskId` does not, so the id is the only durable handle on an asset you have
