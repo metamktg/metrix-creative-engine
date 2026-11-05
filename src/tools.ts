@@ -142,7 +142,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
    */
   const record = async (
     event: "created" | "settled",
-    fields: { taskId: string; model: string; state?: string; resultUrls?: string[]; param?: unknown },
+    fields: { taskId: string; model: string; state?: string; resultUrls?: string[]; param?: unknown; credits?: number },
   ) => {
     const failure = await appendLedger(ledgerPath, {
       ts: new Date().toISOString(),
@@ -316,6 +316,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
             model: settled.model ?? "unknown",
             state: settled.state,
             resultUrls: [...settled.resultUrls, ...settled.frameUrls],
+            credits: settled.creditsConsumed ?? undefined,
           });
         }
         const prefix = timedOut
@@ -354,6 +355,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
             model,
             state: settled.state,
             resultUrls: [...settled.resultUrls, ...settled.frameUrls],
+            credits: settled.creditsConsumed ?? undefined,
           });
         }
         const prefix = timedOut

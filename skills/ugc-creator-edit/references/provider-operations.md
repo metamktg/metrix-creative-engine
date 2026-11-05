@@ -71,7 +71,7 @@ Read the engine's dated format/model routing and verify any unsupported or unver
 
 The inspected server exposes balance and returned task costs, not an authoritative pre-submission quote or budget-reservation API. Get a current official price/rate for the exact settings, label it as an estimate when appropriate and reserve its conservative upper bound. Do not invent `kie_estimate_cost` or pass budget sidecar fields as model inputs.
 
-Returned task data can contain nullable `creditsConsumed`. Persist it separately because `src/ledger.ts` stores recovery events without this cost field. Unknown is not zero. A timeout is not a failed job; resume it. The client documents exit 2 for a wait timeout, so check IDs/status instead of calling create again.
+Returned task data can contain nullable `creditsConsumed`. The ledger now keeps it as `credits` on the settled event, from both the MCP server and `kie.mjs`, and `kie_ledger` reports it per task with a total; copy it into the run's own cost records as well, because the ledger is a recovery record and not a budget. Unknown is not zero: a settled task with no `credits` was not free. A timeout is not a failed job; resume it. The client documents exit 2 for a wait timeout, so check IDs/status instead of calling create again.
 
 Provider result links can expire. Keep the task ID, download on success and recover/re-poll that task before paying to regenerate. Verify current reference expiry rules and refresh the same source when required; expired transport URLs do not justify a new creative generation.
 

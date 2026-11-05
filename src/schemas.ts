@@ -95,6 +95,7 @@ export const ledgerOutputShape = {
       state: z.string(),
       resultUrls: z.array(z.string()),
       name: z.string().optional(),
+      credits: z.number().optional(),
       recoverable: z.boolean(),
       minutesLeft: z.number(),
     }),

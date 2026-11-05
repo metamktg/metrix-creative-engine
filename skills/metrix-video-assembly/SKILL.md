@@ -53,6 +53,7 @@ node scripts/render.mjs <run>/composition --storyboard <run>/storyboard.json [--
 node scripts/beats.mjs <track> --window 30 --out <run>/work/cues.json
 node scripts/qa-video.mjs <run>/<name>.mp4 --poster <run>/<name>.jpg --ratio 4:5 --duration 12
 node scripts/make-row.mjs --base <base-run> --brief brief.json --out <row-dir>     (MST rows only)
+node scripts/make-srt.mjs <run>/storyboard.json --out <run>/captions.srt
 ```
 
 `scripts/` is relative to this skill's directory. Keep run folders out of the
@@ -248,15 +249,32 @@ storyboard. Then generate the row from it:
 node scripts/make-row.mjs --base <base-run> --brief brief.json --out <row-dir> [--field hook] [--text-id hook]
 ```
 
-For each `testing_framework.cells[]` entry it copies the composition, puts the
-cell's copy into the slot line in both the storyboard and the HTML, names the
-cell by `matrix_naming_convention`, and runs `check-storyboard.mjs --row` over
-the result. Render each cell, run `qa-video.mjs` on each, and keep the poster
+For each `testing_framework.cells[]` entry it copies the composition and every
+audio file the storyboard names (music, voiceover and each effect, from a
+storyboard-relative, absolute or `../` path) into the cell under `_row_audio/`,
+puts the cell's copy into the slot line in both the storyboard and the HTML,
+names the cell by `matrix_naming_convention`, and runs `check-storyboard.mjs
+--row` over the result. A cell is self-contained: it renders and moves without
+the base run. A missing audio input stops the script before any cell is made. Render each cell, run `qa-video.mjs` on each, and keep the poster
 time identical across the row.
 
 The row check fails if anything outside the slot differs, or if any timing
 differs inside it. A longer hook gets the same clock as a shorter one; if it cannot meet the
 reading floor in that clock, the cell is a brief problem, not an edit.
+
+## Caption file
+
+```
+node scripts/make-srt.mjs <run>/storyboard.json --out <run>/captions.srt
+```
+
+Exports the storyboard's spoken-caption lines (`source: "voiceover"`) as SRT, each
+cue running from the line's `in` to its `out`. It sorts cues, clamps one that runs
+into the next and says so, and fails on a cue with no length, a negative time, no
+text or a time past the storyboard's duration. It reads times from the storyboard
+only: it does not hear the take, so caption timing against the actual voice is
+still a listening check. `--source` names another source value and `--all` exports
+every text item for review.
 
 ## What this skill will not do
 

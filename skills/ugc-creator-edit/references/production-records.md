@@ -37,7 +37,7 @@ Append job events to `ugc-jobs.jsonl` so a crashed run can recover accepted IDs 
 
 Reconcile costs by unique provider/account/job ID, not by summing every event. Provider job status and human acceptance are distinct: a successful render can be rejected.
 
-For Kie, keep `kie-ledger.jsonl` as the existing recovery record. Do not rewrite it with these additional event labels. Store sidecar cost facts from returned task records, including nullable `creditsConsumed`; the engine's current ledger does not retain that field.
+For Kie, keep `kie-ledger.jsonl` as the existing recovery record. Do not rewrite it with these additional event labels. Store sidecar cost facts from returned task records, including nullable `creditsConsumed`; the ledger also keeps it as `credits` on settled events, which is a recovery aid and not a budget record.
 
 ## Pre-submission budget check
 

@@ -346,6 +346,7 @@ try {
   const ledger = led.result?.structuredContent;
   const logged = (ledger?.tasks ?? []).find((t) => t.taskId === structured?.task?.taskId);
   check("the run that spent credits was recorded", Boolean(logged));
+  check("the settled ledger entry keeps the credits the task actually cost", logged?.credits === 14, `credits=${logged?.credits}`);
   check("it carries the model it ran on", logged?.model === "google/nano-banana");
   check("it settled, not merely created", logged?.state === "success");
   check("its result urls were kept", (logged?.resultUrls ?? []).length > 0);

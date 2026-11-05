@@ -109,6 +109,9 @@ are worth naming:
   because a frame is not the asset.
 - **`creditsConsumed`** is what the task actually cost. The docs publish only
   ranges (images roughly 10-50, video roughly 100-500); this is the number.
+  The ledger records it as `credits` on the settled event, and `kie_ledger`
+  returns it per task with a total. A settled task with no recorded `credits`
+  is unknown, not free.
 
 An unrecognised state reads as `unknown` and keeps its raw value in `rawState` —
 it is deliberately **not** treated as finished, so a future Kie state cannot be

@@ -37,6 +37,11 @@ export interface LedgerEntry {
   /** What was actually sent, so a re-render can reproduce the request. */
   param?: unknown;
   error?: string;
+  /**
+   * What the settled task actually cost, in Kie credits, as the provider's
+   * `creditsConsumed` reported it. Absent means unknown, never zero.
+   */
+  credits?: number;
 }
 
 /** One task folded from its events, which is what a caller actually wants. */
@@ -49,6 +54,8 @@ export interface LedgerTask {
   resultUrls: string[];
   name?: string;
   param?: unknown;
+  /** Credits the settled task actually cost, when the provider reported them. */
+  credits?: number;
   /** True while Kie's documented result window has not yet closed. */
   recoverable: boolean;
   /** Whole minutes left in that window; 0 once it has passed. */
@@ -88,6 +95,11 @@ export async function appendLedger(
   }
 }
 
+/** A reported cost is a finite, non-negative number. Anything else is unknown. */
+function reportedCredits(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
 /**
  * Fold the file into one record per task, newest first.
  *
@@ -120,6 +132,7 @@ export function foldLedger(contents: string, now: number): LedgerTask[] {
         resultUrls: entry.resultUrls ?? [],
         name: entry.name,
         param: entry.param,
+        credits: reportedCredits(entry.credits),
         recoverable: false,
         minutesLeft: 0,
       });
@@ -131,6 +144,8 @@ export function foldLedger(contents: string, now: number): LedgerTask[] {
       existing.settledAt = entry.ts;
       existing.state = entry.state ?? existing.state;
       if (entry.resultUrls?.length) existing.resultUrls = entry.resultUrls;
+      const credits = reportedCredits(entry.credits);
+      if (credits !== undefined) existing.credits = credits;
     }
     if (entry.name) existing.name = entry.name;
     if (entry.param !== undefined) existing.param = entry.param;
@@ -177,7 +192,15 @@ export function formatLedger(tasks: LedgerTask[]): string {
         ? `${task.minutesLeft} min of result window left`
         : "result window CLOSED, re-poll to re-issue"
       : task.state;
-    lines.push(`  ${task.createdAt}  ${task.taskId}  ${task.model}  ${window}${task.name ? `  ${task.name}` : ""}`);
+    const cost = task.credits !== undefined ? `  ${task.credits} credits` : "";
+    lines.push(`  ${task.createdAt}  ${task.taskId}  ${task.model}  ${window}${cost}${task.name ? `  ${task.name}` : ""}`);
+  }
+  const settled = tasks.filter((t) => t.settledAt !== undefined);
+  const costed = settled.filter((t) => t.credits !== undefined);
+  if (costed.length > 0 || settled.length > 0) {
+    const total = costed.reduce((sum, t) => sum + (t.credits ?? 0), 0);
+    const unknown = settled.length - costed.length;
+    lines.push(`Credits recorded: ${total} across ${costed.length} settled task(s).${unknown > 0 ? ` ${unknown} settled task(s) have no recorded cost; that is unknown, not zero.` : ""}`);
   }
   if (models.size > 1) {
     lines.push("");
