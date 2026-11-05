@@ -14,10 +14,13 @@ export const DEFAULT_LUFS = -14;
 const flagValue = (argv, name) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined);
 const finite = (v) => typeof v === "number" && Number.isFinite(v);
 
-/** How the storyboard's audio block classifies the mix, matching render.mjs. */
+/**
+ * How the storyboard's audio block classifies the mix, matching render.mjs. An omitted block is read
+ * as an empty one, exactly as the renderer does (`sb.audio || {}`), so it is a silent ad.
+ */
 export function mixMode(storyboard) {
-  const audio = storyboard?.audio;
-  if (!audio || typeof audio !== "object") return undefined;
+  if (!storyboard) return undefined;
+  const audio = storyboard.audio && typeof storyboard.audio === "object" ? storyboard.audio : {};
   const hasBed = Boolean(audio.music?.file) || Boolean(audio.voiceover?.file);
   if (hasBed) return "mix";
   return Array.isArray(audio.sfx) && audio.sfx.length > 0 ? "effects-only" : "silent";

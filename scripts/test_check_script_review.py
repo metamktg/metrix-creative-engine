@@ -181,6 +181,21 @@ class CheckScriptTests(unittest.TestCase):
         s["pronunciation_map"] = {"$40": "forty dollars"}
         self.assertNotIn("brief.spoken_script", rules(run(s, {"copy_architecture": {"spoken_script": approved}}), "FAIL"))
 
+    def test_canonical_copy_clears_every_exact_copy_check_when_an_alias_is_declared(self):
+        # The preproduction guard compares canonical copy, so the script check must accept it too.
+        brief = {"copy_architecture": {"spoken_script": "Save $40.", "spoken_opening_locked": "Save $40.", "cta": "Save $40."}}
+        for text, expected_ok in (("Save $40.", True), ("Save forty dollars.", True), ("Save forty bucks.", False)):
+            with self.subTest(text=text):
+                s = good_script()
+                s["pronunciation_map"] = {"$40": "forty dollars"}
+                s["lines"] = [s["lines"][0]]
+                s["lines"][0].update(text=text, locked=True)
+                failed = rules(run(s, brief), "FAIL")
+                for rule in ("brief.spoken_script", "L1.locked"):
+                    self.assertEqual(rule not in failed, expected_ok, rule)
+                s["lines"][0]["lock_source"] = "copy_architecture.cta"
+                self.assertEqual("L1.locked" not in rules(run(s, brief), "FAIL"), expected_ok)
+
     def test_exact_complete_script_covers_locked_lines_without_duplicate_sources(self):
         s = good_script()
         for ln in s["lines"]:

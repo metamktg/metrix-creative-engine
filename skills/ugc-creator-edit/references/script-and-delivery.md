@@ -155,7 +155,7 @@ Direction never goes in it.
 | Field | Meaning | Rule |
 | --- | --- | --- |
 | `role` | `hook`, `stakes`, `substance`, `proof`, `reservation`, `action`, `bridge` | First line is `hook`, last is `action` |
-| `locked`, `lock_source` | The brief fixed these exact words, and where | Complete approved `spoken_script` covers exact lines. An explicit `lock_source` must equal the whole named source field, never a substring. The text checker permits explicit pronunciation mapping and whitespace normalization; guarded production keeps canonical speech exact and synthesis aliases separate |
+| `locked`, `lock_source` | The brief fixed these exact words, and where | Complete approved `spoken_script` covers exact lines. An explicit `lock_source` must equal the whole named source field, never a substring. The text checker accepts the canonical copy, or the declared pronunciation alias applied to it, plus whitespace normalization. The preproduction guard compares canonical copy only, so keep each line canonical and put the synthesis alias in `pronunciation_map` |
 | `intent` | The thought behind the line, in plain words | Required; "sell it" is not an intent |
 | `emotion` | `calm`, `warm`, `curious`, `wry`, `surprised`, `reassuring`, `matter_of_fact`, `concerned`, `pleased`, `deadpan` | One per line; affect that matches the words, never frantic or fixed |
 | `intensity` | 1 understated, 2 clear, 3 strong | Sustained intensity is a review warning, not proof of a failed natural performance |
@@ -266,8 +266,9 @@ Exit 1 on structural, source-lock or claim FAIL results: malformed fields,
 direction/tags inside spoken text, synthetic personal-experience patterns,
 changed locked or full approved script, missing emphasis text, unknown enum
 values, kit-forbidden claims and required transcript mismatch. Case and
-punctuation are retained for source-lock checks; explicit pronunciation aliases
-are applied before declared whitespace normalization. Transcript comparison is
+punctuation are retained for source-lock checks. A line may equal the approved copy
+or the copy with the declared pronunciation aliases applied, then whitespace is
+normalized; the guard accepts the canonical form only. Transcript comparison is
 separate ASR evidence, not clearance to modify canonical copy.
 
 Style and planning heuristics produce WARN results: greetings or stock hooks,

@@ -57,8 +57,14 @@ describe("QA options from the storyboard", () => {
     expect(mixMode(sb({ voiceover: { file: "v.wav" } }))).toBe("mix");
     expect(mixMode(sb({ music: null, voiceover: null, sfx: [{ file: "e.ogg", at: 1 }] }))).toBe("effects-only");
     expect(mixMode(sb({ music: null, voiceover: null, sfx: [], silence_reason: "silent" }))).toBe("silent");
-    expect(mixMode(sb(undefined))).toBeUndefined();
-    expect(resolveQaOptions(["ad.mp4"], sb(undefined)).mode).toBe("mix");
+    // An omitted audio block is an empty one, as in render.mjs: a silent ad, never a mix at -14 LUFS.
+    expect(mixMode(sb(undefined))).toBe("silent");
+    expect(mixMode(sb({}))).toBe("silent");
+    expect(mixMode(undefined)).toBeUndefined();
+    const omitted = resolveQaOptions(["ad.mp4"], sb(undefined));
+    expect(omitted.mode).toBe("silent");
+    expect(omitted.lufs).toBeUndefined();
+    expect(resolveQaOptions(["ad.mp4"], sb({})).mode).toBe("silent");
     expect(resolveQaOptions(["ad.mp4"], sb({ music: null, sfx: [{ file: "e.ogg" }] })).mode).toBe("effects-only");
     expect(resolveQaOptions(["ad.mp4", "--silent"], sb({ music })).mode).toBe("silent");
   });

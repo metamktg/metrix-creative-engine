@@ -108,6 +108,16 @@ def apply_map(text: str, mapping) -> str:
     return text
 
 
+def copy_forms(text: str, mapping) -> set[str]:
+    """The exact forms an approved source may take in the script.
+
+    Canonical copy always passes an exact-copy check. The declared pronunciation alias applied to it is
+    the other accepted form: the preproduction guard compares canonical copy and keeps the alias in the
+    synthesis settings, so a script the guard accepts must not fail here.
+    """
+    return {exact_text(text), exact_text(apply_map(text, mapping))}
+
+
 def load(path: str | None):
     if not path:
         return None
@@ -254,7 +264,7 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
             if not isinstance(spoken, str) or not spoken.strip():
                 rep.add("brief.spoken_script", "FAIL", "spoken_script must contain the complete approved text")
             else:
-                matches = exact_text(apply_map(spoken, pron)) == complete_text
+                matches = complete_text in copy_forms(spoken, pron)
                 whole_script_matches = matches
                 rep.add("brief.spoken_script", "PASS" if matches else "FAIL",
                         "complete approved speech matches after explicit pronunciation aliases and whitespace joining" if matches else
@@ -354,7 +364,7 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
         if ln.get("locked"):
             source = ln.get("lock_source")
             if source and brief:
-                candidates = [exact_text(apply_map(v, pron)) for v in resolve(str(source), brief)]
+                candidates = [form for v in resolve(str(source), brief) for form in copy_forms(v, pron)]
                 if not candidates:
                     rep.add(f"{lid}.locked", "FAIL", f"lock_source {source!r} is empty or missing in the brief")
                 elif exact_text(text) not in candidates:
@@ -362,7 +372,7 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
             elif source:
                 rep.add(f"{lid}.locked", "FAIL", f"no --brief given, cannot verify the lock on {source}")
             elif idx == 0 and locked_opening:
-                if exact_text(text) != exact_text(apply_map(locked_opening, pron)):
+                if exact_text(text) not in copy_forms(locked_opening, pron):
                     rep.add(f"{lid}.locked", "FAIL", f"locked opening drifted: brief says {locked_opening!r}")
             elif brief:
                 rep.add(f"{lid}.locked", "PASS" if whole_script_matches else "FAIL",
@@ -370,7 +380,7 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
                         "locked line has no lock_source and no exact complete approved script match")
 
     if locked_opening and not lines[0].get("locked"):
-        if exact_text(str(lines[0].get("text", ""))) != exact_text(apply_map(locked_opening, pron)):
+        if exact_text(str(lines[0].get("text", ""))) not in copy_forms(locked_opening, pron):
             rep.add("hook.locked", "FAIL", f"brief locks the opening to {locked_opening!r}; the hook line differs")
 
     # Register and delivery across the script
