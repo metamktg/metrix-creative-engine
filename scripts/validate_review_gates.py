@@ -309,6 +309,17 @@ class Validator:
         if not isinstance(data, dict):
             self.issue("NOT_CHECKED", "production", "Production decisions have not been recorded.")
             return
+        # Existing artifact roles stay unchanged. The packet binding itself is
+        # in the production context digest and is rehashed locally here.
+        if "preproduction" in data or (isinstance(profile, dict) and profile.get("creator_preproduction_required") is True):
+            bindings = data.get("preproduction")
+            if isinstance(bindings, list):
+                if not bindings:
+                    self.issue("NOT_CHECKED", "production.preproduction", "Required creator packet bindings are missing.")
+                for index, binding in enumerate(bindings):
+                    self.artifact(binding, "production.preproduction[" + str(index) + "]")
+            else:
+                self.artifact(bindings, "production.preproduction")
         music = data.get("music")
         if not isinstance(music, dict):
             self.issue("NOT_CHECKED", "production.music", "A reviewed music decision is missing.")

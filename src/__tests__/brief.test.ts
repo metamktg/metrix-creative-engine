@@ -87,7 +87,7 @@ describe("brand assets", () => {
 });
 
 describe("an id that becomes a filename", () => {
-  it.each(["ECAS-MST1-C1A_...", "concept-{id}", "hero-TBD"])("blocks the placeholder in %s", (id) => {
+  it.each(["EXAMPLE-MST1-C1A_...", "concept-{id}", "hero-TBD"])("blocks the placeholder in %s", (id) => {
     expect(
       errorsOf({ ...renderable, brief_metadata: { ...renderable.brief_metadata, brief_id: id } }),
     ).toMatch(/placeholder/);

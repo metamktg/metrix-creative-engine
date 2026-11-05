@@ -26,9 +26,10 @@ whole matrix, so "UGC feel" is not a hidden variable between cells.
 - No real people, public figures or lookalikes.
 - Keep the same person description in the locked base across a row. A different
   face per cell is an uncontrolled variable.
-- Cast before generating: persona brief, product match, identity-still spec and
-  voice are in `skills/ugc-creator-edit/references/casting.md`. Reuse B-roll and
-  graphics, never the actor, and treat the presenter as a demonstrator.
+- Cast before generating: role, identity, voice and recording-scene fit are in
+  `skills/ugc-creator-edit/references/casting.md`. Follow assigned casting and
+  explicit replacement instructions. A new performer needs fresh acceptance;
+  retain suitable accepted B-roll/UI and source/rights bindings.
 
 ## Product in hand
 
@@ -45,11 +46,20 @@ whole matrix, so "UGC feel" is not a hidden variable between cells.
 Before any voice or motion spend, write the script for the mouth with a per-line
 delivery map and run `skills/ugc-creator-edit/scripts/check_script.py`. Rules and
 format: `skills/ugc-creator-edit/references/script-and-delivery.md` and
-`hooks.md`. Plan at about 2.4 words a second under the brief's duration mode
-(exact, maximum or range); never speed speech to fit. A synthetic presenter
+`hooks.md`. Use word-rate only as a labeled planning estimate; the accepted
+complete read determines actual timing under the brief's duration mode
+(exact, maximum or range). Never speed speech to fit. A synthetic presenter
 demonstrates and never reports experience. Direction is not spoken text, and no
 breaths or imperfections are inserted. The negative sheet and the voice, shot
 and editor blocks are in `kie://ugc-creative-playbook`.
+
+The preproduction director in
+`skills/ugc-creator-edit/references/preproduction-director.md` connects hook
+treatment, exact copy, cast/voice/scene, thought-level direction, proof and
+current capabilities to one versioned packet. Before dependent lip sync,
+validate it with `kie_validate_ugc_preproduction` and use
+`kie_create_ugc_lipsync` for guarded approved-audio submission. CLI equivalents
+are `ugc-check` and `ugc-start`. Raw generation success is not acceptance.
 
 ## Honesty and disclosure
 
@@ -83,7 +93,10 @@ Choose the route by input and record it, the live price and a fallback in
 plus accepted dry voice), a two-step silent base clip then a video-to-video
 lip-sync pass, or a native-audio model for short beats. Accept the still, then
 the full dry voice by listening, then one representative motion proof, then the
-full take. Face beats only get lip sync. Routes, dated observations and the
+full take. Native-audio operations need a separately qualified exact-speech,
+identity and performance contract; they are not accepted by the approved-voice
+guard and cannot bypass its full-voice requirement. Face beats only get lip
+sync. Routes, dated observations and the
 outage protocol: `skills/ugc-creator-edit/references/lip-sync-routing.md`.
 
 ## QA checks to add
@@ -102,5 +115,6 @@ The checklist below is additive and cannot certify an unheard or unwatched cut.
 - [ ] Disclosure requirement flagged in the handoff
 - [ ] `check_script.py` passes on the delivery map before voice spend
 - [ ] Full dry voice accepted by human listening before any lip-sync spend
+- [ ] Current preproduction packet passes offline validation and dependent lip sync uses the guarded route
 - [ ] Rendered take transcribed and compared with the script (`--transcript`)
 - [ ] Last two seconds of every clip inspected for drift and intruding objects

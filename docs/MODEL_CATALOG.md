@@ -1,16 +1,18 @@
 # Model catalog
 
 Read from the OpenAPI specs `docs.kie.ai` embeds in each page (append `.md` to
-any docs URL to get one). **Retrieved 2026-09-14.** Kie adds and renames models
-often — when a call fails with a validation error, check the model's live page
+any docs URL to get one). **Spec snapshot retrieved 2026-09-14**; later production
+observations are dated where they appear. Kie adds and renames models
+often, when a call fails with a validation error, check the model's live page
 before assuming this file is right.
 
 Every id below is quoted verbatim from a spec. Ids marked **[enum]** are pinned
 by the spec's `model` enum; **[example]** means the spec left `model` a free
 string and this is the value its own example used.
 
-Nothing here was verified against a live API call. Treat the first run of any
-new model as a test.
+The spec snapshot was not exercised against a live API. The exceptions are the
+upload host probe (2026-09-15) and the production observations, each dated and
+marked as observed. Treat the first run of any new model as a test.
 
 ## Four gotchas that will cost you a run
 
@@ -22,25 +24,28 @@ new model as a test.
    silently ignored and you get the default.
 3. **The image-input field varies**: `image_urls`, `image_input`, `input_urls`,
    `image_url` (singular) and `first_frame_url` all appear. Per model, below.
-4. **Sora and Midjourney are not available.** See "Not available" at the end.
+4. **Sora, Midjourney and Mmaudio are not available.** See "Not available" at the end.
 
 ---
 
 ## Images
 
-### Recommended defaults for ad creative
+### Capability by job
+
+This maps jobs to models by capability. The choice for a brief is made in
+`skills/metrix-ad-creative/references/model-routing.md`, which defaults feed statics to `nano-banana-2`.
 
 | Job | Model | Why |
 | --- | --- | --- |
-| General text to image | `google/nano-banana` [enum] | Broad, fast, 11 aspect ratios including 4:5 and 9:16 |
+| General and cheap-iteration text to image | `google/nano-banana` [enum] | Broad, fast, 11 aspect ratios including 4:5 and 9:16. Small prompt budget |
 | Highest quality / 4K | `nano-banana-2` [enum] | 4K, 14 reference images, biggest prompt budget |
 | Edit an existing image | `google/nano-banana-edit` [enum] | Straightforward URL-in, instruction-based |
 | Product / photoreal | `bytedance/seedream-v4-text-to-image` [enum] | Strong on product realism |
-| Design with legible text | `ideogram/v3-text-to-image` [enum] | Best documented text rendering of the set |
+| Design with legible text | `ideogram/v3-text-to-image` [enum] | Best documented text rendering of the set, but no 4:5. A 4:5 feed static with text uses `nano-banana-2` |
 
 ### Nano Banana family
 
-**`google/nano-banana`** [enum] — text to image.
+**`google/nano-banana`** [enum] · text to image.
 
 | Field | Type | Required | Values |
 | --- | --- | --- | --- |
@@ -52,21 +57,21 @@ new model as a test.
 `image_size` also appears but the docs say it is replaced by `aspect_ratio`. Use
 `aspect_ratio`.
 
-**`google/nano-banana-edit`** [enum] — image edit. Required `prompt` (max 5000)
+**`google/nano-banana-edit`** [enum] · image edit. Required `prompt` (max 5000)
 and `image_urls` (array of URLs, **max 10**, jpeg/png/webp, 10MB each). Optional
 `aspect_ratio` (same 11 values), `output_format`.
 
-**`nano-banana-pro`** [enum] — note: **no `google/` prefix.** Required `prompt`
+**`nano-banana-pro`** [enum] · note: **no `google/` prefix.** Required `prompt`
 (max 10000). Optional `image_input` (array, max 8, 30MB each), `aspect_ratio`
 (11 values incl. `4:5`, `auto`), `resolution` (`1K` `2K` `4K`, default `1K`),
 `output_format` (`png` `jpg`).
 
-**`nano-banana-2`** [enum] — **no prefix.** Required `prompt` (max 20000).
+**`nano-banana-2`** [enum] · **no prefix.** Required `prompt` (max 20000).
 Optional `image_input` (array, **max 14**, 30MB), `aspect_ratio` (15 values,
 default **`auto`**), `resolution` (`1K` `2K` `4K`), `output_format` (`png` `jpg`,
 default **`jpg`**).
 
-**`nano-banana-2-lite`** [enum] — **`aspect_ratio` is required here.** Uses
+**`nano-banana-2-lite`** [enum] · **`aspect_ratio` is required here.** Uses
 `image_urls` (max 10), not `image_input`.
 
 ### Seedream
@@ -95,51 +100,51 @@ you need 4:5 natively rather than cropping.
 
 ### Flux
 
-`flux-2/pro-text-to-image`, `flux-2/flex-text-to-image` [enum] — required
+`flux-2/pro-text-to-image`, `flux-2/flex-text-to-image` [enum], required
 `prompt` (3–5000), `aspect_ratio` (`1:1` `4:3` `3:4` `16:9` `9:16` `3:2` `2:3`),
 `resolution` (`1K` `2K`).
 
-`flux-2/pro-image-to-image`, `flux-2/flex-image-to-image` [enum] — same, plus
+`flux-2/pro-image-to-image`, `flux-2/flex-image-to-image` [enum], same, plus
 required `input_urls` (1–8 images, 10MB each); `aspect_ratio` gains `auto`.
 
-`flux1-kontext` [enum] — generate or edit. **English prompts only.** Optional
+`flux1-kontext` [enum] · generate or edit. **English prompts only.** Optional
 `input_image` (single URL, edit mode), `aspect_ratio` (`21:9` `16:9` `4:3` `1:1`
 `3:4` `9:16`, default `16:9`), `output_format`, `prompt_upsampling`,
 `safety_tolerance` (0–6, default 2; edit mode allows 0–2 only).
 
-### Ideogram — the text-rendering option
+### Ideogram · the text-rendering option
 
-`ideogram/v3-text-to-image` [enum] — required `prompt`. Optional `style` (`AUTO`
+`ideogram/v3-text-to-image` [enum] · required `prompt`. Optional `style` (`AUTO`
 `GENERAL` `REALISTIC` `DESIGN`), `rendering_speed` (`TURBO` `BALANCED`
 `QUALITY`), `negative_prompt`, `seed`, `image_size`, `num_images` (**a string**:
 `"1"`–`"4"`).
 
-`ideogram/v3-edit` [enum] requires `prompt`, `image_url` **and** `mask_url` —
+`ideogram/v3-edit` [enum] requires `prompt`, `image_url` **and** `mask_url`,
 true inpainting; the mask must match the image dimensions. `ideogram/v3-remix`
 takes `prompt` + `image_url` + `strength` (0.01–1). `ideogram/character` takes
 `reference_image_urls` for a consistent character, though the docs note only the
 first image is used.
 
-Ideogram is the family to reach for when on-image text has to be legible. It is
-also one of the few with a real `negative_prompt`.
+Ideogram is the family to reach for when on-image text has to be legible and the
+placement is not 4:5. It is also one of the few with a real `negative_prompt`.
 
 ### Other image models
 
-- `google/imagen4`, `google/imagen4-fast`, `google/imagen4-ultra` [enum] —
+- `google/imagen4`, `google/imagen4-fast`, `google/imagen4-ultra` [enum],
   `prompt`, `negative_prompt`, `aspect_ratio` (`1:1` `16:9` `9:16` `3:4` `4:3`
   `auto`). Note `seed` is a **string** on imagen4 and ultra, an **integer** on
   fast, and fast defaults to `16:9` where the others default to `1:1`.
-- `z-image` [enum] — **no prefix.** `prompt` (max 1000) and `aspect_ratio`
+- `z-image` [enum] · **no prefix.** `prompt` (max 1000) and `aspect_ratio`
   (`1:1` `4:3` `3:4` `16:9` `9:16`) both required. No image input. Cheap and fast.
 - `qwen/text-to-image`, `qwen/image-edit`, `qwen/image-to-image`,
   `qwen3/text-to-image`, `qwen3/image-to-image`, `qwen3/pro-text-to-image`,
-  `qwen3/pro-image-to-image` [enum] — all expose `negative_prompt` and `seed`.
+  `qwen3/pro-image-to-image` [enum] · all expose `negative_prompt` and `seed`.
 - `gpt-image/1.5-text-to-image`, `gpt-image-2-text-to-image` and the
-  `gpt-image-2-5-flare` / `-sunburst` pairs [enum] — gpt-image-2 supports
+  `gpt-image-2-5-flare` / `-sunburst` pairs [enum], gpt-image-2 supports
   `background: transparent`, but only at 1K.
 - `grok-imagine/text-to-image`, `grok-imagine-image-2-0/text-to-image` [enum].
-- `recraft/remove-background` [enum] — required `image` (max 5MB).
-- `recraft/crisp-upscale`, `topaz/image-upscale` [enum] — see Upscaling.
+- `recraft/remove-background` [enum] · required `image` (max 5MB).
+- `recraft/crisp-upscale`, `topaz/image-upscale` [enum], see Upscaling.
 
 ---
 
@@ -160,7 +165,7 @@ Video is slow and costs several times what an image does. Use
 
 ### Veo
 
-**`veo-3-1`** [example] — required `prompt`. Optional:
+**`veo-3-1`** [example] · required `prompt`. Optional:
 
 | Field | Values |
 | --- | --- |
@@ -170,8 +175,9 @@ Video is slow and costs several times what an image does. Use
 | `resolution` | `720p` `1080p` `4k`. Default `720p` |
 | `duration` | integer `4` `6` `8`. Default `8`. Reference mode supports 8 only |
 
-Docs note 4K costs roughly 2x. **No 4:5 or 1:1** — for feed placements generate
-9:16 or 16:9 and crop, or use a model that offers the ratio.
+Docs note 4K costs roughly 2x. **No 4:5 or 1:1.** For feed placements generate
+9:16 or 16:9 and compose the feed cut in `metrix-video-assembly`, or use a model that offers the
+ratio. Do not crop a finished ad.
 
 Companions: `veo/extend`, `veo/get-1080p-video`, `veo/get-4k-video` [example].
 1080p videos cannot be extended.
@@ -195,15 +201,15 @@ Companions: `veo/extend`, `veo/get-1080p-video`, `veo/get-4k-video` [example].
 
 ### Seedance / Bytedance
 
-`bytedance/v1-pro-text-to-video`, `v1-lite-text-to-video` [enum] — `prompt` (max
+`bytedance/v1-pro-text-to-video`, `v1-lite-text-to-video` [enum], `prompt` (max
 10000); `aspect_ratio` (pro adds `21:9`, lite adds `9:21`), `resolution` (`480p`
 `720p` `1080p`), `duration` (`"5"` `"10"`), `camera_fixed`, `seed`.
 
 `bytedance/v1-pro-image-to-video`, `v1-lite-image-to-video`,
-`v1-pro-fast-image-to-video` [enum] — `prompt` + `image_url`, no `aspect_ratio`
+`v1-pro-fast-image-to-video` [enum] · `prompt` + `image_url`, no `aspect_ratio`
 (the image sets it).
 
-`bytedance/seedance-2` / `-fast` / `-mini` / `-2-5` / `seedance-1.5-pro` [enum] —
+`bytedance/seedance-2` / `-fast` / `-mini` / `-2-5` / `seedance-1.5-pro` [enum],
 the richest reference support: `reference_image_urls`, `reference_video_urls`,
 `reference_audio_urls`, `first_frame_url`, `last_frame_url`, `generate_audio`,
 `aspect_ratio` (incl. `adaptive`), `resolution` up to `4k` on seedance-2.
@@ -212,18 +218,18 @@ the richest reference support: `reference_image_urls`, `reference_video_urls`,
 ### Others
 
 - `hailuo/02-text-to-video-standard` / `-pro`, `hailuo/02-image-to-video-*`,
-  `hailuo/2-3-image-to-video-*` [enum] — `duration` `"6"`/`"10"` as strings.
-- `minimax-h3/text-to-video`, `/image-to-video`, `/reference-to-video` [enum] —
+  `hailuo/2-3-image-to-video-*` [enum] · `duration` `"6"`/`"10"` as strings.
+- `minimax-h3/text-to-video`, `/image-to-video`, `/reference-to-video` [enum],
   `aspect_ratio` up to `21:9`, `duration` int 4–15.
-- `wan/2-5-*`, `wan/2-6-*`, `wan/2-7-*`, `wan/3-0-video` [enum] — **`wan/2-7-text-to-video`
+- `wan/2-5-*`, `wan/2-6-*`, `wan/2-7-*`, `wan/3-0-video` [enum], **`wan/2-7-text-to-video`
   uses `ratio`, not `aspect_ratio`.**
-- `runway`, `runway/extend-ai-video`, `runway/gen4-aleph` [example] — Aleph is
+- `runway`, `runway/extend-ai-video`, `runway/gen4-aleph` [example], Aleph is
   video-to-video. `duration` and `quality` are free strings here, not enums;
   10-second clips cannot be 1080p.
 - `grok-imagine/text-to-video`, `/image-to-video`, `/extend`, `/upscale` [enum].
 - Avatar / lip-sync: `kling/ai-avatar-pro`, `kling/ai-avatar-standard`,
   `omnihuman-1-5`, `infinitalk/from-audio`,
-  `volcengine/video-to-video-lip-sync` [enum] — ids confirmed, parameters not
+  `volcengine/video-to-video-lip-sync` [enum] · ids confirmed, parameters not
   extracted. Fetch the page before first use.
   Observed in production (dates matter, these are not current facts):
   2026-11-02, every image-plus-audio model above (`ai-avatar-pro`,
@@ -234,7 +240,9 @@ the richest reference support: `reference_image_urls`, `reference_video_urls`,
   (8 credits a second, output 25 fps, trimmed or looped to the audio) worked
   instead. 2026-11-05, `kling/ai-avatar-standard` quoted at 10.1 credits a
   second, 720p native; `kling/v2-1-standard` charged 101 credits per 10 s clip
-  where it had charged 50 three days earlier. Routing and the outage protocol:
+  where it had charged 50 three days earlier. A second record names `omnihuman-1-5` among the
+  models that failed on 2026-11-02 instead of `ai-avatar-standard`; treat every image-plus-audio
+  avatar route as unreliable for that day. Routing and the outage protocol:
   `skills/ugc-creator-edit/references/lip-sync-routing.md`.
 
 ---
@@ -267,7 +275,7 @@ from the top-level one.
 Required: `prompt`, `custom_mode`, `instrumental`, `input.model`. Optional:
 `style`, `title` (max 80), `negative_tags`, `vocal_gender` (`m`/`f`),
 `style_weight`, `weirdness_constraint`, `audio_weight`, `duration` (10–360,
-default 20 — only when `custom_mode` is true on V5_5 and later).
+default 20, only when `custom_mode` is true on V5_5 and later).
 
 With `custom_mode: true` and `instrumental: false`, `prompt` is used **verbatim
 as lyrics**, and `style` and `title` become required. For an ad bed you almost
@@ -279,8 +287,8 @@ Others: `ai-music-api/extend`, `/generate-lyrics`, `/cover-generate`,
 
 ### Speech
 
-`elevenlabs/text-to-speech-multilingual-v2` [enum] — required `text` (max 5000)
-**and `voice`**. `elevenlabs/text-to-speech-turbo-2-5` [enum] — `voice` optional.
+`elevenlabs/text-to-speech-multilingual-v2` [enum] · required `text` (max 5000)
+**and `voice`**. `elevenlabs/text-to-speech-turbo-2-5` [enum], `voice` optional.
 
 `voice` is a 67-value enum of ElevenLabs voice ids, default
 `EkK5I93UQWFDigLMpZcX` ("James - Husky, Engaging and Bold"). Preview any of them
@@ -293,13 +301,15 @@ Optional: `stability` (0–1, default 0.5), `similarity_boost` (0–1, default
 `{text, voice}` for multi-speaker, 5000 characters total across all entries.
 `elevenlabs/audio-isolation` [enum] strips background noise from `audio_url`.
 
-Also `google/gemini-2-5-pro-tts`, `google/gemini-3-1-flash-tts` [enum].
+Also `google/gemini-2-5-pro-tts`, `google/gemini-3-1-flash-tts` [enum]. The id quoted and used in
+production on 2026-11-05 was `google/gemini-3-8-flash-tts`, which is not in this enum snapshot, so
+confirm the id on the model page before use.
 
 Observed in production: on 2026-11-02 both `elevenlabs/text-to-speech-multilingual-v2`
 and `elevenlabs/text-to-dialogue-v3` returned "upstream API service timed out"
 for every task all afternoon, including the provider's example input, uncharged;
-`google/gemini-3-8-flash-tts` (per-turn `style`, inline `<breath>` and
-`<short pause>` marks) worked throughout at under one credit a take and produced
+`google/gemini-3-8-flash-tts` (per-turn `style`; it also accepts inline `<breath>` and
+`<short pause>` marks, which the script rules say not to use) worked throughout at under one credit a take and produced
 the accepted voice. On 2026-11-05 multilingual v2 was quoted at 12 credits per
 1,000 characters. Delivery direction for either route comes from the script's
 delivery map (`skills/ugc-creator-edit/references/script-and-delivery.md`).
@@ -308,14 +318,14 @@ delivery map (`skills/ugc-creator-edit/references/script-and-delivery.md`).
 
 ## Upscaling
 
-- `topaz/image-upscale` [enum] — `image_url`, `upscale_factor` as a **string**:
+- `topaz/image-upscale` [enum] · `image_url`, `upscale_factor` as a **string**:
   `"1"` `"2"` `"4"`.
-- `topaz/video-upscale` [enum] — `video_url` (mp4/mov/mkv, max 50MB), same
+- `topaz/video-upscale` [enum] · `video_url` (mp4/mov/mkv, max 50MB), same
   `upscale_factor`.
-- `recraft/crisp-upscale` [enum] — `image`.
+- `recraft/crisp-upscale` [enum] · `image`.
 
 Upscalers sharpen what exists. They do not fix composition, hands or garbled
-text — regenerate for those. Use as the final step on an approved asset.
+text, regenerate for those. Use as the final step on an approved asset.
 
 ---
 
@@ -333,7 +343,7 @@ Three endpoints, all authenticated with the same bearer token. Note the path has
 | `POST /api/file-stream-upload` | multipart `file`, `uploadPath`, `fileName?` | Large files |
 | `POST /api/file-base64-upload` | JSON `{base64Data, uploadPath, fileName?}` | Accepts a raw base64 string or a `data:` URL. Recommended under 10MB |
 
-Take **`downloadUrl`** from the response — it is the one URL field present in
+Take **`downloadUrl`** from the response, it is the one URL field present in
 both documented response shapes.
 
 **The host contradiction is RESOLVED** (probed live, 2026-09-15): the prose
@@ -347,19 +357,18 @@ examples are right and the OpenAPI `servers` block is wrong.
 `scripts/kie.mjs upload` tries redpandaai first and falls back, so it keeps
 working if Kie moves it. Override with `KIE_AI_UPLOAD_BASE_URL`.
 
-**Both contradictions this file used to record have since been resolved
-upstream** (re-read 2026-09-15,
+**The upload page now states one response shape and one expiry** (re-read 2026-09-15,
 https://docs.kie.ai/file-upload-api/upload-file-stream):
 - **Response shape.** One shape now, required fields `fileName`, `filePath`,
   `downloadUrl`, `fileSize`, `mimeType`, `uploadedAt`. The second prose shape
   with `fileUrl` is gone; `fileUrl` no longer appears on the page at all.
   `kie.mjs` still reads `downloadUrl || fileUrl` as a harmless superset.
 - **Expiry.** One figure now: "Uploaded files are temporary and will be
-  automatically deleted after **3 days**." The 24-hour claim is gone.
+  automatically deleted after **3 days**." The 24-hour figure applies to result URLs only.
 
 Upload late anyway. Three days is the file's life, not the batch's budget.
 
-Because uploaded URLs expire, upload as late as possible — right before the
+Because uploaded URLs expire, upload as late as possible, right before the
 generation that consumes the URL, not at the start of a long batch.
 
 `scripts/kie.mjs upload <file>` wraps this. It reads `downloadUrl` or

@@ -1,7 +1,8 @@
 # Prompting
 
 How to write prompts per model family. Model ids and their parameters are in
-[`MODEL_CATALOG.md`](MODEL_CATALOG.md); this is about what to put in the prompt
+`MODEL_CATALOG.md` (in the repository's `docs/`; the `kie-generate` skill carries a digest as
+`references/models.md`); this is about what to put in the prompt
 string once you have picked one.
 
 ## The general shape
@@ -16,7 +17,7 @@ subject and action -> composition -> environment -> light -> style -> colour -> 
 Four habits that separate a usable prompt from a lucky one:
 
 **Name a medium, not a mood.** "Editorial photography, 50mm, shallow depth of
-field" is reproducible. "Premium", "aspirational", "clean" are not — the model
+field" is reproducible. "Premium", "aspirational", "clean" are not, the model
 has no shared referent, so you get a different interpretation every run. If a
 brief hands you the adjective, translate it once and reuse that exact
 translation everywhere.
@@ -32,7 +33,7 @@ positively: "plain seamless backdrop" instead of "no background clutter".
 
 **Change one thing at a time.** When a result is close but wrong, edit the one
 clause responsible and re-run. Rewriting the whole prompt means you learn
-nothing about which change helped — and in a Matrix Sprint Test it invalidates
+nothing about which change helped, and in a Matrix Sprint Test it invalidates
 the cell outright.
 
 ## Image generation
@@ -63,13 +64,13 @@ Things worth knowing:
 Edit models take one or more **input image URLs** plus an instruction. Two rules:
 
 **The image must be reachable over HTTPS.** A local file path is not an input.
-If you have a local file, it needs a public URL first — see the upload section
+If you have a local file, it needs a public URL first, see the upload section
 of `MODEL_CATALOG.md` for whether Kie offers an endpoint for this.
 
 **Describe the change, not the whole scene.** "Change the background to a plain
 warm grey studio backdrop, keep the product and its lighting unchanged" works.
 Re-describing everything invites the model to regenerate parts you wanted kept.
-Name explicitly what must be preserved — edit models drift on unmentioned
+Name explicitly what must be preserved, edit models drift on unmentioned
 elements.
 
 ## Video
@@ -102,7 +103,7 @@ shallow depth of field, 5 seconds
 Where a model accepts a starting image, it controls composition, subject and
 style far more reliably than words do. The prompt then only has to carry motion.
 For ad creative this is usually the better path: generate the frame, approve it,
-then animate it — you get to reject a bad composition before paying for video.
+then animate it, you get to reject a bad composition before paying for video.
 
 ## Music and speech
 
@@ -114,7 +115,7 @@ Upbeat indie folk, acoustic guitar and handclaps, 120 bpm,
 warm and optimistic, building to a full chorus, 30 seconds, instrumental
 ```
 
-For ad beds, ask for instrumental unless vocals are the point — vocals compete
+For ad beds, ask for instrumental unless vocals are the point, vocals compete
 with voiceover and on-screen copy.
 
 Speech models want the **text** plus a voice id and delivery notes. Punctuation
@@ -125,7 +126,7 @@ adjectives like "slowly".
 
 Upscalers take an image URL and a scale factor. They sharpen what is there; they
 do not add information. An upscale will not fix a bad composition, a mangled
-hand, or garbled text — regenerate instead. Use it as the last step before
+hand, or garbled text, regenerate instead. Use it as the last step before
 delivery, once the asset is approved.
 
 ## Prompting inside a Matrix Sprint Test

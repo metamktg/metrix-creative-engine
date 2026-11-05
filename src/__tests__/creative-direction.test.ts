@@ -11,6 +11,8 @@ import adDirection from "../../skills/metrix-ad-creative/references/creative-dir
 import adPlaybook from "../../skills/metrix-ad-creative/references/ugc-creative-playbook.md";
 import creatorDirection from "../../skills/ugc-creator-edit/references/creative-direction.md";
 import creatorPlaybook from "../../skills/ugc-creator-edit/references/ugc-creative-playbook.md";
+import preproduction from "../../skills/ugc-creator-edit/references/preproduction-director.md";
+import packetTemplate from "../../examples/ugc-production/preproduction.example.json";
 import { registerKiePrompts } from "../prompts.js";
 import { registerKieResources } from "../resources.js";
 
@@ -69,5 +71,15 @@ describe("UGC creative direction over MCP", () => {
     expect(result.contents).toHaveLength(1);
     expect(result.contents[0]).toMatchObject({ uri, mimeType: "text/markdown", text: creativePlaybook });
     expect(creativePlaybook.trim().length).toBeGreaterThan(1000);
+  });
+
+  it("serves the actual preproduction contract and pending template to a repository-free client", async () => {
+    const uri = "kie://ugc-preproduction";
+    expect((await client.listResources()).resources.map(r => r.uri)).toContain(uri);
+    const result = await client.readResource({ uri });
+    const text = "text" in result.contents[0] ? result.contents[0].text : "";
+    expect(text).toContain(preproduction);
+    expect(text).toContain(JSON.stringify(packetTemplate, null, 2));
+    expect(text).toContain("INCOMPLETE TEMPLATE");
   });
 });

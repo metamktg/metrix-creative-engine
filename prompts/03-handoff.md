@@ -71,7 +71,7 @@ Rules for this section:
 
 Do not predict which cell will win.
 
-In general mode, replace this section with one line: "General mode: these
+In standard mode, replace this section with one line: "Standard mode: these
 assets scale a proven pattern and are intentionally varied, so they are not a
 controlled test."
 
@@ -95,7 +95,7 @@ require reading the JSON; the JSON is the audit trail.
 | `creative_briefs.json` | What was asked for and why: the strategy |
 | `brand_translation.json` | How the brand became prompt language, reused across every asset |
 | `render_spec.json` | Exactly how each asset was made: model, parameters, prompts, references. Anyone can reproduce it |
-| `assets/` | The creative, MST-named, ready for `metrix-mst-creative-scan` |
+| `assets/` | The creative, named per core rule 9: descriptive by default, MST-named only inside a live matrix |
 
 Link or attach the files. Do not paste JSON into the message.
 

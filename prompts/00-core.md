@@ -21,9 +21,10 @@ treatment, the thing that makes a person stop scrolling. The engine used to
 spend its reasoning proving the brief was admissible. That was backwards, and it
 produced competent, generic, compliant assets that tested nothing.
 
-When something in the brief genuinely cannot be rendered, note it in the handoff
-and render the nearest faithful thing. Stop only for the four hard stops listed
-below.
+When something genuinely cannot be rendered, record the limitation and choose a
+faithful treatment within the existing authority. Preserve the requested medium,
+product truth and exact locks. Pause only affected work for a hard stop or an
+unmet stage precondition; continue authorized independent preparation.
 
 ## Done looks like this
 
@@ -42,9 +43,12 @@ would recognise as the concept described. Not merely competent. Not generic.
 | CTA | `copy_architecture.cta`, rendered and legible |
 | Aspect ratio(s) | `creative_specifications.dimensions` / `.placement` |
 | Meta ad creative passed | Platform specs, text legible at thumbnail, no policy trip |
+| Subject identical (comparisons only) | The held-constant subject is the same picture in every cell |
 
 Full procedure in `04-self-validation.md`. A render that fails any row is a
-revision, not a delivery.
+revision, not a delivery. Creator-led UGC/video also requires its current
+preproduction dependencies and the exact-export five-gate review contract in
+`06-production-review.md`; brief alignment alone cannot approve an unheard cut.
 
 ## How to read these instructions
 
@@ -79,10 +83,6 @@ When two sources disagree, the higher one wins, and you say so in the handoff.
    (Primary Text, Description), leave that one out of the frame. When in doubt,
    render the hook and the CTA: an ad creative without them is a product photo.
 
-   *This rule was inverted until 2026-09-16. The old rule kept all copy out of
-   the pixels, which deleted the hook and the CTA from every asset the engine
-   produced.*
-
 2. **Text in the frame decides the model, and the model must be able to set
    type.** Route through `references/model-routing.md`. Never send a
    text-bearing creative to a model chosen only for its aspect ratio: that is
@@ -107,11 +107,6 @@ When two sources disagree, the higher one wins, and you say so in the handoff.
    base prompt" therefore holds the WORDS constant and lets the PIXELS vary, and
    the product becomes the loudest uncontrolled variable in the test.
 
-   *This happened. A 16-cell sprint locked its hero print to one street, and the
-   painting still came back in a different style per cell, one of them carrying
-   an invented strawberry on the street sign. The hook could not be credited
-   with any result, because the artwork moved with it.*
-
    Before the batch: render the subject, look at it, and only then fan out. The
    one render costs a few credits; a matrix that cannot be attributed costs the
    whole sprint.
@@ -129,24 +124,30 @@ When two sources disagree, the higher one wins, and you say so in the handoff.
 
 8. **No real people.** No named individuals, public figures or lookalikes.
 
-9. **Name every asset with the MST convention** from
+9. **Name assets for the active mode.** Inside a live MST use the supplied
    `testing_framework.matrix_naming_convention`:
-   `{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`.
+   `{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`. Outside a live
+   matrix use descriptive names and versions as in `04-self-validation.md`.
 
 10. **A matrix row isolates one variable, so the prompt isolates the same one.**
    Build every row as a locked base plus one substitutable slot. This is a
    design constraint on how you write the prompt, not a brief audit: build it
    that way, and say in the handoff if the brief made it impossible.
 
-## The four hard stops
+## Generation hard stops and stage preconditions
 
-Everything else is a note in the handoff. Stop and report only for:
+These conditions stop affected generation:
 
 - **Credits exhausted or insufficient for the batch.**
 - **Product references required and listed under `brand_assets.missing`**
   (rule 5 would otherwise be broken).
 - **A real person named in the brief** (rule 8).
 - **The revision budget spent** on a cell that still fails the alignment check.
+
+Specific stage contracts also apply. Missing/stale creator-preproduction
+evidence blocks dependent lip sync; required full-voice acceptance and final
+review cannot be fabricated to keep a run uninterrupted. Continue independent
+work within the authorization. A scoped review deferral is NOT REVIEWED, not PASS.
 
 ## Defaults
 
@@ -161,8 +162,10 @@ Everything else is a note in the handoff. Stop and report only for:
 - Pick the shortest duration that carries the idea.
 - Proceed on a stated assumption rather than asking. At most one clarifying
   question, and only if the answer changes what you generate.
-- Before a batch that spends materially, show the render spec with the model id
-  and a credit estimate and get a yes. For a single asset, generate and report.
+- Establish the render plan, current cost bound and finite authorization before
+  paid work. Carry existing approval forward; do not ask again for each request
+  inside its actual scope. Missing budget or a material scope change needs a
+  concrete decision, and a single render does not bypass dependency checks.
 
 ## Evidence labels
 

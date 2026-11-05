@@ -12,6 +12,17 @@ Use relative local paths inside the run. The registry is an approved JSON snapsh
 
 The profile declares expected format/timing, placement/safe regions, sound/delivery requirements, and `sound_check_required_facts` for message, benefit, action and essential conditions. These facts are declared before the lay review. Where no material condition exists, state that explicitly instead of inventing one.
 
+New creator runs set `creator_preproduction_required: true` in that profile and
+bind `production.preproduction` to one `{path, sha256}` descriptor or a nonempty
+array listing every actual operation packet directly. A manifest proxy does not
+bind indirectly referenced packet contents.
+Before final review rerun the offline Node preflight defined in
+[preproduction-director.md](preproduction-director.md). The final Python
+validator rehashes the packet and includes its descriptor in review context;
+it does not rerun preflight or recursively inspect nested files. Missing a
+required packet is NOT_CHECKED, and a changed packet invalidates the bound
+review context. Existing artifact roles and all five gates remain unchanged.
+
 Include the brief-specific production criteria from `production-standard.md` in the profile and evidence: coherent narration/phrase consistency, audible subordinate music and its entrance, matching spoken/product beats, format-appropriate proof treatment, clean image handoffs, gaze/action continuity and readable holds. Bind any accepted treatment reference and its decision scope rather than imposing an inherited layout. No single numeric loudness threshold or final mix normalization certifies these judgments. Each final placement or captioned/clean export needs its own versioned record bound to its exact master; shared component evidence needs an explicit current-export binding.
 
 Copy `templates/review-manifest.json` into the run, replace its paths and deliberately fill the production decisions. Use the preparation helper to hash the files and create five PENDING gates:

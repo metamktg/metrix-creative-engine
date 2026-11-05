@@ -2,7 +2,11 @@
 /*
  * Check a finished ad file. ffmpeg only.
  *
- *   node qa-video.mjs <ad.mp4> [--poster ad.jpg] [--ratio 4:5] [--duration 12] [--lufs -14] [--silent | --effects-only]
+ *   node qa-video.mjs <ad.mp4> [--storyboard storyboard.json] [--poster ad.jpg] [--ratio 4:5] [--duration 12]
+ *                     [--lufs -14] [--silent | --effects-only]
+ *
+ * --storyboard supplies the ratio, duration, loudness target and silent or effects-only mode the
+ * renderer used. Any explicit flag overrides it, and the output records where each value came from.
  *
  * Checks, each PASS or FAIL:
  *   format      width x height matches --ratio; duration within 0.1s of --duration
@@ -20,6 +24,8 @@
  * flat colour do not fit, so they are not counted.
  */
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import { resolveQaOptions } from "./qa-options.mjs";
 
 const argv = process.argv.slice(2);
 const flag = (k, d) => (argv.includes(k) ? argv[argv.indexOf(k) + 1] : d);
@@ -31,21 +37,31 @@ const pj = JSON.parse(spawnSync("ffprobe", ["-v", "error", "-show_entries", "for
 const vs = pj.streams.find((s) => s.codec_type === "video");
 const dur = +pj.format.duration;
 
-const ratio = flag("--ratio");
+let storyboard = null;
+const sbPath = flag("--storyboard");
+if (sbPath) {
+  try { storyboard = JSON.parse(fs.readFileSync(sbPath, "utf8")); }
+  catch (e) { console.error(`qa-video: cannot read --storyboard ${sbPath}: ${e.message}`); process.exit(2); }
+}
+let opts;
+try { opts = resolveQaOptions(argv, storyboard); }
+catch (e) { console.error(`qa-video: ${e.message}`); process.exit(2); }
+
+const ratio = opts.ratio;
 if (ratio) {
   const [a, b] = ratio.split(":").map(Number);
   add("format.ratio", Math.abs(vs.width / vs.height - a / b) < 0.003, `${vs.width}x${vs.height}, wanted ${ratio}`);
 }
-const want = flag("--duration");
+const want = opts.duration;
 if (want) add("format.duration", Math.abs(dur - +want) <= 0.1, `${dur.toFixed(3)}s, wanted ${want}s`);
 add("audio", pj.streams.some((s) => s.codec_type === "audio"), "audio stream present");
 
 const er = spawnSync("ffmpeg", ["-v", "info", "-nostats", "-i", v, "-vn", "-af", "ebur128=peak=true", "-f", "null", "-"], { encoding: "utf8" }).stderr;
 const I = parseFloat(([...er.matchAll(/I:\s+(-?[\d.]+) LUFS/g)].at(-1) || [])[1]);
 const P = parseFloat(([...er.matchAll(/Peak:\s+(-?[\d.]+) dBFS/g)].at(-1) || [])[1]);
-if (argv.includes("--silent")) add("loudness", !(I > -60), `${I} LUFS, silent mix expected`);
-else if (argv.includes("--effects-only")) add("loudness", I <= -16 && !(P > -1), `${I} LUFS, peak ${P} dBFS; effects-only mix must sit at or under -16 LUFS with peaks at or under -1 dBFS`);
-else { const t = +flag("--lufs", "-14"); add("loudness", Math.abs(I - t) <= 1, `${I} LUFS, target ${t} +/- 1`); }
+if (opts.mode === "silent") add("loudness", !(I > -60), `${I} LUFS, silent mix expected`);
+else if (opts.mode === "effects-only") add("loudness", I <= -16 && !(P > -1), `${I} LUFS, peak ${P} dBFS; effects-only mix must sit at or under -16 LUFS with peaks at or under -1 dBFS`);
+else { const t = opts.lufs; add("loudness", Math.abs(I - t) <= 1, `${I} LUFS, target ${t} +/- 1 (${opts.sources.lufs})`); }
 
 const poster = flag("--poster");
 if (poster) {
@@ -124,5 +140,5 @@ for (const t of hits) { const e = events.at(-1); if (e && t - e[1] <= 2 / FPS + 
 add("transitions", !events.length, events.length ? `double exposure at ${events.map(([a, b]) => `${a.toFixed(2)}-${b.toFixed(2)}s`).join(", ")}; dip through the background instead` : "no double exposures");
 
 const fails = results.filter((r) => r.verdict === "FAIL").length;
-console.log(JSON.stringify({ file: v, verdict: fails ? "FAIL" : "PASS", results }, null, 2));
+console.log(JSON.stringify({ file: v, verdict: fails ? "FAIL" : "PASS", options: { ratio: opts.ratio, duration: opts.duration, mode: opts.mode, lufs: opts.lufs, sources: opts.sources, notes: opts.notes }, results }, null, 2));
 process.exit(fails ? 1 : 0);

@@ -4,7 +4,7 @@
  * Kie.ai's Market API is one generic job endpoint: `model` picks the model and
  * `input` is whatever THAT model documents. Each model's parameters differ
  * (https://docs.kie.ai/market/quickstart says so explicitly), so `input` is a
- * pass-through object rather than a per-model schema invented here — a schema
+ * pass-through object rather than a per-model schema invented here, a schema
  * we made up would reject valid calls the day Kie adds a model or a field.
  */
 import { z } from "zod";
@@ -16,6 +16,7 @@ import { ASSET_TYPES, formatVerdict, validateBrief } from "./brief.js";
 import type { KieClient, PollUpdate } from "./client.js";
 import { appendLedger, formatLedger, readLedger } from "./ledger.js";
 import { RESULT_RETENTION_NOTE, summarizeTask, type TaskRecord } from "./protocol.js";
+import { inspectUgcPacket, submitUgcPacket } from "../skills/metrix-ad-creative/scripts/ugc-preflight.mjs";
 import {
   createOutputShape,
   creditsOutputShape,
@@ -126,7 +127,7 @@ const modelArg = z
 const inputArg = z
   .record(z.unknown())
   .describe(
-    "Model-specific input object, passed through to Kie.ai unchanged. The accepted fields differ per model — check that model's page on docs.kie.ai.",
+    "Model-specific input object, passed through to Kie.ai unchanged. The accepted fields differ per model, check that model's page on docs.kie.ai.",
   );
 
 export function registerKieTools(server: McpServer, deps: ToolDeps): void {
@@ -141,7 +142,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
    */
   const record = async (
     event: "created" | "settled",
-    fields: { taskId: string; model: string; state?: string; resultUrls?: string[]; param?: unknown },
+    fields: { taskId: string; model: string; state?: string; resultUrls?: string[]; param?: unknown; credits?: number },
   ) => {
     const failure = await appendLedger(ledgerPath, {
       ts: new Date().toISOString(),
@@ -190,6 +191,40 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
           warnings: verdict.warnings,
         });
       }),
+  );
+
+  server.registerTool(
+    "kie_validate_ugc_preproduction",
+    {
+      title: "Check UGC preproduction dependencies without spending",
+      description: "Validate a local version-1 UGC preproduction packet, exact source hashes, locked copy, presenter/voice/scene acceptance records, proof roles and current request/capability/budget bindings. Does not certify listening or performance. Optional observed duration detects returned-duration changes that require replanning.",
+      inputSchema: { packetPath: z.string().min(1), observedDurationSeconds: z.number().positive().optional() },
+      outputSchema: briefVerdictShape,
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    async ({ packetPath, observedDurationSeconds }) => guarded(async () => {
+      const { ok, errors, warnings } = await inspectUgcPacket(packetPath, { observedDurationSeconds });
+      return text([ok ? "UGC dependencies are current. Perceptual and final reviews remain separate." : `UGC preflight blocked:\n${errors.join("\n")}`], { ok, errors, warnings });
+    }),
+  );
+
+  server.registerTool(
+    "kie_create_ugc_lipsync",
+    {
+      title: "Submit approved-voice UGC lip sync after dependency checks",
+      description: "Use for dependent creator lip-sync production. Loads exact model/input from the private packet, revalidates current hashes/acceptance and creates an exclusive durable submission receipt before one provider call. A submitted or uncertain receipt blocks duplicate calls; recover the recorded task. Raw generation tools remain raw and do not provide this guard. No account-wide atomic budget or media-quality guarantee.",
+      inputSchema: { packetPath: z.string().min(1) },
+      outputSchema: { ...createOutputShape, receiptPath: z.string(), warnings: z.array(z.string()) },
+      annotations: { readOnlyHint: false, openWorldHint: true },
+    },
+    async ({ packetPath }) => guarded(async () => {
+      const result = await submitUgcPacket(packetPath, async ({ model, input }) => {
+        const taskId = await client.createTask({ model, input });
+        await record("created", { taskId, model, param: input });
+        return taskId;
+      });
+      return text([`UGC task created: ${result.taskId}. Preserve its receipt and wait on the same taskId.`, ...(result.warning ? [result.warning] : [])], { taskId: result.taskId, model: result.model, receiptPath: result.receiptPath, warnings: result.warning ? [result.warning] : [] });
+    }),
   );
 
   server.registerTool(
@@ -281,10 +316,11 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
             model: settled.model ?? "unknown",
             state: settled.state,
             resultUrls: [...settled.resultUrls, ...settled.frameUrls],
+            credits: settled.creditsConsumed ?? undefined,
           });
         }
         const prefix = timedOut
-          ? `Still running after ${polls} polls — the timeout passed, not the task. Wait again with the same taskId.`
+          ? `Still running after ${polls} polls, the timeout passed, not the task. Wait again with the same taskId.`
           : `Settled after ${polls} polls.`;
         return taskResult(settled, { task: settled, timedOut, polls }, prefix);
       }),
@@ -319,6 +355,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
             model,
             state: settled.state,
             resultUrls: [...settled.resultUrls, ...settled.frameUrls],
+            credits: settled.creditsConsumed ?? undefined,
           });
         }
         const prefix = timedOut

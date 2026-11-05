@@ -55,6 +55,12 @@ describe("skill-bundled kie.mjs copies", () => {
     }
   });
 
+  it("ships byte-identical portable UGC guards beside every client", () => {
+    const guards = skillClients().map(c => readFileSync(path.join(path.dirname(c.file), "ugc-preflight.mjs"), "utf8"));
+    expect(guards.length).toBe(3);
+    for (const guard of guards) expect(guard).toBe(guards[0]);
+  });
+
   it("state no rate-limit figure Kie does not publish", () => {
     // Kie documents that 429 means the limit was exceeded and publishes no
     // number. An error hint that invents one sends the reader to pace a batch

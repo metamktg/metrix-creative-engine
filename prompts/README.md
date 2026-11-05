@@ -12,9 +12,9 @@ carry video instructions it will never use.
 
 **Evergreen by reference.** None of the prompts name a model id or parameter.
 They point to the dated references in `skills/metrix-ad-creative/references/`.
-When Kie changes a model, you update one routing table, not eight prompts.
+When Kie changes a model, you update one routing table, not every prompt.
 
-**Restrictive only where it matters.** Nine rules, each with its reason, protect
+**Restrictive only where it matters.** Ten rules, each with its reason, protect
 test validity, product truth and spend. Everything else is a default the model
 may override with a stated reason, or craft left to its judgment.
 
@@ -61,7 +61,10 @@ The complete production standard and creative playbook remain available as
 stage-specific reading. Neither full manual is appended to render prompts.
 
 Relative `references/...` paths in the prompts resolve to
-`skills/metrix-ad-creative/references/`. The brief's `asset_type` routes to a
+`skills/metrix-ad-creative/references/`, which only a checkout contains. A client
+connected to the MCP server alone cannot read them: it can read the `kie://`
+resources, and `model-routing.md`, `placement-specs.md` and `prompt-construction.md`
+are not among them. The brief's `asset_type` routes to a
 format module through the table in `00-core.md`; an unmapped type stops rather
 than falling back.
 

@@ -11,13 +11,14 @@ This is a production orchestration skill. It uses existing provider tools or the
 
 ## Load only what the work needs
 
-- Read [repository alignment](references/repository-alignment.md) when connecting a Metrix brief or using Kie. It identifies the actual engine contracts, verified revision and unresolved documentation differences.
+- When connecting a Metrix brief or using Kie, read the engine's own files rather than a summary of them: `prompts/00-core.md` and `prompts/formats/ugc.md` hold the contracts (descriptive names by default, MST names only inside a live matrix, the brief's hook and CTA verbatim, the same approved subject input across comparisons, an inspectable `render_spec.json` before spend). The recovery ledger records task status and settled credits; it does not enforce a budget. Adding this skill folder does not change MCP prompt assembly, because `src/prompts.ts` imports selected prompt files, not arbitrary skill content. The generating clients are `kie-generate`, `kie-tasks` and `metrix-ad-creative`, which carry the shared `ugc-preflight.mjs`; this skill ships no provider client of its own.
 - Read [production direction](references/production-prompt.md) and [finishing standard](references/production-standard.md) when planning or editing footage. Send models only shot-specific instructions, relevant references and supported parameters, not this entire skill.
-- Read the bundled [creative direction](references/creative-direction.md) before planning or spending. At planning/review, read only the current stage's details in the bundled [UGC playbook](references/ugc-creative-playbook.md), including its negative-prompt sheet and voice, shot and editor blocks. Reuse relevant instructions already in context; never send the whole playbook to a provider. The four references below are its checkable companions and defer to it where they overlap.
+- Read the bundled [creative direction](references/creative-direction.md) before planning or spending. At planning/review, read only the current stage's details in the bundled [UGC playbook](references/ugc-creative-playbook.md), including its negative-prompt sheet and voice, shot and editor blocks. Reuse relevant instructions already in context; never send the whole playbook to a provider. The references below are its checkable companions and defer to it where they overlap.
 - These bundled copies work without the repository or MCP. When their `docs/UGC_CREATIVE_PLAYBOOK.md` or `kie://ugc-creative-playbook` pointer is unavailable, use the bundled playbook; resolve its production/review-standard references through this skill's existing [finishing standard](references/production-standard.md) and [review gates](references/review-gates.md). Keep completed client profiles and receipts in the repository's gitignored `out/` or `renders/`, or an external private run directory. Reusable instructions and committed examples stay anonymous.
-- Read [casting](references/casting.md) before generating a presenter: the persona brief from the ICP, the product-to-persona match, the identity-still spec a lip-sync pass can use, voice as part of the persona, and the rule that reuse means B-roll and graphics, never the actor.
+- Read [casting](references/casting.md) before generating or replacing a presenter: the speaker's relationship to the message, the portable performer card, the identity and motion inputs a lip-sync pass can use, the voice-and-scene audition, performance proof, and what a replacement keeps (suitable B-roll, graphics, rights) and what it resets (face, lips, voice acceptance). Assigned cast is reused when suitable.
 - Read [script and delivery](references/script-and-delivery.md) before writing or voicing a talking-head line. It holds the spoken register, length as a budget, the per-line delivery map (intent, emotion, emphasis, pause, gaze, gesture) and the `scripts/check_script.py` gate that runs before any voice spend.
-- Read [hooks](references/hooks.md) when the brief tests openings or the ad gets impressions without watch time: three-layer hooks, twelve patterns mapped to `HK_` codes, the one-variable hook test and the hook log.
+- Read [preproduction director](references/preproduction-director.md) before new creator performance, changed copy or presenter replacement. It connects the existing script, casting, provider and review records to the versioned offline preflight and guarded lip-sync submission; it does not add a second timeline or a copywriting owner.
+- Read [hooks](references/hooks.md) when the brief tests openings or the ad gets impressions without watch time: three-layer hooks, twelve patterns with their nearest `HK_` code for reference, the one-variable hook test and the hook log.
 - Read [lip-sync routing](references/lip-sync-routing.md) before a talking-head render: the three routes by input type, dated observations of what worked and what was down, the price-check rule, the outage protocol and input QA.
 - Read [mandatory review gates](references/review-gates.md) before preparing any finished UGC/video for client presentation. It defines the five reviews, anonymity, evidence bindings and release check.
 - Read [production records and budget checks](references/production-records.md) before paid work or resuming a run. Use its sidecar records alongside the engine's existing artifacts.
@@ -41,6 +42,8 @@ For each gap, state the deliverable/shot it serves, action, framing, continuity 
 
 Produce the existing engine's `render_spec.json` where applicable. Keep additional UGC tracking in `ugc-production.json`; its fields are this skill's sidecar convention, not new engine API parameters.
 
+Keep one approved `script.json` and its complete spoken progression. Link selected hook treatment, actor/voice/scene fit, thought-level intention/emotion/behavior and truthful proof requirements from the preproduction packet. Existing copy owners handle authorized rewriting. Preserve user-locked wording and separate estimates from measured read timing.
+
 ## 3. Authorize an affordable path to a finished edit
 
 Record a finite run ceiling and the approved deliverables, provider/account, comparison locks, review gates and finishing allowance. Carry forward existing session authorization. If a ceiling or a material scope choice is missing, prepare the concrete plan and quote before asking once. Available account balance is not authorization to spend it.
@@ -58,6 +61,8 @@ Proceed autonomously within the approved scope, ceiling and review gates. Ask ag
 Reuse an approved reference frame rather than generating another still. If composition or identity is uncertain, approve a still before animation. If motion, pacing or lip sync is uncertain, use one short representative motion proof before dependent expensive work. A still is not evidence that motion works; do not require an unnecessary paid proof when accepted material already answers the question.
 
 Approve the complete vocal performance through human listening before lip sync. Preserve the exact approved voice file and dry source; do not substitute an old audition or change its rate to force pacing. Clearly label temporary performances, excerpts and provisional mixes. Reuse a passing proof in the final edit when it fits.
+
+Validate the current packet with `kie_validate_ugc_preproduction` or the existing client `ugc-check` command, then use `kie_create_ugc_lipsync` or client `ugc-start` for guarded approved-audio submission. Bind the exact request and file hashes, required current acceptance, route capabilities and finite budget evidence. Raw `kie_create_task`/`start` are general primitives, not equivalent guarded submissions. Native generated speech requires a separate qualified route; it cannot borrow a standalone voice pass.
 
 For comparative work, reuse the approved subject file and the same approved footage wherever the test holds them constant. Identical words in prompts do not lock pixels. Inspect the actual outputs together before expanding.
 
@@ -79,7 +84,7 @@ Use the finishing standard's explicit checks for coherent narration and phrase l
 
 Assign an acoustic profile to each visible speaking setting. Carry the active profile through offscreen narration, screens and CTA; change it only when the creator is visibly established speaking in another setting. Preserve word tails, compatible level and room decay. A crop or B-roll change is not a new recording event.
 
-Apply the restraint principle from `find-animation-opportunities`: an effect needs a specific viewer benefit and a cost-aware way to achieve it. Prefer existing edit capabilities before paid motion generation. No mandatory effect quota, artificial errors or trend decoration. Its interface frequency thresholds and millisecond budgets do not govern ad footage. For an actual application UI audit, use that skill separately and report opportunities without changing source code.
+Apply restraint: an effect needs a specific viewer benefit and a cost-aware way to achieve it. Prefer existing edit capabilities before paid motion generation. No mandatory effect quota, artificial errors or trend decoration. Interface-animation frequency thresholds and millisecond budgets do not govern ad footage.
 
 For selected effects, specify timecode, purpose, properties/transition, duration in frames or seconds, source and cost. Reject effects that obscure evidence, reduce caption readability, break recording continuity or add spend without a brief-specific benefit. Do not claim an effect is viral or improves conversion without evidence. Keep trend references and commercial-use rights specific to the intended platform.
 
@@ -103,9 +108,11 @@ Assemble a rough cut, reassess it as a skeptical viewer, then refine identified 
 
 Check brief alignment, exact in-frame hook/CTA text, required placements, product fidelity and comparison validity. Inspect every cut, visible mouth span, silent span and CTA tail. Human review includes raw voice and final mix listening, full normal-speed playback, muted phone-size viewing and placement context. General praise and technical checks cannot fabricate component acceptance. If a required human check is pending, deliver a clearly marked review cut and complete independent work; do not claim final acceptance.
 
-Deliver the approved master(s), editable recipe/timeline and recoverable stems, an asset map, validation report, and cost reconciliation. The execution table is:
+Deliver the approved master(s), editable recipe/timeline and recoverable stems, an asset map, validation report, and cost reconciliation.
 
 Before authorized removal of superseded drafts, verify a recovery manifest/archive, critical-source hashes, editable relinking and sufficient workspace capacity. Preserve accepted originals, rights, stems, job/cost ledgers and reviews. Record incomplete or inaccessible recovery material; do not turn provider-job recovery into a claim of a complete production archive.
+
+The execution table is:
 
 `Timecode | Viewer purpose | Visual/action/framing | Source hash/ranges | Output ranges/speed | On-camera/acoustic profile | Transition/GFX | Music/ambience/SFX cue and rights | Acceptance evidence`
 

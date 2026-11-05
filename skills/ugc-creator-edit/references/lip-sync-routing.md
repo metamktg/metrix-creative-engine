@@ -2,15 +2,20 @@
 
 Three routes make a generated person speak. They differ in cost, in what they
 need as input, and in what fails. Pick by input type and by what the brief
-locks, state the choice in `render_spec.json` with the live price, and keep a
-fallback written down before the first paid call. On 2026-11-02 every Kie
-image-plus-audio avatar model was down for a working day and eight attempts
-across three models failed before a different route was taken; on 2026-11-05 a
-base-clip model's price had doubled since the quote. Both are routing facts,
-not surprises, once they are in this file.
+locks, state the choice in `render_spec.json` with a current cost bound, and keep
+a compatible fallback before the first paid call. The dated observations below
+are historical run evidence about attempted routes, not an exhaustive provider
+availability test, current quote or guaranteed outcome.
 
 Model facts below carry the date they were observed. Inspect the live model page
 and the current charge before every dependent submission (`provider-operations.md`).
+
+The implemented [preproduction guard](preproduction-director.md) accepts Kie
+approved-full-voice lip sync only: offline `ugc-check` /
+`kie_validate_ugc_preproduction`, then `ugc-start` / `kie_create_ugc_lipsync`.
+It binds the actual accepted input, voice/source ranges, current capability
+evidence and exact request. Native audio requires a separately qualified
+contract and cannot bypass a full-voice-before-lip-sync requirement.
 
 ## 1. The three routes
 
@@ -23,22 +28,23 @@ and the current charge before every dependent submission (`provider-operations.m
 Face beats only get lip sync. Lines carried by B-roll or product capture use the
 same accepted voice without a sync pass, at a fraction of the cost.
 
-## 2. Verified routes on Kie, with dates
+## 2. Historical observations on Kie, to reverify
 
 | Role | Model | Observed | Notes |
 | --- | --- | --- | --- |
 | A. one-take avatar | `kling/ai-avatar-standard` | quoted 10.1 credits per second, 720p native (2026-11-05) | image_url + audio_url + performance prompt; the route planned for a later run |
-| A. one-take avatar | `kling/ai-avatar-pro`, `omnihuman-1-5`, `infinitalk/from-audio` | all failed with code 500 timeouts for a full day on 2026-11-02, including the provider's own example inputs; uncharged | parameters still marked unverified in `MODEL_CATALOG.md`; fetch the model page before first use |
+| A. one-take avatar | `kling/ai-avatar-pro`, `infinitalk/from-audio`, and per one record `omnihuman-1-5` | failed with code 500 timeouts for a full day on 2026-11-02, including the provider's own example inputs; uncharged. The catalog's record of the same day names `kling/ai-avatar-standard` instead of `omnihuman-1-5`, so treat every image-plus-audio avatar route as unreliable for that day | parameters still marked unverified in `docs/MODEL_CATALOG.md`; fetch the model page before first use |
 | B. base clip | `kling/v2-1-standard` image-to-video, `duration` the string `"10"`, `cfg_scale` 0.5, negative prompt | 50 credits per 10 s clip on 2026-11-02; **101 on 2026-11-05** | the price change broke a budget quoted three days earlier; read the live charge before the dependent sync pass |
 | B. sync pass | `volcengine/video-to-video-lip-sync`, mode `lite` | 8 credits per second, output 25 fps, trimmed or looped to the audio (2026-11-02 and 2026-11-05) | "server is busy" (500) seen twice; a retry succeeded once and was unaffordable once |
 | voice | `elevenlabs/text-to-speech-multilingual-v2` | 12 credits per 1,000 characters (2026-11-05); upstream timeouts all afternoon on 2026-11-02 | per-word timestamps available for caption timing |
 | voice | `elevenlabs/text-to-dialogue-v3` | same outage on 2026-11-02 | multi-speaker; bracket tags for delivery |
-| voice | `google/gemini-3-8-flash-tts` | worked throughout 2026-11-02 at under one credit per take | per-turn `style`; the route that produced an accepted voice while the others were down |
+| voice | `google/gemini-3-8-flash-tts` | worked throughout 2026-11-02 at under one credit per take | per-turn `style`; the route that produced an accepted voice while the others were down. The catalog's enum lists `google/gemini-3-1-flash-tts`, so confirm the id on the model page |
 | identity still | `nano-banana-2` | 12 credits per image (2026-11-05) | 9:16, 2K, `aspect_ratio` set explicitly |
 | upscale | `topaz/video-upscale` | 8 credits per second (2026-11-05) | only on documented need |
 
-Result URLs expire in about 24 hours and uploads in 3 days. An outage that
-outlasts them means re-uploading the same accepted files, never regenerating them.
+Historical run notes recorded result/upload expiry. Actual lifetime and
+registration readiness are selected-operation facts to check again. Re-upload
+the same accepted source when a transport expires; do not regenerate content.
 
 ## 3. Order of operations
 
@@ -48,12 +54,15 @@ outlasts them means re-uploading the same accepted files, never regenerating the
 3. Route A: one representative motion proof (the first sentence) before the full
    take. Route B: the base clip's mouth and gaze inspected before the sync pass.
 4. Full take.
-5. Segments joined on natural pauses, the same face file across every segment,
-   seams covered by a two-second cutaway rather than a visible cut.
+5. Join segments on natural thought/phrase boundaries, preserve the accepted
+   identity inputs, and use a purposeful cutaway only where it helps continuity.
+   Its duration follows the action and reading load, not a fixed two-second rule.
 
-The audio-only rule: when the voice is rejected and the picture is
-accepted, place the new phrases on the old onsets and keep the video stream
-byte-identical. Do not regenerate the picture to fix the sound.
+Preserve accepted picture during an audio repair when its acceptance actually
+survives the change. Non-speaking B-roll can remain byte-identical. Changed
+phonemes/timing on a visible mouth require affected sync to be checked and, when
+necessary, repaired; matching old onsets does not establish correct lips. Do not
+regenerate unrelated sources or whole takes to fix one affected span.
 
 ## 4. Writing for the sync
 
@@ -61,29 +70,35 @@ From `script-and-delivery.md`, the lines that specifically degrade lip sync:
 fast delivery (cut words, do not speed), dense consonant clusters, long
 unbroken sentences, numbers written as symbols, whispers and shouts. Short
 sentences with real pauses give the sync something to land on. Keep each
-talking-face beat to about 8 to 10 s.
+talking-face beat within actual route limits and its useful thought duration.
+The script check's ten-second warning prompts review, not a mandatory cut quota.
 
 Audio for a sync pass: the accepted dry voice only. No music, no room treatment,
 no effects; those go on after the sync, in the mix, where they can be listened to.
 
 ## 5. Prompt syntax per native-audio model (route C)
 
+These are candidate historical prompt patterns, not current schema guarantees
+or qualified native-audio adapters. Verify the selected operation's exact mode,
+supported references, speech controls and audio behavior before use. This table
+does not authorize a native route for an approved-voice assignment.
+
 | Model | Dialogue syntax | Observed constraints |
 | --- | --- | --- |
-| Veo 3.x text-to-video | `She says: Okay, wait...` colon form, **no quotation marks** (quotes burn subtitles); add "no subtitles, no text, no captions" | audio reliable in text-to-video, generally absent in image-to-video; keep each line under about 20 words |
+| Veo 3.x text-to-video | `She says: Okay, wait...` colon form, **no quotation marks** (quotes burn subtitles); add "no subtitles, no text, no captions" | audio reliable in text-to-video; with an image input, confirm the audio is actually produced before relying on it; keep each line under about 20 words |
 | Sora 2 | labelled `Dialogue:` block, quotes allowed | 4 to 20 s steps |
 | Seedance 2.x | prose dialogue, `@Image1` references, audio generated in one pass | rejects real faces as input; "fast" is the biggest documented quality degrader |
 | Kling 3.0 Omni | state who speaks and when; tone as one bold modifier ("warm voice") | dual-image person plus product; real faces allowed; aspect inherited from the input image |
 | Hailuo, Seedance 1.0 | no speech; dub separately | route B or A instead |
 
-Not every model on that table is on Kie; `format-routing.md` lists the eligible
+Not every model on that table is on Kie; `skills/metrix-ad-creative/references/format-routing.md` lists the eligible
 set and the catalogue carries the IDs.
 
-Provider roles are engine policy, not a model ranking. In this engine Kie is the
-default generation route. Higgsfield is not used for lip sync or long generations
-unless a current instruction authorises it: one run's quote for a 9 s sync pass was
-160 credits against a 10-credit ceiling. Any switch records a concrete capability,
-quality or cost reason and preserves matrix locks.
+Provider roles are engine policy, not a model ranking. Kie is the default
+generation route; retain an already authorized provider/model role. A switch
+needs a current concrete capability/quality/cost reason and authorization where
+material. One historical run's quote or ceiling is not a global provider ban or
+budget. Preserve comparison locks and obtain current operation facts.
 
 ## 6. The outage protocol
 

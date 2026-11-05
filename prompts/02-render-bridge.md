@@ -6,7 +6,17 @@ the translation happened in someone's head and nobody could see it.
 
 Close that gap with an inspectable object: the **render spec**. Build it before
 any credits are spent. It is the contract between the brief, the platform and
-the model, and it is what the user approves.
+the model. Existing authorization carries forward; approval is needed only for
+a missing material decision or scope/budget change, not every repeated call.
+
+For new creator performance, link the existing canonical `script.json` and
+versioned preproduction packet described in
+`skills/ugc-creator-edit/references/preproduction-director.md`. The packet binds
+approved copy, selected hook treatment, cast/voice/scene, thought-level direction,
+proof needs, actual complete-voice acceptance and current provider capability to
+the exact request. It consumes upstream strategy/copy; it does not replace them.
+The assembly storyboard remains the sole composition timeline. Sidecar fields
+are never copied into unsupported provider input parameters.
 
 ## Inputs
 
@@ -25,7 +35,7 @@ inside a running Matrix Sprint Test does it become a base with a slot per cell.
 ```json
 {
   "brief_id": "",
-  "mode": "matrix | general",
+  "mode": "standard | matrix",
   "matrix_row": "C1",
   "isolated_variable": "HK_",
 
@@ -127,9 +137,10 @@ nothing.
 - Stories and Reels: the subject sits in the middle band, clear of the UI.
   Prompt for a centred subject with headroom, because models cannot be told to
   respect safe zones.
-- One asset for several placements: generate at the tallest ratio with a
-  centred subject and crop down, or generate per ratio. Never mix ratios within
-  a matrix row.
+- One asset for several placements: generate per ratio, or generate once with a
+  centred subject and headroom and compose each placement deliberately,
+  repositioning proof and type for that canvas. Never merely crop a finished ad.
+  Never mix ratios within a matrix row.
 
 **3. The attention window.** Translate the platform's attention pattern into
 visual instructions:
@@ -142,16 +153,18 @@ visual instructions:
 
 ## Aligning with the user's expectations
 
-**Before generating,** restate the spec in two or three plain lines: what they
-will get, at what ratio, from which model, what is locked, what varies, the
-likely limits, and the credit estimate. Wait for a yes before any batch that
-spends materially: a matrix row, a carousel set, any video.
+**Before generating,** make the current plan reviewable: deliverable, ratio,
+model/role, locks, authorized variation, limits and inspected cost bound. Carry
+forward existing session authorization. Resolve a missing material scope or
+budget decision once with the concrete plan.
 
-**That yes is the only interruption.** Once it is given the run goes through to
-completion without stopping again: generate, validate against the confidence
-gate, revise if it must, polish, name, report. See `04-self-validation.md`.
-Stopping half way leaves a part-rendered set that still cost credits, and in a
-matrix it leaves something that is not a test at all.
+Continue autonomously within the approved plan: generate, validate, repair,
+polish, name and report. Required human quality decisions and current dependency
+checks remain real stage preconditions. For approved-audio creator lip sync use
+the guarded `kie_create_ugc_lipsync` / client `ugc-start` path after offline
+validation; raw generation success cannot replace it. Continue independent work
+while a required review is pending. See `04-self-validation.md` and
+`06-production-review.md`.
 
 **After generating,** judge each output against the spec, not against memory
 of the prompt. Record PASS or FAIL per `qa_checks` item, with the reason.
@@ -177,5 +190,5 @@ of the prompt. Record PASS or FAIL per `qa_checks` item, with the reason.
 - [ ] One model for the whole batch, and its id is written in this spec
 - [ ] Avoid list mapped to the right method for this model
 - [ ] Logo approach and clear space stated
-- [ ] MST name ready for every cell
+- [ ] A name ready for every output: descriptive by default, an MST name only inside a live matrix
 - [ ] Credits checked and estimate stated

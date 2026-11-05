@@ -57,7 +57,7 @@ cells changes the weighting and is itself a variable.
 ## Two things that go wrong
 
 **Brand adjectives do not render.** "Premium", "trustworthy", "aspirational",
-"on-brand" produce nothing repeatable — the model has no shared referent for
+"on-brand" produce nothing repeatable, the model has no shared referent for
 them. Translate to something a camera could capture: "premium" becomes the
 lighting, the surface, the styling. If the brief only gives you the adjective,
 translate it once, write the translation down in the report, and reuse that
@@ -66,7 +66,7 @@ running.
 
 **Negations are unreliable.** "No text, no watermark, no people" often produces
 text, watermarks and people, because many models have no true negation. Prefer
-the `negative_prompt` field where the model has one — check
+the `negative_prompt` field where the model has one, check
 `model-routing.md`. Where it does not, state the positive: instead of "no
 background clutter", write "plain seamless backdrop".
 
@@ -106,5 +106,5 @@ Every word outside the slot is identical. That is what makes the row a test.
 
 Where the model exposes a seed, fix it across the row: it removes sampling noise
 as a confound. Where it does not, generate the row in one sitting and accept
-that sampling variance exists — do not re-roll individual cells to taste, which
+that sampling variance exists, do not re-roll individual cells to taste, which
 would select on the outcome you are supposed to be measuring.

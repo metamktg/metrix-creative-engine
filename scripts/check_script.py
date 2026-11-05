@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 from difflib import SequenceMatcher
@@ -47,7 +48,11 @@ EXPERIENCE_CLAIMS = re.compile(
     r"|\bmy\s+\w+\s+(has|have)\s+(completely\s+)?(changed|cleared|improved|transformed)\b"
     r"|\b(three|two|four|five|six|a few|several)\s+(weeks|months|years|days)\s+(in|later|on)\b"
     r"|\bsince\s+i\s+started\b"
-    r"|\bchanged\s+my\s+(life|skin|sleep|routine)\b",
+    r"|\bchanged\s+my\s+(life|skin|sleep|routine)\b"
+    # The example wording of the mistake, comparison and confession hook patterns (hooks.md).
+    r"|\bi\s+was\s+doing\s+(this|it|that)\s+(completely\s+|totally\s+|all\s+)?wrong\b"
+    r"|\bi\s+tried\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten|a\s+few|several|everything|all)\b"
+    r"|\bi\s+(didn'?t|did\s+not)\s+(think|believe|expect)\s+(this|it|that)\s+(would|could|was\s+going\s+to)\s+work\b",
     re.IGNORECASE,
 )
 MARKETING_WORDS = re.compile(
@@ -77,11 +82,40 @@ def norm(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def exact_text(text: str) -> str:
+    """Join delivery-map lines without discarding punctuation, case or words.
+
+    Whitespace is the only normalization: line boundaries are production
+    structure, while punctuation and spelling are part of approved copy.
+    Pronunciation aliases are applied explicitly to the source before this.
+    """
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def finite_number(value) -> bool:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
 def apply_map(text: str, mapping) -> str:
     """Turn a written form into its spoken form, longest key first."""
     for written, spoken in sorted((mapping or {}).items(), key=lambda kv: -len(str(kv[0]))):
         text = text.replace(str(written), str(spoken))
     return text
+
+
+def copy_forms(text: str, mapping) -> set[str]:
+    """The exact forms an approved source may take in the script.
+
+    Canonical copy always passes an exact-copy check. The declared pronunciation alias applied to it is
+    the other accepted form: the preproduction guard compares canonical copy and keeps the alias in the
+    synthesis settings, so a script the guard accepts must not fail here.
+    """
+    return {exact_text(text), exact_text(apply_map(text, mapping))}
 
 
 def load(path: str | None):
@@ -120,7 +154,8 @@ class Report:
     def finish(self, extra=None) -> dict:
         fails = sum(1 for r in self.results if r["verdict"] == "FAIL")
         warns = sum(1 for r in self.results if r["verdict"] == "WARN")
-        out = {"verdict": "FAIL" if fails else "PASS", "fails": fails, "warns": warns, "results": self.results}
+        out = {"verdict": "FAIL" if fails else "PASS", "fails": fails, "warns": warns, "results": self.results,
+               "scope": "text_and_structure_only", "listening_acceptance": "not_assessed"}
         if extra:
             out.update(extra)
         return out
@@ -144,13 +179,29 @@ def kit_forbidden(kit) -> list[str]:
 
 def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | None) -> dict:
     rep = Report()
+    if not isinstance(script, dict):
+        rep.add("script", "FAIL", "script.json must be an object")
+        return rep.finish()
+    if isinstance(script.get("schema_version", 1), bool) or script.get("schema_version", 1) != 1:
+        rep.add("schema_version", "FAIL", "unsupported script schema_version; expected 1")
     lines = script.get("lines")
     if not isinstance(lines, list) or not lines:
         rep.add("lines", "FAIL", "script.json has no lines")
         return rep.finish()
+    if any(not isinstance(ln, dict) for ln in lines):
+        rep.add("lines", "FAIL", "every delivery-map line must be an object")
+        return rep.finish()
 
-    pron = script.get("pronunciation_map") or {}
+    pron = script.get("pronunciation_map")
+    if pron is None:
+        pron = {}
+    if not isinstance(pron, dict) or any(not isinstance(k, str) or not k.strip() or not isinstance(v, str) or not v.strip() for k, v in pron.items()):
+        rep.add("pronunciation_map", "FAIL", "pronunciation_map must map nonempty written strings to nonempty spoken strings")
+        pron = {}
     presenter = script.get("presenter") or {}
+    if not isinstance(presenter, dict):
+        rep.add("presenter", "FAIL", "presenter must be an object")
+        presenter = {}
     identity = presenter.get("identity")
     if identity not in IDENTITIES:
         rep.add("presenter.identity", "FAIL", f"identity must be one of {', '.join(IDENTITIES)}; got {identity!r}")
@@ -158,9 +209,12 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
     if not str(presenter.get("register", "")).strip():
         rep.add("presenter.register", "WARN", "no speech register for the presenter; the script will drift to brand voice")
 
-    wps = float(script.get("words_per_second") or DEFAULT_WPS)
-    if not 1.8 <= wps <= 3.0:
-        rep.add("words_per_second", "FAIL", f"{wps} is outside the 1.8 to 3.0 range a person speaks at")
+    wps = script.get("words_per_second", DEFAULT_WPS)
+    if not finite_number(wps) or wps <= 0:
+        rep.add("words_per_second", "FAIL", "words_per_second must be a finite positive planning estimate")
+        wps = DEFAULT_WPS
+    elif not 1.8 <= wps <= 3.0:
+        rep.add("words_per_second", "WARN", f"{wps} is outside the usual 1.8 to 3.0 planning range; measure the natural full read, do not force its speed")
 
     # Structure
     first, last = lines[0], lines[-1]
@@ -171,13 +225,16 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
     if not any(ln.get("role") == "reservation" for ln in lines):
         rep.add("shape.reservation", "WARN", "no reservation line; a script with no downside reads as an advert")
 
-    # Key messages: exactly two things the audience must understand
+    # Message count is editorial guidance, not a universal genre requirement.
     key_messages = script.get("key_messages")
-    all_text = norm(" ".join(str(ln.get("text", "")) for ln in lines))
+    complete_text = exact_text(" ".join(str(ln.get("text", "")) for ln in lines))
+    all_text = norm(complete_text)
     if key_messages is not None:
-        if not (isinstance(key_messages, list) and len(key_messages) == 2 and all(str(k).strip() for k in key_messages)):
-            rep.add("key_messages", "FAIL", "key_messages must be exactly two things the audience must understand")
+        if not (isinstance(key_messages, list) and key_messages and all(isinstance(k, str) and k.strip() for k in key_messages)):
+            rep.add("key_messages", "FAIL", "key_messages must be a nonempty list of nonempty strings")
         else:
+            if len(key_messages) != 2:
+                rep.add("key_messages", "WARN", "check message focus against this brief; two messages is guidance, not a required count")
             for i, msg in enumerate(key_messages, 1):
                 core = norm(msg)
                 size = SequenceMatcher(None, core, all_text, autojunk=False).find_longest_match(0, len(core), 0, len(all_text)).size
@@ -187,14 +244,31 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
 
     # Brief locks
     locked_opening = None
-    if brief:
-        copy = brief.get("copy_architecture") or {}
+    whole_script_matches = False
+    if brief is not None:
+        if not isinstance(brief, dict):
+            rep.add("brief", "FAIL", "brief must be an object")
+            brief = {}
+        copy = brief.get("copy_architecture")
+        if copy is None:
+            copy = {}
+        if not isinstance(copy, dict):
+            rep.add("brief.copy_architecture", "FAIL", "copy_architecture must be an object")
+            copy = {}
         locked_opening = copy.get("spoken_opening_locked")
+        if locked_opening is not None and not isinstance(locked_opening, str):
+            rep.add("brief.spoken_opening_locked", "FAIL", "spoken_opening_locked must contain exact text")
+            locked_opening = None
         spoken = copy.get("spoken_script")
-        if spoken:
-            ratio = SequenceMatcher(None, norm(apply_map(spoken, pron)), all_text, autojunk=False).ratio()
-            rep.add("brief.spoken_script", "PASS" if ratio >= 0.9 else "WARN",
-                    f"script text matches the brief's spoken_script at {ratio:.2f}")
+        if spoken is not None:
+            if not isinstance(spoken, str) or not spoken.strip():
+                rep.add("brief.spoken_script", "FAIL", "spoken_script must contain the complete approved text")
+            else:
+                matches = complete_text in copy_forms(spoken, pron)
+                whole_script_matches = matches
+                rep.add("brief.spoken_script", "PASS" if matches else "FAIL",
+                        "complete approved speech matches after explicit pronunciation aliases and whitespace joining" if matches else
+                        "delivery-map lines differ from complete approved speech; do not use approximate similarity to clear approved copy")
 
     total_words = 0
     total_pause = 0.0
@@ -210,9 +284,9 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
         if lid in seen_ids:
             rep.add(f"{lid}.id", "FAIL", "duplicate line id")
         seen_ids.add(lid)
-        text = str(ln.get("text") or "")
-        if not text.strip():
-            rep.add(f"{lid}.text", "FAIL", "empty line")
+        text = ln.get("text")
+        if not isinstance(text, str) or not text.strip():
+            rep.add(f"{lid}.text", "FAIL", "text must be a nonempty spoken string")
             continue
         n = words(text)
         total_words += n
@@ -225,7 +299,7 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
         if emotion not in EMOTIONS:
             rep.add(f"{lid}.emotion", "FAIL", f"emotion {emotion!r} is not in the vocabulary")
         intensity = ln.get("intensity", 1)
-        if intensity not in (1, 2, 3):
+        if isinstance(intensity, bool) or intensity not in (1, 2, 3):
             rep.add(f"{lid}.intensity", "FAIL", f"intensity {intensity!r} must be 1, 2 or 3")
         else:
             intensities.append(intensity)
@@ -247,11 +321,13 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
                 rep.add(f"{lid}.emphasis", "FAIL", f"emphasis {emphasis!r} is not in the line")
             elif words(str(emphasis)) > 3:
                 rep.add(f"{lid}.emphasis", "WARN", "emphasis longer than three words stops being emphasis")
-        pause = ln.get("pause_after", 0) or 0
-        if not isinstance(pause, (int, float)) or pause < 0 or pause > 3:
-            rep.add(f"{lid}.pause_after", "FAIL", f"pause_after {pause!r} must be 0 to 3 seconds")
+        pause = ln.get("pause_after", 0)
+        if not finite_number(pause) or pause < 0:
+            rep.add(f"{lid}.pause_after", "FAIL", f"pause_after {pause!r} must be a finite nonnegative number of seconds")
         else:
             total_pause += float(pause)
+            if pause > 3:
+                rep.add(f"{lid}.pause_after", "WARN", "long planned pause; verify its purpose and actual read timing")
 
         # The words themselves
         if DIRECTION_MARKERS.search(text):
@@ -263,13 +339,13 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
         if STAGE_NOISE.search(text):
             rep.add(f"{lid}.stage_noise", "WARN", "filler or stage-noise word; a manufactured imperfection reads fake")
         if idx == 0 and GREETING_OPENERS.search(text):
-            rep.add(f"{lid}.opener", "FAIL", "greeting, introduction or meta-narration opener; start on the point")
+            rep.add(f"{lid}.opener", "WARN", "greeting, introduction or meta-narration opener; assess against the brief without changing locked words")
         if idx == 0 and STOCK_HOOKS.search(text):
-            rep.add(f"{lid}.stock_hook", "FAIL", "stock hook phrase; write the specific problem or claim")
+            rep.add(f"{lid}.stock_hook", "WARN", "stock hook phrase; assess relevance and support without changing locked words")
         if DIGITS_OR_CURRENCY.search(text):
-            rep.add(f"{lid}.numbers", "FAIL",
-                    "digits or currency symbols; write the spoken form here and map the written form in pronunciation_map")
-        if synthetic and EXPERIENCE_CLAIMS.search(text):
+            rep.add(f"{lid}.numbers", "WARN",
+                    "digits or currency symbols; preserve approved copy and declare pronunciation aliases where needed")
+        if synthetic and EXPERIENCE_CLAIMS.search(text.replace("’", "'").replace("‘", "'")):
             rep.add(f"{lid}.experience", "FAIL",
                     "first-person experience claim from a synthetic presenter; write a demonstration, not a testimony")
         m = MARKETING_WORDS.search(text)
@@ -288,28 +364,30 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
         if ln.get("locked"):
             source = ln.get("lock_source")
             if source and brief:
-                candidates = [norm(apply_map(v, pron)) for v in resolve(str(source), brief)]
+                candidates = [form for v in resolve(str(source), brief) for form in copy_forms(v, pron)]
                 if not candidates:
                     rep.add(f"{lid}.locked", "FAIL", f"lock_source {source!r} is empty or missing in the brief")
-                elif not any(norm(text) in c for c in candidates):
-                    rep.add(f"{lid}.locked", "FAIL", f"locked line is not verbatim in {source}")
+                elif exact_text(text) not in candidates:
+                    rep.add(f"{lid}.locked", "FAIL", f"locked line does not exactly equal {source}; truncation, punctuation and case changes are not cleared")
             elif source:
-                rep.add(f"{lid}.locked", "WARN", f"no --brief given, cannot verify the lock on {source}")
+                rep.add(f"{lid}.locked", "FAIL", f"no --brief given, cannot verify the lock on {source}")
             elif idx == 0 and locked_opening:
-                if norm(text) != norm(apply_map(locked_opening, pron)):
+                if exact_text(text) not in copy_forms(locked_opening, pron):
                     rep.add(f"{lid}.locked", "FAIL", f"locked opening drifted: brief says {locked_opening!r}")
             elif brief:
-                rep.add(f"{lid}.locked", "WARN", "locked line has no lock_source, so nothing was compared with the brief")
+                rep.add(f"{lid}.locked", "PASS" if whole_script_matches else "FAIL",
+                        "line is covered by the exact complete approved script" if whole_script_matches else
+                        "locked line has no lock_source and no exact complete approved script match")
 
     if locked_opening and not lines[0].get("locked"):
-        if norm(str(lines[0].get("text", ""))) != norm(apply_map(locked_opening, pron)):
+        if exact_text(str(lines[0].get("text", ""))) not in copy_forms(locked_opening, pron):
             rep.add("hook.locked", "FAIL", f"brief locks the opening to {locked_opening!r}; the hook line differs")
 
     # Register and delivery across the script
     if total_words >= 15 and not CONTRACTION.search(" ".join(str(ln.get("text", "")) for ln in lines)):
         rep.add("register.contractions", "WARN", "no contractions anywhere; it will read like a press release")
     if intensities and all(i >= 3 for i in intensities):
-        rep.add("delivery.energy", "FAIL", "every line at intensity 3; sustained high energy reads as an ad")
+        rep.add("delivery.energy", "WARN", "every line at intensity 3; verify this matches the actual brief and accepted performance")
     elif intensities and max(intensities) == 1 and len(intensities) > 2:
         rep.add("delivery.energy", "WARN", "flat throughout; fine if deadpan is intended, otherwise give one line a genuine lift")
     if len(gazes) > 3 and all(g == "lens" for g in gazes):
@@ -335,16 +413,19 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
     if mode is not None and mode not in DURATION_MODES:
         rep.add("duration_mode", "FAIL", f"duration_mode {mode!r} must be one of {', '.join(DURATION_MODES)}")
         mode = None
+    if target is not None and (not finite_number(hi) or hi <= 0 or (lo is not None and (not finite_number(lo) or lo < 0 or lo > hi))):
+        rep.add("target_duration_seconds", "FAIL", "duration target must have finite positive max and an optional nonnegative min no greater than max")
+        lo = hi = None
     detail = f"{total_words} words at {wps} wps plus {total_pause:.1f}s of pauses = about {estimate:.1f}s"
     if hi is None:
         rep.add("duration", "WARN", detail + "; no target_duration_seconds declared")
     elif mode == "exact":
         if abs(estimate - hi) > EXACT_TOLERANCE_SECONDS:
-            rep.add("duration", "FAIL", detail + f"; exact target is {hi}s within {EXACT_TOLERANCE_SECONDS}s. Adjust words or pauses, never the speed")
+            rep.add("duration", "WARN", detail + f"; estimated difference from exact target {hi}s exceeds {EXACT_TOLERANCE_SECONDS}s. Measure the full read; change only permitted copy or the authorized plan, never force the speed")
         else:
             rep.add("duration", "PASS", detail)
     elif estimate > float(hi) + 0.5:
-        rep.add("duration", "FAIL", detail + f"; ceiling is {hi}s. Cut words, never speed the speech")
+        rep.add("duration", "WARN", detail + f"; estimate exceeds ceiling {hi}s. Measure the full read and resolve timing without changing locked words or forcing speed")
     elif mode == "range" and lo is not None and estimate < float(lo) - 2.0:
         rep.add("duration", "WARN", detail + f"; range floor is {lo}s. Add a pause or a useful beat, not padding")
     else:
@@ -361,7 +442,8 @@ def check(script: dict, brief: dict | None, kit: dict | None, transcript: str | 
                 if core and core not in heard:
                     rep.add(f"transcript.{ln.get('id')}", "FAIL", f"{ln.get('role')} line not heard verbatim in the transcript")
 
-    return rep.finish({"estimate_seconds": round(estimate, 2), "words": total_words})
+    return rep.finish({"estimate_seconds": round(estimate, 2), "words": total_words,
+                       "timing_basis": "word_count_estimate", "measured_duration_seconds": None})
 
 
 def spoken_text(script: dict) -> str:

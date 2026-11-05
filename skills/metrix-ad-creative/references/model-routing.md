@@ -1,6 +1,7 @@
 # Model routing for ad creative
 
-Historical routing baseline from `docs.kie.ai`, **2026-09-14**. The following
+Routing baseline from `docs.kie.ai`, **2026-09-14**, plus production observations
+dated 2026-11-02 and 2026-11-05 where marked. The following
 tables, model IDs, limits and recommendations are not current capability or
 price verification. Inspect the selected model's live official schema and
 cost before a paid call, rather than waiting for a validation error. Full
@@ -29,10 +30,8 @@ current model; automatic cropping may remove the subject or proof.
 ### The text-and-ratio bind, and how it is resolved
 
 A Meta ad creative carries a hook and a CTA in the frame (core rule 1) AND has
-to be 4:5. Until 2026-09-16 this table sent text to `ideogram/v3-text-to-image`,
-which does not offer 4:5 (see the row above), so every text-bearing feed static
-had to break one of the two. Assets came back either at the wrong ratio or with
-garbled words, and the cause looked like model weakness rather than routing.
+to be 4:5. `ideogram/v3-text-to-image` sets type well but does not offer 4:5 (see
+the row above), so routing a text-bearing feed static to it breaks one of the two.
 
 `nano-banana-2` does both, and carries the budget a real brief needs:
 
@@ -65,7 +64,7 @@ Reposition proof and type for that canvas rather than cropping a finished ad.
 | Product-led static | `bytedance/seedream-v4-text-to-image` | Product realism; no 4:5 |
 | Carousel | `nano-banana-2` at `1:1` | One model across all cards, or they will not sit together |
 | UGC / AI-UGC still | `nano-banana-2` | Caption bars are on-image text; the identity still is also the lip-sync source, so mouth closed, no shadow on the lower face, no logos or screens |
-| AI-UGC talking head, one take | `kling/ai-avatar-standard` | Accepted still plus accepted dry voice in, one coherent take out. Quoted 10.1 credits a second on 2026-11-05. Every image-plus-audio avatar model on Kie was down for a day on 2026-11-02, so record the fallback before the first call |
+| AI-UGC talking head, one take | `kling/ai-avatar-standard` | Accepted still plus accepted dry voice in, one coherent take out. Quoted 10.1 credits a second on 2026-11-05. Image-plus-audio avatar models on Kie were down for a day on 2026-11-02 (the list is in `skills/ugc-creator-edit/references/lip-sync-routing.md`), so record the fallback before the first call |
 | AI-UGC talking head, two-step fallback | `kling/v2-1-standard` then `volcengine/video-to-video-lip-sync` (`lite`) | Silent talking base clip (eyes on camera, mouth visible) then the sync pass on the accepted voice. Worked on 2026-11-02 and 2026-11-05; the base clip price doubled between those dates (50 to 101 credits per 10 s), so read the live charge before the dependent pass |
 | Video from a still | `kling/v2-1-master-image-to-video` | Approve the frame, then animate |
 | Video, top quality | `veo-3-1` | 1080p/4K with native audio |
@@ -101,22 +100,22 @@ model exposes one.
 `aspect_ratio`: `1:1` `9:16` `16:9` `3:4` `4:3` `3:2` `2:3` `5:4` `4:5` `21:9`
 `auto`.
 
-**`nano-banana-2`** — no prefix. `resolution` `1K`/`2K`/`4K`,
+**`nano-banana-2`** · no prefix. `resolution` `1K`/`2K`/`4K`,
 `output_format` defaults to `jpg`. Use `2K` or better for anything a client
 sees at full size.
 
-**`bytedance/seedream-v4-text-to-image`** — sizing is **`image_size`**, not
+**`bytedance/seedream-v4-text-to-image`** · sizing is **`image_size`**, not
 `aspect_ratio`: `portrait_4_3`, `landscape_16_9`, `square_hd` and so on. Passing
 `aspect_ratio` here is silently ignored and you get `square_hd`. This is the
 single easiest way to render a whole matrix at the wrong ratio.
 
-**`ideogram/v3-text-to-image`** — `negative_prompt` is real here, so the brief's
+**`ideogram/v3-text-to-image`** · `negative_prompt` is real here, so the brief's
 avoid list can go in properly rather than being phrased positively.
 
-**`veo-3-1`** — `aspect_ratio` `16:9` / `9:16` / `Auto` (capital A);
+**`veo-3-1`** · `aspect_ratio` `16:9` / `9:16` / `Auto` (capital A);
 `resolution` `720p`/`1080p`/`4k`; `duration` integer `4`/`6`/`8`.
 
-**`kling/v2-1-master-image-to-video`** — takes the approved still. On the v2.1
+**`kling/v2-1-master-image-to-video`** · takes the approved still. On the v2.1
 family `duration` is the **string** `"5"` or `"10"`, not a number.
 
 ## Uploading an approved still
@@ -146,7 +145,7 @@ hundred credits;
 the same in video is thousands.
 
 Call `kie_get_credits` before the run and report the real `creditsConsumed` per
-task afterwards. A matrix that runs out halfway is not a cheap partial result —
+task afterwards. A matrix that runs out halfway is not a cheap partial result,
 it is an unusable test, because the cells that never rendered cannot be
 compared against the ones that did.
 

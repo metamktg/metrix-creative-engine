@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * audit-brand.mjs — draft a brand kit from public sources.
+ * audit-brand.mjs · draft a brand kit from public sources.
  *
  * Zero dependencies, Node only, same as kie.mjs: a skill has to run without an
  * install step on any machine.

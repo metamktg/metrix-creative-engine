@@ -122,9 +122,9 @@ that stop a broken one shipping, is **`SOP.md`** beside this file.
 
 Two files per account, in `brand-kits/<account>/`:
 
-- **`brand-kit.json`** — the structured kit. Its `brand_assets` array plugs
+- **`brand-kit.json`** · the structured kit. Its `brand_assets` array plugs
   straight into the brief contract that `kie_validate_brief` checks.
-- **`PROMPTS.md`** — the account's render prompts, carrying its scene grammar,
+- **`PROMPTS.md`** · the account's render prompts, carrying its scene grammar,
   its one non-negotiable product rule, and its copy rules.
 
 `scripts/audit-brand.mjs` does the mechanical half: fetch, fingerprint, pull the

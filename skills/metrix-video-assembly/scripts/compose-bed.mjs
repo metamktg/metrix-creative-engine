@@ -12,7 +12,7 @@
 // 1: kick and sub bass; 2: adds hats and a pluck arpeggio; 3: adds a riser into
 // the next section; 4: the resolve (CTA): big hit, chime, ring out.
 // Choose bpm and grid_start so that cuts land on beats: grid_start + k * 60/bpm.
-// Without a cue sheet it writes the MTX-VID-001 bed (100 BPM, cuts 2.8/7.0/10.6, CTA 13.0).
+// Without a cue sheet it writes the default demo bed (100 BPM, cuts 2.8/7.0/10.6, CTA 13.0).
 import fs from "node:fs";
 
 const SPEC = process.argv[3] ? JSON.parse(fs.readFileSync(process.argv[3], "utf8")) : null;

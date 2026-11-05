@@ -2,6 +2,12 @@
 
 These are agent-maintained sidecar conventions. They do not add fields to the engine's Zod schemas, Kie requests or Higgsfield parameters, and they do not automatically enforce a provider-side limit.
 
+The implemented approved-voice creator preflight has its own versioned local
+packet and guarded submission entry points. See
+[preproduction-director.md](preproduction-director.md) for the exact contract.
+Keep this production sidecar as the run/asset/budget context; do not duplicate
+canonical script lines, another composition timeline or the provider request.
+
 ## Records
 
 Keep `brand_translation.json`, `render_spec.json`, `assets/` and `validation_report.json` where the engine already expects them. Add `ugc-production.json` to the run's output directory with the following groups. Keep credentials and secret-bearing URLs out of shared reports.
@@ -14,15 +20,24 @@ Keep `brand_translation.json`, `render_spec.json`, `assets/` and `validation_rep
 | `assets` | Asset ID, file/hash, provider/task ID when generated, role, source/output ranges, usable duration, speed, rights evidence, acoustic profile, acceptance evidence and reuse destinations |
 | `shots` | Shot ID, deliverables served, purpose, gap/reuse decision, exact references, action/framing, trim handles, duration, acceptance criteria, paid repair count |
 | `reviews` | Component, exact file/hash, reviewer/evidence, status (pending, accepted, rejected), scope/limits of acceptance, defect and dependent work affected |
+| `preproduction` | Packet path/hash, canonical `script.json` binding, current offline result/limits, guarded submission receipt path and affected shot IDs; no secrets or duplicated editable speech |
 | `delivery` | Final files and recipe/stem paths, validation evidence, remaining defects/checks, unique accepted deliverables, exports, source inventory, cost reconciliation |
 
 Use null plus an explanation for unknown cost, duration or acceptance evidence. Never turn unknown into zero, success or approved.
+
+Line direction stays in `script.json`. Keep current hook-treatment rationale,
+cast/voice/scene fit, thought-led emotion and observable behavior there or in
+linked private evidence as the preflight contract defines. Measured full-read
+audio/phrases replace planning estimates only after actual media review. A
+changed script, identity, voice/settings or scene makes the affected performer
+acceptance stale; unchanged appropriate source originals remain accepted within
+their rights/reuse scope.
 
 Append job events to `ugc-jobs.jsonl` so a crashed run can recover accepted IDs without erasing earlier records. Use one record per transition, carrying a stable `request_id`, shot/deliverable IDs, provider/account/unit, exact settings or their file/hash, quote source/time/upper bound, reservation, job ID, observed status, actual cost and its source, downloaded file/hash, repair number and relevant review references. Suggested event labels: `reserved`, `submitted`, `submission_unknown`, `settled`, `downloaded`, `reviewed`, `released`.
 
 Reconcile costs by unique provider/account/job ID, not by summing every event. Provider job status and human acceptance are distinct: a successful render can be rejected.
 
-For Kie, keep `kie-ledger.jsonl` as the existing recovery record. Do not rewrite it with these additional event labels. Store sidecar cost facts from returned task records, including nullable `creditsConsumed`; the engine's current ledger does not retain that field.
+For Kie, keep `kie-ledger.jsonl` as the existing recovery record. Do not rewrite it with these additional event labels. Store sidecar cost facts from returned task records, including nullable `creditsConsumed`; the ledger also keeps it as `credits` on settled events, which is a recovery aid and not a budget record.
 
 ## Pre-submission budget check
 
@@ -72,6 +87,15 @@ Do not treat a quoted estimate, an account balance delta affected by other work,
 Add `music_plan`, `speed_map`, `shot_acceptance` and `defect_log` to the existing run records as described in [production-standard.md](production-standard.md). Keep recoverable voice/music/ambience/SFX stems, actual source/output ranges, rights restrictions and the final listening evidence. A deliberate dry mix requires a specific editorial reason and reviewer acceptance; silence is not an implicit music decision.
 
 Use the separate `production-review.json` record in [review-gates.md](review-gates.md) for the five mandatory presentation gates. It binds exact local artifact hashes and distinct reviewer evidence. These are orchestration sidecars, not provider parameters, backend spending enforcement or proof that a human listened. Changed exports and changed component hashes make old approvals stale. Keep client-specific evidence private; use neutral IDs in shared summaries and review packets.
+
+For new creator runs set `creator_preproduction_required: true` in the bound
+profile. Set `production.preproduction` in the final record to one `{path, sha256}`
+descriptor or a nonempty array listing every actual operation packet directly.
+A manifest proxy is insufficient: the final validator rehashes listed packets,
+not indirect manifest contents. Descriptors enter production context and no new
+artifact role is added. Rerun offline Node preflight first, because the final Python
+validator does not recursively revalidate nested source files or provider
+contracts. A changed packet requires fresh affected final-review context.
 
 ## Decision scope and production continuity
 

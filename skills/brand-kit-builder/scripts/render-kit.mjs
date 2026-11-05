@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * render-kit.mjs — turn a brand kit's HTML into a print-ready PDF, and refuse to
+ * render-kit.mjs · turn a brand kit's HTML into a print-ready PDF, and refuse to
  * ship one that is wrong.
  *
  * The layout of a kit is per brand and always will be: an art brand's kit is a
@@ -44,7 +44,7 @@ await page.evaluate(() => document.fonts.ready);
 
 let failures = 0;
 const check = (label, ok, detail = "") => {
-  console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}${detail ? " — " + detail : ""}`);
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}${detail ? " · " + detail : ""}`);
   if (!ok) failures += 1;
 };
 

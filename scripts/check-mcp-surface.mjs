@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * check-mcp-surface — drive the BUILT server over a real stdio MCP session.
+ * check-mcp-surface · drive the BUILT server over a real stdio MCP session.
  *
  * Every other check in this repo tests a function. None of them proves the
  * thing an MCP client actually meets: that the bundle starts, negotiates,
@@ -8,7 +8,7 @@
  * prompts/get and tools/call with the shapes it promised. A tool can be
  * perfectly unit-tested and still be invisible because its capability was never
  * advertised, or unusable because its outputSchema and its structuredContent
- * disagree — the SDK validates that at call time, so it fails in front of a
+ * disagree, the SDK validates that at call time, so it fails in front of a
  * user, not in a test.
  *
  * Kie is stubbed on localhost, so this spends no credits and needs no API key.
@@ -126,7 +126,7 @@ const rpc = (method, params) =>
 
 let failures = 0;
 const check = (label, ok, detail = "") => {
-  console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}${detail ? ` — ${detail}` : ""}`);
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}${detail ? ` · ${detail}` : ""}`);
   if (!ok) failures += 1;
 };
 
@@ -155,6 +155,8 @@ try {
   // and this check exists to catch a tool that stopped being registered.
   const EXPECTED_TOOLS = [
     "kie_validate_brief",
+    "kie_validate_ugc_preproduction",
+    "kie_create_ugc_lipsync",
     "kie_get_credits",
     "kie_create_task",
     "kie_get_task",
@@ -173,17 +175,24 @@ try {
   );
   const typed = tools.filter((tool) => tool.outputSchema);
   check("every tool declares an outputSchema", typed.length === tools.length, `${typed.length}/${tools.length}`);
+  const ugcMissing = await rpc("tools/call", { name: "kie_validate_ugc_preproduction", arguments: { packetPath: path.join(downloadDir, "missing-packet.json") } });
+  check("UGC offline preflight returns typed blocked evidence for missing packet", ugcMissing.result?.structuredContent?.ok === false && ugcMissing.result?.structuredContent?.errors?.length > 0);
+  const ugcBlocked = await rpc("tools/call", { name: "kie_create_ugc_lipsync", arguments: { packetPath: path.join(downloadDir, "missing-packet.json") } });
+  check("UGC guarded submit refuses missing dependencies", ugcBlocked.result?.isError === true);
 
   console.log("\n== Resources ==");
   const resources = (await rpc("resources/list", {})).result?.resources ?? [];
-  const expectedResources = ["kie://model-catalog", "kie://format-routing", "kie://production-review-standard", "kie://ugc-creative-playbook"];
+  const expectedResources = ["kie://model-catalog", "kie://format-routing", "kie://production-review-standard", "kie://ugc-creative-playbook", "kie://ugc-preproduction"];
   const resourceUris = resources.map((resource) => resource.uri);
   check(
-    "all four reference documents are listed, with no substitution",
+    "all five reference documents are listed, with no substitution",
     resourceUris.length === expectedResources.length && expectedResources.every((uri) => resourceUris.includes(uri)),
     resourceUris.join(", "),
   );
   const catalog = await rpc("resources/read", { uri: "kie://model-catalog" });
+  const preproduction = await rpc("resources/read", { uri: "kie://ugc-preproduction" });
+  const preproductionText = preproduction.result?.contents?.[0]?.text ?? "";
+  check("preproduction contract and incomplete template are readable without repository access", preproductionText.includes("kie_create_ugc_lipsync") && preproductionText.includes('"accepted_bindings"') && preproductionText.includes("INCOMPLETE TEMPLATE"));
   const catalogText = catalog.result?.contents?.[0]?.text ?? "";
   check(
     "the catalog reads back inlined, not empty",
@@ -337,6 +346,7 @@ try {
   const ledger = led.result?.structuredContent;
   const logged = (ledger?.tasks ?? []).find((t) => t.taskId === structured?.task?.taskId);
   check("the run that spent credits was recorded", Boolean(logged));
+  check("the settled ledger entry keeps the credits the task actually cost", logged?.credits === 14, `credits=${logged?.credits}`);
   check("it carries the model it ran on", logged?.model === "google/nano-banana");
   check("it settled, not merely created", logged?.state === "success");
   check("its result urls were kept", (logged?.resultUrls ?? []).length > 0);

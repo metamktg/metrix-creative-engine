@@ -78,6 +78,63 @@ describe("folding events into tasks", () => {
   });
 });
 
+describe("what a task cost", () => {
+  it("keeps the credits a settled task reported, from either writer", () => {
+    // kie.mjs and the MCP server append to the same file, and both write `credits`.
+    const tasks = foldLedger(
+      [
+        line({ ts: at(600_000), taskId: "t1", model: "m", event: "created" }),
+        line({ ts: at(300_000), taskId: "t1", model: "m", event: "settled", state: "success", credits: 14 }),
+      ].join("\n"),
+      NOW,
+    );
+    expect(tasks[0]!.credits).toBe(14);
+  });
+
+  it("treats a missing or malformed cost as unknown, never zero", () => {
+    for (const credits of [undefined, null, "14", -3, Number.NaN]) {
+      const tasks = foldLedger(
+        line({ ts: at(1000), taskId: "t1", model: "m", event: "settled", state: "success", credits }),
+        NOW,
+      );
+      expect(tasks[0]!.credits, `credits=${String(credits)}`).toBeUndefined();
+    }
+  });
+
+  it("keeps an earlier cost when a later event reports none", () => {
+    const tasks = foldLedger(
+      [
+        line({ ts: at(3000), taskId: "t1", model: "m", event: "settled", state: "success", credits: 9 }),
+        line({ ts: at(1000), taskId: "t1", model: "m", event: "settled", state: "success" }),
+      ].join("\n"),
+      NOW,
+    );
+    expect(tasks[0]!.credits).toBe(9);
+  });
+
+  it("totals recorded credits and counts settled tasks with no recorded cost separately", () => {
+    const out = formatLedger(
+      foldLedger(
+        [
+          line({ ts: at(5000), taskId: "a", model: "m", event: "settled", state: "success", credits: 10 }),
+          line({ ts: at(4000), taskId: "b", model: "m", event: "settled", state: "success", credits: 4.5 }),
+          line({ ts: at(3000), taskId: "c", model: "m", event: "settled", state: "success" }),
+          line({ ts: at(2000), taskId: "d", model: "m", event: "created" }),
+        ].join("\n"),
+        NOW,
+      ),
+    );
+    expect(out).toMatch(/Credits recorded: 14\.5 across 2 settled task\(s\)/);
+    expect(out).toMatch(/1 settled task\(s\) have no recorded cost; that is unknown, not zero/);
+    expect(out).toMatch(/10 credits/);
+  });
+
+  it("does not claim a total for a ledger with nothing settled", () => {
+    const out = formatLedger(foldLedger(line({ ts: at(1000), taskId: "a", model: "m", event: "created" }), NOW));
+    expect(out).not.toMatch(/Credits recorded/);
+  });
+});
+
 describe("the report", () => {
   it("names a closed window as re-pollable, not as lost", () => {
     const out = formatLedger(

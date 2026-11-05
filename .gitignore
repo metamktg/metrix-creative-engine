@@ -3,6 +3,8 @@ dist/
 *.tsbuildinfo
 .vitest-downloads/
 .cache/
+__pycache__/
+*.pyc
 
 # Generated creative. Assets are large and regenerable; keep them out of git
 # and let KIE_AI_DOWNLOAD_DIR point wherever you actually want them.

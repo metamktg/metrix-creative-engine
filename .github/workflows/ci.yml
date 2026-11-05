@@ -20,25 +20,26 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # The review-record checks and the generated-standard check are Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm run typecheck
-
-      # Includes the drift guard over the three skill-bundled copies of
-      # kie.mjs, which nothing else would reveal.
-      - name: Test
-        run: pnpm run test
-
-      - name: Build
-        run: pnpm run build
-
-      # Drives the built bundle over a real stdio MCP session against a stubbed
-      # Kie. Catches what unit tests cannot see: a capability never advertised,
-      # or an outputSchema that disagrees with the structuredContent the tool
-      # actually returns, which the SDK rejects at call time in front of a user.
-      - name: MCP surface
-        run: pnpm run check:mcp-surface
+      # The repository gate, the same command a contributor runs locally. It
+      # runs the byte-copy check, the generated standard drift check, the type
+      # check, the vitest suite, the build, the MCP surface check, the Python
+      # review-record tests and the retention tests. Keep it one command so this
+      # file cannot fall behind package.json.
+      #
+      # The MCP surface leg drives the built bundle over a real stdio MCP
+      # session against a stubbed Kie. It catches what unit tests cannot see: a
+      # capability never advertised, or an outputSchema that disagrees with the
+      # structuredContent the tool actually returns, which the SDK rejects at
+      # call time in front of a user.
+      - name: Verify
+        run: pnpm run verify
 
       # The skills ship as zip uploads, and a SKILL.md nested deeper than the
       # top level is rejected on upload with no other signal. Cheap to check

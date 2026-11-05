@@ -16,6 +16,8 @@ import modelCatalog from "../docs/MODEL_CATALOG.md";
 import formatRouting from "../skills/metrix-ad-creative/references/format-routing.md";
 import productionStandard from "../docs/UGC_PRODUCTION_STANDARD.md";
 import ugcCreativePlaybook from "../docs/UGC_CREATIVE_PLAYBOOK.md";
+import ugcPreproduction from "../skills/ugc-creator-edit/references/preproduction-director.md";
+import ugcPacketTemplate from "../examples/ugc-production/preproduction.example.json";
 
 interface KieResource {
   name: string;
@@ -26,6 +28,13 @@ interface KieResource {
 }
 
 export const KIE_RESOURCES: readonly KieResource[] = [
+  {
+    name: "kie-ugc-preproduction",
+    uri: "kie://ugc-preproduction",
+    title: "UGC preproduction contract and incomplete packet template",
+    description: "The implemented local packet, exact dependency bindings, guarded submit/recovery semantics and anonymous incomplete JSON template. Read before preparing a creator lip-sync packet; not injected into unrelated prompts and never a claim of actual acceptance.",
+    body: `${ugcPreproduction}\n\n## Anonymous incomplete packet template\n\nCopy into a private run and replace pending/null facts with actual evidence. Do not submit this template.\n\n\`\`\`json\n${JSON.stringify(ugcPacketTemplate, null, 2)}\n\`\`\`\n`,
+  },
   {
     name: "kie-production-review-standard",
     uri: "kie://production-review-standard",

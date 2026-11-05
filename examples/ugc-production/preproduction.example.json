@@ -1,0 +1,44 @@
+{
+  "_status": "INCOMPLETE TEMPLATE. Not an audition, quote, approval or ready packet. Replace nulls with actual private evidence; never submit this example.",
+  "schema_version": 1,
+  "run_id": "REPLACE_WITH_PRIVATE_RUN_ID",
+  "brief_id": "REPLACE_WITH_BRIEF_ID",
+  "brief": { "path": "brief.json", "sha256": null },
+  "script": { "path": "script.json", "sha256": null },
+  "hook": { "line_id": "L1", "rationale": null, "first_frame": null, "payoff": null },
+  "claims": [{ "line_id": "L1", "status": "pending", "rationale": null, "evidence": { "path": null, "sha256": null } }],
+  "presenter": {
+    "identity": { "path": null, "sha256": null },
+    "voice_settings": { "path": "voice-settings.json", "sha256": null },
+    "scene": { "path": "scene.json", "sha256": null },
+    "fit_rationale": null,
+    "review": { "status": "pending", "reviewer_id": null, "method": "visual_identity_review", "reviewed_at": null, "identity_sha256": null, "voice_settings_sha256": null, "scene_sha256": null, "evidence": { "path": null, "sha256": null } }
+  },
+  "voice": {
+    "master": { "path": null, "sha256": null },
+    "duration_seconds": null,
+    "review": { "status": "pending", "reviewer_id": null, "method": "human_full_listen", "reviewed_at": null, "evidence": { "path": null, "sha256": null } },
+    "accepted_bindings": { "script_sha256": null, "identity_sha256": null, "voice_settings_sha256": null, "scene_sha256": null, "audio_sha256": null },
+    "phrases": [{ "line_id": "L1", "start": null, "end": null }]
+  },
+  "proofs": [{ "line_id": "L1", "requirement": "illustration", "kind": "screenshot", "source": { "path": null, "sha256": null }, "demonstrates": null, "limits": null, "rights": null }],
+  "retained_assets": [{ "source": { "path": null, "sha256": null }, "rights": null, "reuse_scope": null }],
+  "route": {
+    "provider": "kie", "operation": "lip_sync", "audio_mode": "approved_voice", "model": null,
+    "checked_at": null, "valid_until": null,
+    "schema_evidence": { "path": null, "sha256": null },
+    "supported_controls": [], "required_controls": [],
+    "requested_duration_seconds": null, "supported_durations_seconds": [], "duration_input_pointer": null
+  },
+  "request": { "model": null, "input": {} },
+  "request_sha256": null,
+  "input_bindings": [
+    { "role": "identity", "source": { "path": null, "sha256": null }, "upload_receipt": { "path": null, "sha256": null }, "input_pointer": null, "provider_value": null,
+      "review": { "status": "pending", "reviewer_id": null, "method": "visual_derivative_review", "reviewed_at": null, "source_sha256": null, "identity_sha256": null, "scene_sha256": null, "evidence": { "path": null, "sha256": null } }
+    },
+    { "role": "voice", "source": { "path": null, "sha256": null }, "upload_receipt": { "path": null, "sha256": null }, "input_pointer": null, "provider_value": null, "master_sha256": null, "start_seconds": null, "end_seconds": null,
+      "review": { "status": "pending", "reviewer_id": null, "method": "human_segment_listen", "reviewed_at": null, "segment_sha256": null, "master_sha256": null, "start_seconds": null, "end_seconds": null, "evidence": { "path": null, "sha256": null } }
+    }
+  ],
+  "budget": { "provider": "kie", "account": null, "unit": null, "authorization_ref": null, "ceiling": null, "settled": null, "pending": null, "request_upper_bound": null, "finish_reserve": null, "repair_reserve": null, "quote_valid_until": null, "quote_evidence": { "path": null, "sha256": null } }
+}

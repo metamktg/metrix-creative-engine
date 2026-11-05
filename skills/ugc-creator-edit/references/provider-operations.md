@@ -4,6 +4,44 @@ Use the provider already selected by the user or approved render plan. For an un
 
 This reference retains the 2026-10-09 routing baseline with capability wording reconciled on 2026-11-05. Inspect current tool schemas and model constraints again before calling them. No generation is authorized merely because a tool is available.
 
+## Current selected-operation contract
+
+The [preproduction director](preproduction-director.md) defines the implemented
+local packet for approved-full-voice Kie lip sync. Record the actual operation,
+model, schema evidence/check/validity, supported versus required controls,
+reference source/role, upload receipt/value, duration and exact request digest.
+Only supported controls enter provider input. Canonical words and planning
+emotion labels stay separate from provider-specific synthesis aliases/tags.
+
+Use `kie_validate_ugc_preproduction` / client `ugc-check` offline, then
+`kie_create_ugc_lipsync` / client `ugc-start` for guarded dependent submission.
+The guard does not accept native-audio generation or silently translate one
+architecture into another. Unsupported controls, stale bindings and incompatible
+durations block affected work; resolve the actual requirement rather than
+inventing fields or dropping an identity input.
+
+The exact embedded request is hashed using the shared helper's canonical JSON
+serialization. Local source and upload receipts provide provenance; their
+presence cannot prove remote byte fidelity or account entitlement. Reinspect
+the selected live operation and response. An asset registration requirement,
+temporary URL lifetime or polling convention belongs to that operation, not all
+tools from the same vendor.
+
+Upload receipts are parsed JSON: `provider: "kie"`, `source_sha256`, exact
+`provider_value` and future `valid_until` must match the input binding. Client
+`upload <file> --receipt <private.json>` writes source hash/current returned URL
+and provider expiry when supplied, otherwise null. Establish expiry from current
+authoritative evidence before marking that receipt ready; unknown is not an
+invented future validity. Refresh the same accepted source if transport expires.
+
+Record returned duration and use offline `--observed-duration` validation before
+dependent assembly. Any adjustment requires replanning complete speech, source
+ranges, handles and caption/reading holds. Keep requested versus actual facts
+separate. A per-packet exclusive submission receipt holds unknown/submitted
+work for recovery, not automatic retry. It is not an atomic provider budget cap
+or account-wide lock; the existing authorization, one-operator budget checks and
+task ledger still apply.
+
 ## Higgsfield
 
 1. Discover the available tools; confirm the intended workspace/project from the existing context. Do not silently change workspace, create speculative projects or upload unrelated assets.
@@ -33,7 +71,7 @@ Read the engine's dated format/model routing and verify any unsupported or unver
 
 The inspected server exposes balance and returned task costs, not an authoritative pre-submission quote or budget-reservation API. Get a current official price/rate for the exact settings, label it as an estimate when appropriate and reserve its conservative upper bound. Do not invent `kie_estimate_cost` or pass budget sidecar fields as model inputs.
 
-Returned task data can contain nullable `creditsConsumed`. Persist it separately because `src/ledger.ts` stores recovery events without this cost field. Unknown is not zero. A timeout is not a failed job; resume it. The client documents exit 2 for a wait timeout, so check IDs/status instead of calling create again.
+Returned task data can contain nullable `creditsConsumed`. The ledger now keeps it as `credits` on the settled event, from both the MCP server and `kie.mjs`, and `kie_ledger` reports it per task with a total; copy it into the run's own cost records as well, because the ledger is a recovery record and not a budget. Unknown is not zero: a settled task with no `credits` was not free. A timeout is not a failed job; resume it. The client documents exit 2 for a wait timeout, so check IDs/status instead of calling create again.
 
 Provider result links can expire. Keep the task ID, download on success and recover/re-poll that task before paying to regenerate. Verify current reference expiry rules and refresh the same source when required; expired transport URLs do not justify a new creative generation.
 

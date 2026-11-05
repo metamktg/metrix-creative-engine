@@ -7,7 +7,7 @@ folder unless absolute.
 ```json
 {
   "name": "skyline-print-gift-hook-4x5",
-  "brief_id": "ECAS-VID-001",
+  "brief_id": "VID-001",
   "format": { "ratio": "4:5", "width": 1080, "height": 1350, "fps": 30 },
   "duration": 12,
   "tone": "polished",
@@ -40,7 +40,7 @@ folder unless absolute.
   ],
   "audio": {
     "music": { "file": "media/bed.mp3", "start": 0, "volume": 0.32, "fade_in": 0.2, "fade_out": 0.8,
-               "licence": "client-supplied, licence ref ECAS-2026-03" },
+               "licence": "client-supplied, licence ref LIC-2026-03" },
     "sfx": [
       { "file": "C:/.../assets/sfx/impact/impactSoft_medium_001.ogg", "at": 2.5, "volume": 0.6 },
       { "file": "C:/.../assets/sfx/interface/drop_001.ogg", "at": 6.8, "volume": 0.55 }
@@ -78,3 +78,27 @@ The composition mirrors this: each scene is a `section` with the same
 `data-scene`, `data-start` and `data-end`; each text item an element with the
 same `data-text`, `data-in`, `data-out`, `data-enter` and `data-dur`. The
 layout check fails any line whose on-screen text differs from `copy`.
+
+## Creator performance and proof handoff
+
+For creator-led production the current preproduction packet binds canonical
+`script.json`, actual accepted full-voice timing, cast/voice/scene and proof
+sources before dependent lip sync. Keep this storyboard as the sole composition
+timeline. Link scene/shot IDs, exact script lines, accepted audio ranges and
+proof sources in `ugc-production.json`; do not maintain a second editable
+timeline or add undocumented role values to this contract.
+
+Existing scene roles remain `hook`, `show`, `proof`, `offer`, `cta`. Creator
+delivery, UI demonstration, B-roll bridge and feature illustration describe the
+source/presentation within that scene, not new role enums. Record initial state,
+actual captured action, final state, deliberate change and cut reason where
+useful. A screenshot moving inside a composition is still an illustration; it
+does not prove a click or uncaptured interface behavior.
+
+Build caption and scene times from the accepted measured read, preserving one
+canonical narration master. Returned provider duration changes require a new
+coverage/handle/caption/reading-hold plan. Passing the storyboard checker proves
+only its encoded timing/text rules; it cannot assess delivered emotion, actual
+UI behavior, listening or the five final review gates. Preserve project-specific
+creator/UI geometry in the private bound reference, without a global card or
+motion template.

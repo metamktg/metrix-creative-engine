@@ -12,7 +12,7 @@ recovers one that did not finish.
 
 Two paths. **Check which you have before doing anything else.**
 
-**1. The bundled script (default, no install).** Every skill ships
+**1. The bundled script (default, no install).** This skill ships
 `scripts/kie.mjs`. It needs nothing but Node, which Claude Code already runs on,
 and `KIE_AI_API_KEY` in the environment. Works on Windows, macOS and Linux.
 
@@ -34,8 +34,10 @@ On Windows the path is `scripts\kie.mjs`. Use the skill's own directory, which
 in an installed skill is under `.claude/skills/<skill>/`.
 
 **2. MCP tools, if `/mcp` lists `kie-ai`.** `kie_run_task`, `kie_create_task`,
-`kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_ledger`, `kie_download_result`.
-Same API, typed arguments. Prefer these when present; they are not required.
+`kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_ledger` and `kie_download_result`
+for generation, `kie_validate_brief` as a free check before a brief is rendered, and
+`kie_validate_ugc_preproduction` with `kie_create_ugc_lipsync` for creator lip sync
+(see `ugc-creator-edit`). Same API, typed arguments. Prefer these when present; they are not required.
 
 Never tell the user to install anything before generating. If the key is
 missing the script says so and names where to get one.
@@ -53,16 +55,15 @@ not, say so and stop rather than starting and hoping.
 ## Batching
 
 **Kie publishes no rate-limit figure**, only that 429 means a request limit was
-exceeded. An earlier version of this file said 20 per 10 seconds; that number is
-not in the docs. Ramp a batch up rather than firing it all at once. Kie returns
+exceeded. Ramp a batch up rather than firing it all at once. Kie returns
 429 and those creations are lost, not queued.
 
 For a batch of N:
 
 1. `kie_create_task` per item, in waves of at most 15, pausing between waves.
-   Fifteen rather than twenty leaves headroom for anything else sharing the key.
+   Fifteen is a conservative starting size, not a documented limit; shrink it on any 429.
 2. Collect every `taskId` alongside what it was for. **Write the mapping down in
-   the reply before waiting on anything** — if the session is interrupted mid
+   the reply before waiting on anything**, if the session is interrupted mid
    batch, that list is the only way to recover jobs already paid for.
 3. `kie_wait_for_task` per id.
 4. `kie_download_result` per success, if a download directory is configured.
@@ -91,7 +92,7 @@ Video generations routinely outrun the 300s default. Either raise
 | Invalid or rejected parameters | Fix `input` against the model's parameters. Re-running unchanged fails identically |
 | Content policy refusal | Rewrite the prompt. Report that you did and why, do not quietly soften it and pretend it worked |
 | Insufficient credits | Stop the batch. Report what completed and what did not |
-| Server error | Retry once. Twice is a pattern, not a blip — report it |
+| Server error | Retry once. Twice is a pattern, not a blip, report it |
 
 Never report a batch as complete when part of it failed. List the failures with
 their reasons and what each needs.
@@ -107,8 +108,7 @@ is likely still good; an id from last month is likely not.
 `kie_download_result` exists only when `KIE_AI_DOWNLOAD_DIR` is set. Without it,
 report the URLs and say they expire in about 24 hours.
 
-Pass a meaningful `filename`. For Metrix work that is the MST name, so the asset
-lands ready for `metrix-mst-creative-scan`. The directory is fixed by
+Pass a meaningful `filename`. For Metrix work that is the descriptive concept name from the brief id; the MST name only inside a live matrix, so the asset lands ready for `metrix-mst-creative-scan`. The directory is fixed by
 configuration and the filename is sanitized to a single path segment, so a name
 cannot redirect the write.
 

@@ -2,6 +2,7 @@
 """Compose the engine's readable review resource from its skill references."""
 from pathlib import Path
 import argparse
+import re
 import sys
 
 
@@ -18,8 +19,13 @@ def rendered_standard(skill_root: Path) -> str:
         text = (skill_root / 'references' / name).read_text(encoding='utf-8').strip()
         # Retain the full contract while nesting its headings in this document.
         text = '\n'.join('#' + line if line.startswith('#') else line for line in text.splitlines())
-        for target in ('production-standard.md', 'review-gates.md', 'production-records.md'):
-            text = text.replace('](' + target + ')', '](../skills/ugc-creator-edit/references/' + target + ')')
+        # A relative link to any sibling reference must still resolve from docs/.
+        siblings = {p.name for p in (skill_root / 'references').glob('*.md')}
+        text = re.sub(
+            r'\]\(([A-Za-z0-9_.-]+\.md)\)',
+            lambda m: '](../skills/ugc-creator-edit/references/' + m.group(1) + ')' if m.group(1) in siblings else m.group(0),
+            text,
+        )
         text = text.replace('`templates/review-manifest.json`', '`skills/ugc-creator-edit/templates/review-manifest.json`')
         parts.append(text)
     return '\n\n'.join(parts).rstrip() + '\n'

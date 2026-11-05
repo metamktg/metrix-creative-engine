@@ -147,7 +147,7 @@ List each one with its resolution:
 | --- | --- | --- |
 | Guidelines say warm tones; `DS_02` specifies cool grey | Brand kit vs client library | Client library wins (rank 3 over 4) |
 | No lifestyle references | n/a | Production choice from `photographic_style`; labelled in handoff |
-| Brief asks for 4:5 video | Brief vs platform | Blocker: no video model offers 4:5. Proposing 9:16 with a centred crop |
+| Brief asks for 4:5 video | Brief vs selected model | Not a blocker: if the selected model does not offer 4:5 (check its current ratios), generate clips at 9:16 with a centred subject and compose the 4:5 cut in `metrix-video-assembly`. Labelled in handoff |
 
 Anything marked blocker stops generation until the user answers.
 

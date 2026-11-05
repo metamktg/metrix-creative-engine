@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 /**
- * kie.mjs — generate through the Kie.ai Market API. No install, no build, no
+ * kie.mjs · generate through the Kie.ai Market API. No install, no build, no
  * dependencies: Node's global fetch only. Works on Windows, macOS and Linux,
  * which is why this is Node rather than curl+jq (Windows has no jq).
  *
  *   node kie.mjs credits
+ *   node kie.mjs ledger                      (local file; needs no key)
+ *   node kie.mjs upload <file> [--path DIR] [--receipt FILE]
  *   node kie.mjs run   <model> '<input-json>' [--timeout 600] [--out DIR] [--name ID]
+ *   node kie.mjs run   <model> --input-file spec.json
  *   node kie.mjs start <model> '<input-json>'
  *   node kie.mjs poll  <taskId> [--timeout 600] [--out DIR] [--name ID]
+ *   node kie.mjs ugc-check <packet.json> [--observed-duration SECONDS]   (local; needs no key)
+ *   node kie.mjs ugc-start <packet.json>
  *
  * Needs KIE_AI_API_KEY in the environment. Get one at https://kie.ai/api-key
  */
@@ -216,7 +221,7 @@ const UPLOAD_HOSTS = [
   "https://api.kie.ai",
 ].filter(Boolean);
 
-async function upload(filePath, uploadPath) {
+async function upload(filePath, uploadPath, receiptPath) {
   const { readFile } = await import("node:fs/promises");
   const pathMod = await import("node:path");
   let bytes;
@@ -255,6 +260,16 @@ async function upload(filePath, uploadPath) {
     // are temporary and will be automatically deleted after 3 days."
     console.error("NOTE: Kie deletes uploaded files after 3 days. Re-upload brand assets per batch,");
     console.error("      rather than reusing a URL from a previous sprint.");
+    if (receiptPath) {
+      const { createHash } = await import("node:crypto");
+      const { mkdir, writeFile } = await import("node:fs/promises");
+      const expires = typeof d.expiresAt === "string" && Number.isFinite(Date.parse(d.expiresAt)) ? new Date(d.expiresAt).toISOString() : null;
+      const receipt = { provider: "kie", source_sha256: createHash("sha256").update(bytes).digest("hex"), provider_value: url, uploaded_at: new Date().toISOString(), valid_until: expires };
+      await mkdir(pathMod.dirname(pathMod.resolve(receiptPath)), { recursive: true });
+      try { await writeFile(receiptPath, JSON.stringify(receipt, null, 2), { flag: "wx" }); }
+      catch { console.error("WARNING: upload receipt could not be created; preserve the returned URL and source hash before dependent work."); }
+      if (!expires) console.error("NOTE: provider did not return a verified expiry. Receipt remains incomplete; bind a conservative validity from current authoritative evidence before UGC preflight.");
+    }
     return url;
   }
   die(`upload failed on every documented host:\n  ${problems.join("\n  ")}`);
@@ -276,7 +291,28 @@ if (wantedName && !outDir && (cmd === "run" || cmd === "poll")) {
   console.error(`NOTE: --name needs somewhere to write. Saving to ./${outDir} (pass --out DIR to choose).`);
 }
 
-if (cmd === "ledger") {
+if (cmd === "ugc-check" || cmd === "ugc-start") {
+  if (!a) die(`usage: node kie.mjs ${cmd} <private-packet.json>`);
+  const { inspectUgcPacket, submitUgcPacket } = await import("./ugc-preflight.mjs");
+  if (cmd === "ugc-check") {
+    const observed = flag("--observed-duration", undefined);
+    if (observed !== undefined && !(Number(observed) > 0)) die("--observed-duration requires a positive measured number");
+    const { ok, errors, warnings } = await inspectUgcPacket(a, { observedDurationSeconds: observed === undefined ? undefined : Number(observed) });
+    console.log(JSON.stringify({ ok, errors, warnings }, null, 2));
+    if (!ok) process.exitCode = 1;
+  } else {
+    requireKey();
+    try {
+      const result = await submitUgcPacket(a, async ({ model, input }) => {
+        const d = await call("/api/v1/jobs/createTask", { method: "POST", body: JSON.stringify({ model, input }) });
+        if (!d?.taskId) throw new Error("Provider returned no taskId. Submission remains uncertain; reconcile before replacement.");
+        await ledger("created", { taskId: d.taskId, model, param: input, name: wantedName ?? undefined });
+        return d.taskId;
+      });
+      console.log(JSON.stringify(result));
+    } catch (error) { die(error.message); }
+  }
+} else if (cmd === "ledger") {
   const file = await ledgerPath();
   if (!file) die("The ledger is off (KIE_AI_LEDGER_PATH=off).", 2);
   const { readFileSync } = await import("node:fs");
@@ -329,10 +365,10 @@ if (cmd === "ledger") {
   else await poll(taskId, timeout, outDir);
 } else if (cmd === "upload") {
   if (!a) die("usage: node kie.mjs upload <file> [--path images/user-uploads]");
-  console.log(await upload(a, flag("--path", "images/user-uploads")));
+  console.log(await upload(a, flag("--path", "images/user-uploads"), flag("--receipt", null)));
 } else if (cmd === "poll") {
   if (!a) die("usage: node kie.mjs poll <taskId>");
   await poll(a, timeout, outDir);
 } else {
-  die("usage: node kie.mjs credits | ledger | upload <file> | run <model> '<json>' | start <model> '<json>' | poll <taskId>   [--timeout N] [--out DIR] [--name NAME]");
+  die("usage: node kie.mjs ugc-check <packet.json> | ugc-start <packet.json> | credits | ledger | upload <file> | run <model> '<json>' | start <model> '<json>' | poll <taskId>   [--timeout N] [--out DIR] [--name NAME]");
 }
