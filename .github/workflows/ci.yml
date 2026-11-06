@@ -25,6 +25,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Audio/phrase fixtures and encoded-media checks require both binaries.
+      - name: Install media test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y ffmpeg
+          ffmpeg -version
+          ffprobe -version
+
       - run: pnpm install --frozen-lockfile
 
       # The repository gate, the same command a contributor runs locally. It

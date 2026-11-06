@@ -26,6 +26,11 @@ This is a production orchestration skill. It uses existing provider tools or the
 
 ## 1. Bind the job to the brief
 
+Before source search or spend, consult the current private client library and
+[library/feedback/storage workflow](references/client-library.md). Refresh current
+decisions and rejection windows. At authorized milestones sync reusable assets,
+recipes and feedback; approved exports have a separate delivery destination.
+
 Read the actual brief, current asset manifest and latest component feedback. Preserve the user's source hierarchy, copy permissions, voice selection, accepted file hashes, offer and intended action. Do not re-audit an approved strategy or invent missing claims.
 
 The brief fixes medium, placements and deliverable count. Default to one master and one hook only when that is the assignment. An authorized variant set may reuse accepted sources; do not impose a one-ad limit on a larger authorized job. Do not create speculative variants because raw material is available.

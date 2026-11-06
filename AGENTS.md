@@ -31,12 +31,18 @@ bindings, not actual listening or final approval; raw task tools are unguarded.
 
 # Working in this repository
 
+Client asset/review/storage continuity follows
+`skills/ugc-creator-edit/references/client-library.md`. Resolve the current private
+library before historical source searches. At authorized milestones execute its
+connector sync plan and verify readbacks, keeping source/review storage separate
+from approved-final delivery. This is not a background watcher.
+
 `npm run verify` is the gate. It runs, in order: `check:copies` (every byte copy
 equals its canonical file), `check:production-standard` (the generated standard
 equals its two sources), `typecheck`, `test` (vitest), `build`,
 `check:mcp-surface` (drives the built bundle and checks its advertised tools,
-resources and prompts), `test:production-review` (Python review-record tests) and
-`test:retention`. Run all of it before calling a change done. Do not copy a test
+resources and prompts), `test:production-review` (Python review-record tests),
+`test:retention` and `test:client-library`. Run all of it before calling a change done. Do not copy a test
 count or a tool count into prose; those scripts are the inventory.
 
 A file that appears in more than one place has one canonical copy, listed first in

@@ -10,6 +10,11 @@ produces pixels). The brief is the specification; this skill is the execution.
 
 ## UGC and video direction
 
+At production start and handoff, consult the current private client library and
+bundled [library workflow](references/client-library.md). Reuse scoped accepted
+sources and current exclusions; sync authorized assets, recipes and feedback to
+the configured repository, preserving a separate approved-final destination.
+
 For `ugc`, `ai_ugc` or `video` briefs, read the bundled
 [creative direction](references/creative-direction.md) before planning or
 spending. At planning/review, read only the current stage's details in the
