@@ -1,0 +1,400 @@
+{
+  "schema": "mce.tools/1",
+  "generated_from": "X:/Metrix/tools/INSTALLED.json (installed_at 2026-11-06); local_sha256 values computed with sha256sum on this machine on 2026-11-06",
+  "verify_note": "npm run tools:check verifies presence and sha256 of every pinned file on the machine it runs on. It is NOT part of npm run verify: CI has none of these tools, so it would always exit 2 there. Run it locally where the tools are installed. It never downloads and never executes a tool.",
+  "exit_codes": {
+    "0": "every required file present and every hash matched",
+    "1": "at least one sha256 or size mismatch (wins over missing)",
+    "2": "at least one required file or directory missing",
+    "3": "usage error, unreadable config or invalid manifest"
+  },
+  "roots": {
+    "tools": { "env": "MCE_TOOLS_DIR", "default": "X:/Metrix/tools" },
+    "models": { "env": "MCE_MODELS_DIR", "default": "X:/Metrix/models" },
+    "cache": { "env": "MCE_CACHE_DIR", "default": "X:/Metrix/cache" },
+    "venv": { "env": "MCE_VENV_DIR", "default": "X:/Metrix/venv312" }
+  },
+  "roots_note": "Root resolution, highest first: the root's env var, then roots{} in the JSON file named by --config or MCE_TOOLS_CONFIG, then the default above. Every file path below is relative to its root; absolute paths are refused by the checker.",
+  "file_roles": {
+    "binary": "the file that runs or is loaded; required",
+    "published": "the exact artefact whose sha256 the upstream project publishes; required",
+    "archive": "downloaded archive kept for provenance; optional (missing is a warning, a mismatch is still exit 1)",
+    "config": "local config the tool is run with; required"
+  },
+  "tools": [
+    {
+      "id": "yt-dlp",
+      "name": "yt-dlp",
+      "version": "2026.10.21",
+      "status": "installed",
+      "source_url": "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp.exe",
+      "licence": "Unlicense",
+      "licence_checked": true,
+      "licence_source": "INSTALLED.json licence field",
+      "install_dir_env": "MCE_TOOLS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "tools",
+          "path": "yt-dlp/2026.10.21/yt-dlp.exe",
+          "role": "published",
+          "sha256": "33121d192d706e62f684a06f80918e3f3a8ba52ac3a65213b6951c39c7d9f555",
+          "bytes": 17880111,
+          "basis": "release SHA2-256SUMS (sha256sum -c OK at install)"
+        }
+      ],
+      "notes": "Run only through ytDlpArgv() in scripts/tools-check.mjs: --ignore-config --config-locations <yt-dlp.conf> --no-update --no-remote-components, and the argv guard refuses -U, --update, --update-to, --remote-components and --config-locations. Capture code is not written; a recorded rights basis is required first."
+    },
+    {
+      "id": "yt-dlp.conf",
+      "name": "yt-dlp.conf (pinned config)",
+      "version": "-",
+      "status": "installed",
+      "source_url": "written locally; repo copy tools/yt-dlp.conf is byte-identical",
+      "licence": "-",
+      "licence_checked": true,
+      "licence_source": "local file",
+      "install_dir_env": "MCE_TOOLS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "tools",
+          "path": "yt-dlp/yt-dlp.conf",
+          "role": "config",
+          "sha256": "2d3aa382b01f798b4cb4cab94d6c60dc8dbc258a554ffd52fabf3d8f6f334e86",
+          "bytes": 174,
+          "basis": "local; equals sha256 of tools/yt-dlp.conf in this repo (asserted by src/__tests__/tools-check.test.ts)"
+        }
+      ],
+      "notes": "Sits one level above the exe, so yt-dlp does not auto-load it as a portable config; load it explicitly."
+    },
+    {
+      "id": "hyperframes",
+      "name": "HyperFrames CLI",
+      "version": "0.8.186",
+      "status": "installed",
+      "scripts_disabled": true,
+      "cli_permitted": false,
+      "cli_note": "Installed with npm --ignore-scripts (72 packages). Running the CLI (even --version) was denied by the permission classifier; no lint, render or browser download has happened. Not permitted until the owner decides. render.mjs --backend hyperframes refuses.",
+      "source_url": "https://registry.npmjs.org/hyperframes/-/hyperframes-0.8.186.tgz",
+      "published_integrity": "sha512-JcBRmBdr955LU40+yWarQFL6c3MLeuJqPnYW9tFCS7yLiQGbB5YyoOuhJw5VaDbNHkmM0afn77Dlup5d2q3Anw==",
+      "licence": "Apache-2.0",
+      "licence_checked": true,
+      "licence_source": "package.json license field only; the tarball ships no LICENSE file",
+      "install_dir_env": "MCE_TOOLS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "tools",
+          "path": "hyperframes/0.8.186/node_modules/hyperframes/package.json",
+          "role": "binary",
+          "sha256": "461e1bcdd1227d086421a2fb73c4c5c50ca4a33f90aef72495f88f5c5b5a2683",
+          "bytes": 2540,
+          "basis": "local sha256, 2026-11-06"
+        },
+        {
+          "root": "tools",
+          "path": "hyperframes/0.8.186/node_modules/hyperframes/bin/hyperframes.mjs",
+          "role": "binary",
+          "sha256": "f82692a0d34d8cafb73cf06150067f211fdaa6919abb46359733400c1172252a",
+          "bytes": 669,
+          "basis": "local sha256, 2026-11-06"
+        },
+        {
+          "root": "tools",
+          "path": "hyperframes/0.8.186/package-lock.json",
+          "role": "config",
+          "sha256": "c93a1f8224e2bd608c2353c205bb4ab3041a98d56caa7f32bee180e1587b7fad",
+          "bytes": 62296,
+          "basis": "local sha256, 2026-11-06; its hyperframes integrity equals the registry dist.integrity"
+        },
+        {
+          "root": "cache",
+          "path": "tmp/hyperframes-0.8.186.tgz",
+          "role": "archive",
+          "sha256": "032a6c8c7ceb038296cf08886b0d3cdb09312a766201ce1e25a77e2dca8905a5",
+          "bytes": 7521143,
+          "basis": "sha256 of the packed tarball whose sha512 equals the registry dist.integrity"
+        }
+      ],
+      "notes": "Only the package entry points and the lockfile are hashed, not the 72-package tree. The lockfile pins every transitive integrity."
+    },
+    {
+      "id": "gsap",
+      "name": "gsap (loaded by HyperFrames from the jsDelivr CDN)",
+      "version": "3.14.2 (blank template) and 3.15.0 (compiler default)",
+      "status": "not installed",
+      "source_url": "https://registry.npmjs.org/gsap/-/gsap-3.14.2.tgz",
+      "licence": "GreenSock Standard 'no charge' license, https://gsap.com/standard-license (not an OSI licence)",
+      "licence_checked": true,
+      "licence_source": "package.json license field and README line 91 of an inspection copy; no LICENSE file in the tarball",
+      "install_dir_env": null,
+      "check": "skip",
+      "files": [],
+      "notes": "Nothing local to verify. A HyperFrames render would fetch gsap from a CDN at render time; that is an unpinned network dependency to settle before HyperFrames is qualified."
+    },
+    {
+      "id": "remotion",
+      "name": "Remotion",
+      "version": "-",
+      "status": "not supported",
+      "reason": "no licence decision",
+      "licence_flag": { "env": "MCE_REMOTION", "default": "off" },
+      "source_url": "-",
+      "licence": "Remotion License (custom; company licence terms apply above a team size), not read this pass",
+      "licence_checked": false,
+      "licence_source": "UNVERIFIED",
+      "install_dir_env": null,
+      "check": "skip",
+      "files": [],
+      "notes": "Not installed. render.mjs --backend remotion refuses unless MCE_REMOTION=1 and a recorded licence decision both exist."
+    },
+    {
+      "id": "uv",
+      "name": "uv",
+      "version": "0.13.5",
+      "status": "installed",
+      "source_url": "https://github.com/astral-sh/uv/releases/download/0.13.5/uv-x86_64-pc-windows-msvc.zip",
+      "licence": "MIT OR Apache-2.0",
+      "licence_checked": true,
+      "licence_source": "INSTALLED.json licence field",
+      "install_dir_env": "MCE_TOOLS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "tools",
+          "path": "uv/0.13.5/uv.exe",
+          "role": "binary",
+          "sha256": "f45d1cb9d9140ca6d3f4005fdfc0ebeccf849fd04d1dc85804155cb923f1597b",
+          "bytes": 31899952,
+          "basis": "local sha256, 2026-11-06 (extracted from the verified zip)"
+        },
+        {
+          "root": "tools",
+          "path": "uv/0.13.5/dl/uv-x86_64-pc-windows-msvc.zip",
+          "role": "archive",
+          "sha256": "a38b8d1902b7cfbc76b423ba1bb456f623f42064cdc72628b6075b89afd1019a",
+          "bytes": 15264056,
+          "basis": "release .sha256 asset (sha256sum -c OK at install)"
+        }
+      ]
+    },
+    {
+      "id": "cpython-3.12",
+      "name": "CPython (uv managed)",
+      "version": "3.12.15",
+      "status": "installed",
+      "source_url": "uv python install 3.12 (python-build-standalone, fetched by uv)",
+      "licence": "PSF-2.0",
+      "licence_checked": true,
+      "licence_source": "INSTALLED.json licence field",
+      "install_dir_env": "MCE_TOOLS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "tools",
+          "path": "uv-python/cpython-3.12-windows-x86_64-none/python.exe",
+          "role": "binary",
+          "sha256": "651e2230e6f02b233b46c0f829f08df95864d8155e41802c4609fc4aab45c843",
+          "bytes": 91648,
+          "basis": "local sha256; uv checked the download hash internally, not independently re-checked"
+        }
+      ]
+    },
+    {
+      "id": "venv312",
+      "name": "Python 3.12 venv (whisperX, MediaPipe)",
+      "version": "whisperx 3.8.6, mediapipe 1.1.1, torch 2.8.0+cpu, torchaudio 2.8.0+cpu, torchvision 0.23.0+cpu, torchcodec 0.7.0, transformers 4.57.6, ctranslate2 4.8.5, faster-whisper 1.2.1, pyannote-audio 4.0.7, numpy 2.5.4, opencv-contrib-python 5.0.0.93",
+      "status": "installed",
+      "source_url": "https://download.pytorch.org/whl/cpu (torch, torchaudio, torchvision); https://pypi.org/simple (all else)",
+      "licence": "whisperx BSD-2-Clause; mediapipe Apache-2.0; torch BSD-3-Clause",
+      "licence_checked": true,
+      "licence_source": "INSTALLED.json licence field",
+      "install_dir_env": "MCE_VENV_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "venv",
+          "path": "Scripts/python.exe",
+          "role": "binary",
+          "sha256": "810383c4e0365d0d30a9b4d334655d472884e637facdbef39e20c077d7a9432e",
+          "bytes": 46592,
+          "basis": "local sha256, 2026-11-06"
+        },
+        {
+          "root": "venv",
+          "path": "pyvenv.cfg",
+          "role": "config",
+          "sha256": "855b8503a4ad55d2c66e3d82a1bb5f11887f9a9fdab0129d8a199b76a54401d8",
+          "bytes": 160,
+          "basis": "local sha256, 2026-11-06"
+        }
+      ],
+      "notes": "Wheel hashes were verified by uv from the index; site-packages (about 4.1 GB) is not hashed here."
+    },
+    {
+      "id": "whisper-cli",
+      "name": "whisper.cpp (whisper-cli)",
+      "version": "v1.9.5 (binaries from build b5454, commit d1be6fde)",
+      "status": "installed",
+      "source_url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5454/whisper-bin-x64.zip",
+      "licence": "MIT",
+      "licence_checked": true,
+      "licence_source": "INSTALLED.json licence field",
+      "install_dir_env": "MCE_TOOLS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "tools",
+          "path": "whisper-cpp/v1.9.5/Release/whisper-cli.exe",
+          "role": "binary",
+          "sha256": "331dba46d6427105d2b802cdbc7eae916ea1c5abf9b0d3b5cfe460d8db8e4366",
+          "bytes": 479744,
+          "basis": "local sha256, 2026-11-06 (extracted from the verified zip)"
+        },
+        {
+          "root": "tools",
+          "path": "whisper-cpp/v1.9.5/dl/whisper-bin-x64.zip",
+          "role": "archive",
+          "sha256": "6ba69e3482d7826214f90a6a9c84ca07782aec1e1d0c6a7c30c994fd5d816ccb",
+          "bytes": 8928640,
+          "basis": "GitHub release API asset digest (no SUMS file published); sha256sum -c OK at install"
+        }
+      ],
+      "notes": "DTW needs -nfa: flash attention is on by default and silently disables DTW."
+    },
+    {
+      "id": "ggml-silero-v6.2.0",
+      "name": "ggml-silero-v6.2.0.bin (VAD model)",
+      "version": "v6.2.0",
+      "status": "installed",
+      "source_url": "https://huggingface.co/ggml-org/whisper-vad/resolve/9ffd54a1e1ee413ddf265af9913beaf518d1639b/ggml-silero-v6.2.0.bin",
+      "licence": "MIT",
+      "licence_checked": true,
+      "licence_source": "HF repo card (per INSTALLED.json)",
+      "install_dir_env": "MCE_MODELS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "models",
+          "path": "ggml-silero-v6.2.0.bin",
+          "role": "published",
+          "sha256": "2aa269b785eeb53a82983a20501ddf7c1d9c48e33ab63a41391ac6c9f7fb6987",
+          "bytes": 885098,
+          "basis": "HF LFS oid"
+        }
+      ]
+    },
+    {
+      "id": "ggml-small.en",
+      "name": "ggml-small.en.bin",
+      "version": "HF rev 5359861c",
+      "status": "installed",
+      "source_url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-small.en.bin",
+      "licence": "MIT",
+      "licence_checked": true,
+      "licence_source": "HF repo card (per INSTALLED.json)",
+      "install_dir_env": "MCE_MODELS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "models",
+          "path": "ggml-small.en.bin",
+          "role": "published",
+          "sha256": "c6138d6d58ecc8322097e0f987c32f1be8bb0a18532a3f88f734d1bbf9c41e5d",
+          "bytes": 487614201,
+          "basis": "HF LFS oid"
+        }
+      ]
+    },
+    {
+      "id": "ggml-base.en",
+      "name": "ggml-base.en.bin",
+      "version": "HF rev 5359861c",
+      "status": "installed",
+      "source_url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin (assumed origin; the file pre-dated the install run)",
+      "licence": "MIT",
+      "licence_checked": true,
+      "licence_source": "HF repo card (per INSTALLED.json)",
+      "install_dir_env": "MCE_MODELS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "models",
+          "path": "ggml-base.en.bin",
+          "role": "published",
+          "sha256": "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002",
+          "bytes": 147964211,
+          "basis": "HF LFS oid"
+        }
+      ]
+    },
+    {
+      "id": "face_landmarker",
+      "name": "MediaPipe face_landmarker.task",
+      "version": "float16/1",
+      "status": "installed",
+      "source_url": "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+      "licence": "Apache-2.0",
+      "licence_checked": false,
+      "licence_source": "MediaPipe model card, not re-read in the install run",
+      "install_dir_env": "MCE_MODELS_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "models",
+          "path": "face_landmarker.task",
+          "role": "binary",
+          "sha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+          "bytes": 3758596,
+          "basis": "local sha256; no published sha256, GCS x-goog-hash md5 matched the local md5 at install"
+        }
+      ]
+    },
+    {
+      "id": "wav2vec2-base-960h",
+      "name": "wav2vec2 WAV2VEC2_ASR_BASE_960H (whisperX English align model)",
+      "version": "wav2vec2_fairseq_base_ls960_asr_ls960",
+      "status": "installed",
+      "source_url": "https://download.pytorch.org/torchaudio/models/wav2vec2_fairseq_base_ls960_asr_ls960.pth",
+      "licence": "MIT (fairseq, via torchaudio)",
+      "licence_checked": false,
+      "licence_source": "not re-read in the install run",
+      "install_dir_env": "MCE_CACHE_DIR",
+      "check": "sha256",
+      "files": [
+        {
+          "root": "cache",
+          "path": "hf/wav2vec2_fairseq_base_ls960_asr_ls960.pth",
+          "role": "binary",
+          "sha256": "488fd4f16de84438ffc945334278c1b9fb9b7159a806c1080b16111a958c945d",
+          "bytes": 377664473,
+          "basis": "local sha256; none published, size equals the recorded Content-Length"
+        }
+      ]
+    },
+    {
+      "id": "nltk-punkt_tab",
+      "name": "nltk punkt_tab",
+      "version": "nltk_data current at 2026-11-06",
+      "status": "installed",
+      "source_url": "nltk.download('punkt_tab')",
+      "licence": "Apache-2.0 (nltk_data)",
+      "licence_checked": false,
+      "licence_source": "not re-read in the install run",
+      "install_dir_env": "MCE_CACHE_DIR",
+      "check": "presence",
+      "files": [
+        {
+          "root": "cache",
+          "path": "nltk/tokenizers/punkt_tab/english",
+          "role": "binary",
+          "kind": "dir",
+          "sha256": null,
+          "bytes": null,
+          "basis": "presence only; no checksum recorded"
+        }
+      ]
+    }
+  ]
+}
