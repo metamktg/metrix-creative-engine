@@ -350,6 +350,24 @@ Operating rules:
   footage.
 - `remotion-to-hyperframes` is only for porting work the owner already licenses.
 
+## Caption cues from word times
+
+```
+node scripts/captions/cues.mjs --phrases <run>/work/phrases.json --script script.txt --energy conversational \
+  [--fps 30] [--cuts 3.438,5.234] [--offset <voiceover.at>] [--alias "heard=meant"] --out <run>/work/cues.json --srt cues.srt
+```
+
+Groups the locked script into caption cues on the ad clock: 2 to 3 words for high energy, 3 to
+5 conversational, 4 to 6 calm, breaking at a sentence end, a pause of 150 ms or more, or the word
+limit (HyperFrames rules). Cue text is always the script's words, matched to heard words by
+position; a word-count mismatch after `--alias` is an error. Timing follows Netflix: 42
+characters a line, 2 lines, 20 characters a second, a 2-frame gap, a 20-frame minimum cue, in
+and out snapped to a shot change within 0.5 s. Each cue fades over its last 0.12 s and is hidden
+at its end. The lint fails overlaps, short cues, fast cues, long lines and anything visible after
+its end, and exits 1. A fast speaker can fail 20 characters a second with verbatim text; that is
+a decision for a human, not something the builder hides. `--whisper-cli` reads whisper-cli JSON
+(`-ml 1`) and `--words` a plain `[{text,start,end}]` list.
+
 ## What this skill will not do
 
 - Invent a claim, a number, a testimonial or a rating. Connective framing is
