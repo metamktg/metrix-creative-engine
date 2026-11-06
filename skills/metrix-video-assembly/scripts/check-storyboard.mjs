@@ -2,11 +2,16 @@
 /*
  * Check a storyboard against the assembly laws before anything is rendered.
  *
- *   node check-storyboard.mjs <storyboard.json> [--brief brief.json] [--kit brand-kit.json]
+ *   node check-storyboard.mjs <storyboard.json> [--brief brief.json] [--kit brand-kit.json] [--phrases phrases.json]
  *   node check-storyboard.mjs --row a.json b.json c.json      (Matrix Sprint Test row isolation)
  *
  * Prints a JSON report; exit 1 on any FAIL. WARN never fails the run, it is
  * something a person should look at.
+ *
+ * --phrases takes phrase-map.mjs output for the voiceover. Any effect starting in the 0.25 s
+ * before a phrase onset fails: there it reads as a breath or a clipped word (heard in a recorded
+ * run, where a card-slide 50 ms before a phrase was taken for a breath). Without --phrases a
+ * voiced storyboard gets a WARN that onsets were not checked.
  *
  * Text "source" values:
  *   "copy_architecture.hook" (any dotted path into the brief, or "kit." + a path into the brand kit)
@@ -54,7 +59,9 @@ function resolve(pathStr, brief, kit) {
 }
 const flat = (v) => (v == null ? [] : Array.isArray(v) ? v.flatMap(flat) : typeof v === "object" ? Object.values(v).flatMap(flat) : [String(v)]);
 
-function checkOne(sb, brief, kit) {
+const ONSET_GUARD = 0.25;
+
+function checkOne(sb, brief, kit, phrases) {
   const ratios = { "9:16": [9, 16], "4:5": [4, 5], "1:1": [1, 1], "16:9": [16, 9] };
   const f = sb.format || {};
   const r = ratios[f.ratio];
@@ -190,6 +197,15 @@ function checkOne(sb, brief, kit) {
   const loud = sfx.filter((s) => (s.volume ?? 0.7) > 0.85);
   if (loud.length) add("mix.sfx", "WARN", `${loud.length} effects above 0.85 volume`);
   if (sfx.length > sb.duration * 0.6) add("mix.density", "WARN", `${sfx.length} effects in ${sb.duration}s; fewer cues, better timed`);
+  if (sb.audio?.voiceover?.file) {
+    if (!phrases) add("mix.onsets", "WARN", "voice phrase onsets not checked; pass --phrases (phrase-map.mjs output)");
+    else {
+      const at = sb.audio.voiceover.at ?? 0;
+      const onsets = (phrases.phrases || []).map((p) => p.start + at);
+      const hits = sfx.flatMap((x) => onsets.filter((o) => x.at >= o - ONSET_GUARD && x.at < o).map((o) => `${x.file} at ${x.at}s, ${(o - x.at).toFixed(3)}s before the phrase at ${o.toFixed(3)}s`));
+      add("mix.onsets", hits.length ? "FAIL" : "PASS", hits.length ? hits.join("; ") : `no effect in the ${ONSET_GUARD}s before any of ${onsets.length} phrase onsets`);
+    }
+  }
   if (sb.audio && !sb.audio.music && !sb.audio.silence_reason) add("mix.music", "WARN", "no music bed and no silence_reason");
 }
 
@@ -220,7 +236,7 @@ function checkRow(paths) {
 }
 
 if (argv[0] === "--row") checkRow(argv.slice(1));
-else checkOne(load(argv[0]), load(flag("--brief")), load(flag("--kit")));
+else checkOne(load(argv[0]), load(flag("--brief")), load(flag("--kit")), load(flag("--phrases")));
 
 const fails = results.filter((r) => r.verdict === "FAIL").length;
 const warns = results.filter((r) => r.verdict === "WARN").length;
