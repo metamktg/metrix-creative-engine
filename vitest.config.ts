@@ -14,5 +14,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // Real ffmpeg and Chrome fixtures take more than 5 s each when the full suite runs in parallel.
+    testTimeout: 30000,
   },
 });
