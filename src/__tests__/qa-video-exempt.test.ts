@@ -83,7 +83,7 @@ describe.skipIf(!ffmpeg)("qa-video --exempt on a real double exposure", () => {
     const r = spawnSync(process.execPath, [qaVideo, file, "--silent", ...args], { encoding: "utf8" });
     return { status: r.status, stderr: r.stderr, report: r.stdout ? JSON.parse(r.stdout) : null };
   };
-  const trans = (rep: { results: { check: string }[] }) => rep.results.find((x) => x.check === "transitions") as { verdict: string; detail: string; measured: unknown[]; exempted?: unknown[] };
+  const trans = (rep: { results: { check: string }[] }) => rep.results.find((x) => x.check === "transitions") as unknown as { verdict: string; detail: string; measured: unknown[]; exempted?: unknown[] };
 
   beforeAll(() => {
     dir = fs.mkdtempSync(path.join(base, "qa-video-exempt-"));
