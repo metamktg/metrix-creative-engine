@@ -22,6 +22,7 @@
  *       or guarantees. A claim belongs in the brief, with its evidence.
  */
 import fs from "node:fs";
+import { floorFor, norm, ONSET_GUARD, onsetGuard, settled, voFloorFor, words } from "./timeline/rules.mjs";
 
 const argv = process.argv.slice(2);
 const flag = (k) => {
@@ -31,14 +32,7 @@ const flag = (k) => {
 const load = (p) => (p ? JSON.parse(fs.readFileSync(p, "utf8")) : null);
 const results = [];
 const add = (rule, verdict, detail) => results.push({ rule, verdict, detail });
-const words = (s) => s.trim().split(/\s+/).filter(Boolean).length;
-const norm = (s) => String(s).toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim();
-
-// Reading floor from brag, kept as is: a short label needs ~0.8s settled, a
-// sentence ~0.3s per word with a 1.2s minimum. Pace comes from motion and
-// cuts, never from pulling text before it can be read.
-const floorFor = (copy) => (words(copy) <= 3 ? 0.8 : Math.max(1.2, 0.3 * words(copy)));
-const settled = (t) => ({ from: t.in + (t.enter === "none" ? 0 : t.dur ?? 0.35), to: t.out });
+// words, norm, settled, floorFor, voFloorFor and onsetGuard live in timeline/rules.mjs.
 
 const ASSERTIVE = [
   [/\d/, "a digit"],
@@ -58,8 +52,6 @@ function resolve(pathStr, brief, kit) {
   return cur;
 }
 const flat = (v) => (v == null ? [] : Array.isArray(v) ? v.flatMap(flat) : typeof v === "object" ? Object.values(v).flatMap(flat) : [String(v)]);
-
-const ONSET_GUARD = 0.25;
 
 function checkOne(sb, brief, kit, phrases) {
   const ratios = { "9:16": [9, 16], "4:5": [4, 5], "1:1": [1, 1], "16:9": [16, 9] };
@@ -114,9 +106,8 @@ function checkOne(sb, brief, kit, phrases) {
     for (const t of items) {
       const w = settled(t);
       const hold = w.to - w.from;
-      // Captions of speech the viewer also hears are read along at speaking
-      // pace: about 4 words a second, never under 0.6s.
-      const need = t.source === "voiceover" ? Math.max(0.6, 0.25 * words(t.copy)) : floorFor(t.copy);
+      // Captions of speech the viewer also hears are read along at speaking pace.
+      const need = t.source === "voiceover" ? voFloorFor(t.copy) : floorFor(t.copy);
       if (t.in < s.start - 1e-6 || t.out > s.end + 1e-6) add(`read.${t.id}`, "FAIL", `"${t.copy}" runs outside its scene ${s.id}`);
       else if (hold + 1e-6 < need) add(`read.${t.id}`, "FAIL", `"${t.copy}" holds ${hold.toFixed(2)}s settled, needs ${need.toFixed(2)}s (${words(t.copy)} words)`);
       else add(`read.${t.id}`, "PASS", `${hold.toFixed(2)}s >= ${need.toFixed(2)}s`);
@@ -202,7 +193,7 @@ function checkOne(sb, brief, kit, phrases) {
     else {
       const at = sb.audio.voiceover.at ?? 0;
       const onsets = (phrases.phrases || []).map((p) => p.start + at);
-      const hits = sfx.flatMap((x) => onsets.filter((o) => x.at >= o - ONSET_GUARD && x.at < o).map((o) => `${x.file} at ${x.at}s, ${(o - x.at).toFixed(3)}s before the phrase at ${o.toFixed(3)}s`));
+      const hits = onsetGuard(sfx, onsets).map((h) => `${h.file} at ${h.at}s, ${h.lead.toFixed(3)}s before the phrase at ${h.onset.toFixed(3)}s`);
       add("mix.onsets", hits.length ? "FAIL" : "PASS", hits.length ? hits.join("; ") : `no effect in the ${ONSET_GUARD}s before any of ${onsets.length} phrase onsets`);
     }
   }

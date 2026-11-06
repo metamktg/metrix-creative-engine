@@ -22,6 +22,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { audioGraph } from "./audio-graph.mjs";
+import { norm, settled } from "./timeline/rules.mjs";
 
 const args = process.argv.slice(2);
 const flag = (k, d) => {
@@ -186,11 +187,7 @@ async function frameAt(cdp, t, format = "jpeg") {
 }
 
 // ------------------------------------------------------------ timing data ---
-// The settled window of a text item: fully entered, not yet leaving.
-function settled(item) {
-  const enterEnd = item.in + (item.enter === "none" ? 0 : item.dur ?? 0.35);
-  return { from: enterEnd, to: item.out };
-}
+// settled(): the window a text item is fully entered and not yet leaving (timeline/rules.mjs).
 
 function textItems() {
   return sb.scenes.flatMap((s) => (s.text || []).map((t) => ({ ...t, scene: s.id })));
@@ -346,8 +343,7 @@ async function check() {
     if (found.overflow) reasons.push("text overflows its box");
     // The composition must show the storyboard's copy, which the storyboard
     // check has already matched to the brief. Case is left to CSS.
-    const n = (s) => String(s).toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim();
-    if (n(found.text) !== n(item.copy)) reasons.push(`on screen "${String(found.text).trim()}" differs from storyboard "${item.copy}"`);
+    if (norm(found.text) !== norm(item.copy)) reasons.push(`on screen "${String(found.text).trim()}" differs from storyboard "${item.copy}"`);
     if (found.font_px < minPx) reasons.push(`type ${found.font_px}px is under the ${minPx}px feed-legibility floor`);
     results.push({ id: item.id, t: +t.toFixed(3), verdict: reasons.length ? "FAIL" : "PASS", reasons, on_screen: found.text, storyboard: item.copy, box: b, font_px: found.font_px });
   }
