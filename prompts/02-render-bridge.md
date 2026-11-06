@@ -24,7 +24,7 @@ are never copied into unsupported provider input parameters.
 - The Brand Translation Sheet and conflict resolutions from Stage 1
 - The format module for this `asset_type`
 - `references/model-routing.md`, `references/placement-specs.md`,
-  `references/prompt-construction.md`
+  `references/placement-zones.json`, `references/prompt-construction.md`
 
 ## The render spec
 
@@ -44,7 +44,7 @@ inside a running Matrix Sprint Test does it become a base with a slot per cell.
     "aspect_ratio": "9:16",
     "resolution": "2K",
     "duration_seconds": null,
-    "safe_zone": "keep subject, product and logo space out of top 14% and bottom 20%",
+    "safe_zone": "instagram_reels: keep text, logo, product, face and CTA out of top 14%, bottom 35%, sides 6% (placement-zones.json, Meta ads guide, retrieved 2026-11-06)",
     "viewing_assumption": "sound off, thumb scroll, first 1 to 2 seconds decide"
   },
 
@@ -135,8 +135,10 @@ nothing.
 - Feed: the subject reads at thumbnail size. Large subject, simple ground,
   clear value contrast.
 - Stories and Reels: the subject sits in the middle band, clear of the UI.
-  Prompt for a centred subject with headroom, because models cannot be told to
-  respect safe zones.
+  Take the band from `placement-zones.json` by placement, never from memory:
+  9:16 Reels and Stories keep top 14%, bottom 35%, sides 6% clear. Prompt for a
+  centred subject with headroom, because models cannot be told to respect safe
+  zones.
 - One asset for several placements: generate per ratio, or generate once with a
   centred subject and headroom and compose each placement deliberately,
   repositioning proof and type for that canvas. Never merely crop a finished ad.

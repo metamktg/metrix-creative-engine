@@ -15,7 +15,7 @@
       "Instagram Reels",
       "Facebook Stories"
     ],
-    "safe_zones": "top 14% and bottom 20% clear of type"
+    "safe_zones": "placement-zones.json instagram_reels / facebook_stories (Meta, retrieved 2026-11-06): text, logo, product and CTA clear of top 14%, bottom 35%, sides 6%"
   },
   "copy_architecture": {
     "hook": "Stop Guessing Which Ads Actually Work.",

@@ -14,7 +14,7 @@
     "placement": [
       "Facebook Feed"
     ],
-    "safe_zones": "keep type 5% clear of every edge"
+    "safe_zones": "placement-zones.json feed (house rule, Meta publishes no feed safe zone): keep type and logo 5% clear of every edge"
   },
   "copy_architecture": {
     "hook": null,
