@@ -1,0 +1,955 @@
+{
+  "schema": "mce.cutplan/1",
+  "name": "anon-v19",
+  "phrasemap": {
+    "path": "phrases.json",
+    "sha256": "8726874236a7e9f6d23450e159fdaf7fbad6e2522fd0c760b8df225e0b8594f7"
+  },
+  "fps": 30,
+  "grid": {
+    "bpm": 96,
+    "div": 8,
+    "origin": 0
+  },
+  "edit": {
+    "pre": 0.04,
+    "post": 0.08,
+    "lead": 0.06,
+    "tail": 1.45,
+    "prefer_full_beat_cost": 0.04,
+    "time_dp": 3,
+    "duration_dp": 2
+  },
+  "rules": {
+    "min_shot": 0.75
+  },
+  "segments": [
+    {
+      "id": "A",
+      "phrases": [
+        "A"
+      ],
+      "place": {
+        "mode": "start",
+        "at": 0
+      },
+      "snap": "none"
+    },
+    {
+      "id": "B+C",
+      "phrases": [
+        "B",
+        "C"
+      ],
+      "place": {
+        "mode": "gap"
+      },
+      "snap": "full_beat_pref"
+    },
+    {
+      "id": "D+E",
+      "phrases": [
+        "D",
+        "E"
+      ],
+      "place": {
+        "mode": "gap"
+      },
+      "snap": "full_beat_pref"
+    },
+    {
+      "id": "F",
+      "phrases": [
+        "F"
+      ],
+      "place": {
+        "mode": "gap"
+      },
+      "snap": "full_beat_pref"
+    },
+    {
+      "id": "G",
+      "phrases": [
+        "G"
+      ],
+      "place": {
+        "mode": "gap"
+      },
+      "snap": "full_beat_pref"
+    },
+    {
+      "id": "H",
+      "phrases": [
+        "H"
+      ],
+      "place": {
+        "mode": "sync",
+        "voice_at": 18.767,
+        "point": "cutTalk"
+      },
+      "snap": "none"
+    },
+    {
+      "id": "I",
+      "phrases": [
+        "I"
+      ],
+      "place": {
+        "mode": "after",
+        "point": "endCard"
+      },
+      "snap": "none"
+    }
+  ],
+  "points": [
+    {
+      "id": "picC",
+      "kind": "cut",
+      "from": "clip.S1@1.035",
+      "snap": "up"
+    },
+    {
+      "id": "pushC",
+      "kind": "cut",
+      "from": "clip.S1@1.78",
+      "snap": "up"
+    },
+    {
+      "id": "picApp",
+      "kind": "cut",
+      "from": "clip.S1@2.86",
+      "snap": "down"
+    },
+    {
+      "id": "cutD",
+      "kind": "event",
+      "from": "segment.D+E.cut",
+      "snap": "none"
+    },
+    {
+      "id": "tap",
+      "kind": "event",
+      "from": "voice@9.43",
+      "snap": "full_beat_pref"
+    },
+    {
+      "id": "sel",
+      "kind": "event",
+      "from": "point.tap+0.07",
+      "snap": "none"
+    },
+    {
+      "id": "lesson",
+      "kind": "event",
+      "from": "segment.F.cut",
+      "snap": "none"
+    },
+    {
+      "id": "expand",
+      "kind": "event",
+      "from": "point.lesson+0.38",
+      "snap": "none"
+    },
+    {
+      "id": "qa",
+      "kind": "event",
+      "from": "segment.G.cut",
+      "snap": "none"
+    },
+    {
+      "id": "tapB",
+      "kind": "event",
+      "from": "phrase.G.end-0.04",
+      "snap": "up"
+    },
+    {
+      "id": "right",
+      "kind": "event",
+      "from": "point.tapB+0.06",
+      "snap": "none"
+    },
+    {
+      "id": "ok",
+      "kind": "event",
+      "from": "point.tapB+0.12",
+      "snap": "none"
+    },
+    {
+      "id": "cutTalk",
+      "kind": "cut",
+      "from": null,
+      "snap": "up"
+    },
+    {
+      "id": "endCard",
+      "kind": "cut",
+      "from": null,
+      "snap": "up"
+    }
+  ],
+  "clips": [
+    {
+      "id": "clipA",
+      "file": "media/clip_a.mp4",
+      "duration": 5.04,
+      "fps": 25,
+      "clock": "own",
+      "voice_base": null,
+      "events": {
+        "ev": 1.92
+      },
+      "reject": [],
+      "residual": []
+    },
+    {
+      "id": "S1",
+      "file": "media/clip_b.mp4",
+      "duration": 5,
+      "fps": 25,
+      "clock": "voice",
+      "voice_base": 4,
+      "events": {},
+      "reject": [
+        {
+          "lo": 0.17,
+          "hi": 0.47,
+          "why": "S1 reject window one"
+        },
+        {
+          "lo": 0.53,
+          "hi": 1.03,
+          "why": "S1 reject window two"
+        },
+        {
+          "lo": 2.88,
+          "hi": 3.2,
+          "why": "S1 reject window three"
+        },
+        {
+          "lo": 3.2,
+          "hi": 5,
+          "why": "S1 reject window four"
+        }
+      ],
+      "residual": [
+        {
+          "lo": 1.44,
+          "hi": 1.74,
+          "why": "S1 accepted residual, no cutaway fits"
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "file": "media/clip_c.mp4",
+      "duration": 5,
+      "fps": 25,
+      "clock": "voice",
+      "voice_base": 17.958,
+      "events": {},
+      "reject": [
+        {
+          "lo": 0,
+          "hi": 0.4,
+          "why": "H reject window one"
+        },
+        {
+          "lo": 0.42,
+          "hi": 0.72,
+          "why": "H reject window two"
+        },
+        {
+          "lo": 4.9,
+          "hi": 5,
+          "why": "H reject window three"
+        }
+      ],
+      "residual": []
+    }
+  ],
+  "shots": [
+    {
+      "id": "clipA",
+      "source": "clipA",
+      "label": "clip A",
+      "from": "start",
+      "to": "point.picC",
+      "src_in": 0
+    },
+    {
+      "id": "S1a",
+      "source": "S1",
+      "label": "talking shot",
+      "from": "point.picC",
+      "to": "point.pushC",
+      "src_in": null
+    },
+    {
+      "id": "S1b",
+      "source": "S1",
+      "label": "punch-in",
+      "from": "point.pushC",
+      "to": "point.picApp",
+      "src_in": null
+    },
+    {
+      "id": "app",
+      "source": null,
+      "label": "demo (composition)",
+      "from": "point.picApp",
+      "to": "point.cutTalk",
+      "src_in": null
+    },
+    {
+      "id": "Hs",
+      "source": "H",
+      "label": "second talking shot",
+      "from": "point.cutTalk",
+      "to": "point.endCard",
+      "src_in": null
+    },
+    {
+      "id": "endcard",
+      "source": null,
+      "label": "end card (composition)",
+      "from": "point.endCard",
+      "to": "end",
+      "src_in": null
+    }
+  ],
+  "scenes": [
+    {
+      "id": "s1",
+      "role": "hook",
+      "from": "start",
+      "to": "point.picApp",
+      "visual": "Opening: clip A, then the talking shot and a punch-in"
+    },
+    {
+      "id": "s2",
+      "role": "show",
+      "from": "point.picApp",
+      "to": "point.endCard",
+      "visual": "The demo, then the second talking shot"
+    },
+    {
+      "id": "s3",
+      "role": "cta",
+      "from": "point.endCard",
+      "to": "end",
+      "visual": "End card holds through the last line"
+    }
+  ],
+  "storyboard": {
+    "brief_id": "ANON-01",
+    "tone": "native creator demo",
+    "poster_at": "start+0.5",
+    "lufs": -14,
+    "ratios": [
+      {
+        "ratio": "9:16",
+        "width": 1080,
+        "height": 1920
+      },
+      {
+        "ratio": "4:5",
+        "width": 1080,
+        "height": 1350
+      }
+    ],
+    "modes": [
+      "cap",
+      "clean"
+    ]
+  },
+  "constraints": [
+    {
+      "id": "gap_B",
+      "kind": "min_gap",
+      "a": "phrase.A.end",
+      "b": "phrase.B.start",
+      "s": 0.3,
+      "why": "fixed gap before the second line"
+    },
+    {
+      "id": "gap_D",
+      "kind": "min_gap",
+      "a": "phrase.C.end",
+      "b": "phrase.D.start",
+      "s": 0.11,
+      "why": "fixed gap before the demo line"
+    },
+    {
+      "id": "gap_F",
+      "kind": "min_gap",
+      "a": "phrase.E.end",
+      "b": "phrase.F.start",
+      "s": 0.2,
+      "why": "fixed gap before the third demo line"
+    },
+    {
+      "id": "gap_G",
+      "kind": "min_gap",
+      "a": "phrase.F.end",
+      "b": "phrase.G.start",
+      "s": 0.2,
+      "why": "fixed gap before the fourth demo line"
+    },
+    {
+      "id": "read_result",
+      "kind": "read_after",
+      "a": "point.ok",
+      "b": "point.cutTalk",
+      "s": 1,
+      "why": "result card readable for 1.0 s before the cut to the talking shot"
+    },
+    {
+      "id": "hold_end",
+      "kind": "hold_after",
+      "a": "phrase.H.end",
+      "b": "point.endCard",
+      "s": 0.8,
+      "why": "the expression after the last word is held"
+    },
+    {
+      "id": "clip_a_max",
+      "kind": "max_src",
+      "a": "shot.clipA",
+      "b": null,
+      "s": 3.5,
+      "why": "clip A is unusable after source 3.50"
+    },
+    {
+      "id": "event_in_B",
+      "kind": "min_gap",
+      "a": "phrase.B.start",
+      "b": "clip.clipA@1.92",
+      "s": 0,
+      "why": "the clip A event lands inside the second line"
+    },
+    {
+      "id": "event_in_B2",
+      "kind": "min_gap",
+      "a": "clip.clipA@1.92",
+      "b": "phrase.B.end",
+      "s": -0.15,
+      "why": "the clip A event lands inside the second line"
+    },
+    {
+      "id": "talk_after_words",
+      "kind": "min_gap",
+      "a": "phrase.C.start",
+      "b": "point.picC",
+      "s": 0.5,
+      "why": "the talking shot starts after the words spoken before it"
+    },
+    {
+      "id": "push_room_in",
+      "kind": "min_gap",
+      "a": "point.picC",
+      "b": "point.pushC",
+      "s": 0.5,
+      "why": "punch-in 0.5 s inside the shot"
+    },
+    {
+      "id": "push_room_out",
+      "kind": "min_gap",
+      "a": "point.pushC",
+      "b": "point.picApp",
+      "s": 0.5,
+      "why": "punch-in 0.5 s inside the shot"
+    },
+    {
+      "id": "app_after_line",
+      "kind": "min_gap",
+      "a": "phrase.C.end",
+      "b": "point.picApp",
+      "s": -0.4,
+      "why": "the demo opens once the line is mostly spoken"
+    },
+    {
+      "id": "app_before_D",
+      "kind": "min_gap",
+      "a": "point.picApp",
+      "b": "phrase.D.start",
+      "s": 0,
+      "why": "the demo opens before the next line"
+    },
+    {
+      "id": "line_on_card",
+      "kind": "min_gap",
+      "a": "phrase.H.start",
+      "b": "point.cutTalk",
+      "s": 0,
+      "why": "the line starts on the result card"
+    },
+    {
+      "id": "hold_floor",
+      "kind": "hold_after",
+      "a": "phrase.H.end",
+      "b": "point.endCard",
+      "s": 0.6,
+      "why": "fixed floor for the held expression"
+    },
+    {
+      "id": "take_long_enough",
+      "kind": "max_src",
+      "a": "shot.Hs",
+      "b": null,
+      "s": 4.9,
+      "why": "the take must not run out"
+    },
+    {
+      "id": "last_word_on_card",
+      "kind": "min_gap",
+      "a": "point.endCard",
+      "b": "phrase.I.start",
+      "s": 0,
+      "why": "final line on the end card"
+    },
+    {
+      "id": "decay",
+      "kind": "decay_after",
+      "a": "phrase.I.end",
+      "b": "end",
+      "s": 1.2,
+      "why": "final word decays on the end card"
+    }
+  ],
+  "captions": {
+    "builder": "manual",
+    "rules": {
+      "lead_in": 0.06,
+      "linger": 0.25,
+      "min_cue": 1.2,
+      "per_word": 0.3,
+      "max_lines": 2
+    },
+    "groups": [
+      {
+        "id": "hook",
+        "kind": "hook",
+        "copy": "Pidunebo nob deno pude fipude rafi fapid bemo?",
+        "source": "copy_architecture.hook",
+        "deliver": [
+          "burn"
+        ],
+        "phrases": [],
+        "split": null,
+        "from": "start",
+        "to": "point.picApp",
+        "not_before": null,
+        "not_after": null,
+        "lead_in": null,
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "o_a",
+        "kind": "voiceover",
+        "copy": "Bemo'n dinu.",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "phrases": [
+          "A"
+        ],
+        "split": null,
+        "from": null,
+        "to": null,
+        "not_before": null,
+        "not_after": null,
+        "lead_in": null,
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "o_b",
+        "kind": "voiceover",
+        "copy": "Pad fopa ref gu tig.",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "phrases": [
+          "B"
+        ],
+        "split": null,
+        "from": null,
+        "to": null,
+        "not_before": null,
+        "not_after": null,
+        "lead_in": null,
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "o_c1",
+        "kind": "voiceover",
+        "copy": "Kat vok levok zule mi bamiz",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "phrases": [
+          "C"
+        ],
+        "split": {
+          "id": "c_split",
+          "side": "before"
+        },
+        "from": null,
+        "to": null,
+        "not_before": null,
+        "not_after": null,
+        "lead_in": null,
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "o_c2",
+        "kind": "voiceover",
+        "copy": "nob deno pude fipude rafi.",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "phrases": [
+          "C"
+        ],
+        "split": {
+          "id": "c_split",
+          "side": "after"
+        },
+        "from": null,
+        "to": null,
+        "not_before": null,
+        "not_after": null,
+        "lead_in": 0,
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "cap_de",
+        "kind": "voiceover",
+        "copy": "Gora TegorafIpud, kute v lavik,",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "phrases": [
+          "D",
+          "E"
+        ],
+        "split": null,
+        "from": null,
+        "to": null,
+        "not_before": "point.picApp",
+        "not_after": "point.endCard",
+        "lead_in": null,
+        "cls": "ui",
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "cap_f",
+        "kind": "voiceover",
+        "copy": "zo mezolav pad bumezo,",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "phrases": [
+          "F"
+        ],
+        "split": null,
+        "from": null,
+        "to": null,
+        "not_before": null,
+        "not_after": "point.endCard",
+        "lead_in": null,
+        "cls": "ui",
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "cap_g",
+        "kind": "voiceover",
+        "copy": "nibu dan pad podanibu fepodanib.",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "phrases": [
+          "G"
+        ],
+        "split": null,
+        "from": null,
+        "to": null,
+        "not_before": null,
+        "not_after": "point.endCard",
+        "lead_in": null,
+        "cls": "ui",
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "cap_h1",
+        "kind": "voiceover",
+        "copy": "Rufep giru tagir kota",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "phrases": [
+          "H"
+        ],
+        "split": {
+          "id": "h_split",
+          "side": "before"
+        },
+        "from": null,
+        "to": null,
+        "not_before": null,
+        "not_after": "point.endCard",
+        "lead_in": null,
+        "cls": "ui low",
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "cap_h2",
+        "kind": "voiceover",
+        "copy": "vekotag lu ziluvekot maziluve.",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "phrases": [
+          "H"
+        ],
+        "split": {
+          "id": "h_split",
+          "side": "after"
+        },
+        "from": null,
+        "to": null,
+        "not_before": null,
+        "not_after": "point.endCard",
+        "lead_in": null,
+        "cls": "ui low",
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "o_i",
+        "kind": "voiceover",
+        "copy": "Boma v nebo du TegorafIpud.",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "phrases": [
+          "I"
+        ],
+        "split": null,
+        "from": "phrase.I.start-0.06",
+        "to": "end",
+        "not_before": null,
+        "not_after": null,
+        "lead_in": null,
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "cta",
+        "kind": "cta",
+        "copy": "Boma v nebo du TegorafIpud.",
+        "source": "copy_architecture.cta",
+        "deliver": [
+          "burn"
+        ],
+        "phrases": [],
+        "split": null,
+        "from": "point.endCard",
+        "to": "end",
+        "not_before": null,
+        "not_after": null,
+        "lead_in": null,
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null
+      },
+      {
+        "id": "url",
+        "kind": "label",
+        "copy": "tegorafipud.test",
+        "source": "copy_architecture.display_url",
+        "deliver": [
+          "burn"
+        ],
+        "phrases": [],
+        "split": null,
+        "from": "point.endCard+0.12",
+        "to": "end",
+        "not_before": null,
+        "not_after": null,
+        "lead_in": null,
+        "cls": null,
+        "enter": "fade",
+        "enter_dur": 0.2
+      }
+    ]
+  },
+  "audio": {
+    "voice": {
+      "file": "media/voice.wav",
+      "chain": {
+        "IR": "room/ir_a.wav",
+        "HUM_DB": "-60dB",
+        "HISS_DB": "-48dB",
+        "COMP_RATIO": 2,
+        "POLISH": 1
+      }
+    },
+    "sfx": [
+      {
+        "id": "evA",
+        "file": "sfx/impact/impactWood_medium_001.ogg",
+        "at": "clip.clipA@1.92-0.01",
+        "volume": 0.2,
+        "why": "clip A event"
+      },
+      {
+        "id": "tap1",
+        "file": "sfx/interface/click_002.ogg",
+        "at": "point.tap-0.02",
+        "volume": 0.45,
+        "why": "first tap"
+      },
+      {
+        "id": "tap2",
+        "file": "sfx/interface/click_003.ogg",
+        "at": "point.tapB-0.02",
+        "volume": 0.45,
+        "why": "second tap"
+      },
+      {
+        "id": "right",
+        "file": "sfx/interface/bong_001.ogg",
+        "at": "point.right",
+        "volume": 0.3,
+        "why": "result"
+      },
+      {
+        "id": "card",
+        "file": "sfx/impact/impactSoft_medium_004.ogg",
+        "at": "point.endCard",
+        "volume": 0.26,
+        "why": "cut to the end card"
+      }
+    ],
+    "music": {
+      "file": "media/bed.wav",
+      "volume": 0.27,
+      "fade_in": 0.05,
+      "fade_out": 0.8,
+      "licence": "original, compose-bed.mjs",
+      "sections": [
+        {
+          "at": "start",
+          "snap": "none",
+          "energy": 0,
+          "chord": [
+            57,
+            60,
+            64,
+            67
+          ],
+          "root": 45
+        },
+        {
+          "at": "point.picApp",
+          "snap": "beat_up",
+          "energy": 1,
+          "chord": [
+            53,
+            57,
+            60,
+            64
+          ],
+          "root": 41
+        },
+        {
+          "at": "point.lesson",
+          "snap": "beat_up",
+          "energy": 2,
+          "chord": [
+            48,
+            55,
+            60,
+            64
+          ],
+          "root": 36
+        },
+        {
+          "at": "point.tapB",
+          "snap": "beat_up",
+          "energy": 3,
+          "chord": [
+            55,
+            59,
+            62,
+            67
+          ],
+          "root": 43
+        },
+        {
+          "at": "point.endCard",
+          "snap": "beat_up",
+          "energy": 4,
+          "chord": [
+            48,
+            55,
+            60,
+            64,
+            67
+          ],
+          "root": 36
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "tm": {
+      "picC": "point.picC",
+      "pushC": "point.pushC",
+      "picApp": "point.picApp",
+      "cutHer": "point.cutTalk",
+      "endCard": "point.endCard",
+      "cutD": "point.cutD",
+      "end": "end",
+      "app.tap": "point.tap",
+      "app.sel": "point.sel",
+      "app.lesson": "point.lesson",
+      "app.expand": "point.expand",
+      "app.qa": "point.qa",
+      "app.tapB": "point.tapB",
+      "app.right": "point.right",
+      "app.ok": "point.ok",
+      "iIn": "phrase.I.start"
+    }
+  }
+}

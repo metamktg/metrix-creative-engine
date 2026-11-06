@@ -1,0 +1,777 @@
+{
+  "schema": "mce.timeline/1",
+  "name": "synthetic-desk",
+  "clock": "ad",
+  "fps": 30,
+  "duration": 8.46,
+  "grid": {
+    "bpm": 120,
+    "div": 4,
+    "unit": 0.125,
+    "origin": 0
+  },
+  "inputs": {
+    "phrasemap": {
+      "path": "phrases.json",
+      "sha256": "0da4bebf5506be75b7eaeaec9b63b15fd065c5d50ebb75ada1f3e03c0aac6748",
+      "schema": "mce.phrasemap/1"
+    },
+    "cutplan": {
+      "path": "cut.json",
+      "sha256": "6fc296bb1e6ba02c9371cde7f59250ac41e490c5387e253d67ede1415ba900b9",
+      "schema": "mce.cutplan/1"
+    }
+  },
+  "segments": [
+    {
+      "id": "S1",
+      "phrases": [
+        "P1"
+      ],
+      "src_in": 0.36,
+      "src_out": 1.98,
+      "out_in": 0.02,
+      "out_out": 1.64,
+      "offset": -0.34,
+      "speed": 1,
+      "audio_cut": 0,
+      "picture_cut": 0
+    },
+    {
+      "id": "S2",
+      "phrases": [
+        "P2"
+      ],
+      "src_in": 2.56,
+      "src_out": 4.28,
+      "out_in": 1.895,
+      "out_out": 3.615,
+      "offset": -0.665,
+      "speed": 1,
+      "audio_cut": 1.875,
+      "picture_cut": null
+    },
+    {
+      "id": "S3",
+      "phrases": [
+        "P3"
+      ],
+      "src_in": 4.96,
+      "src_out": 6.38,
+      "out_in": 3.895,
+      "out_out": 5.315,
+      "offset": -1.065,
+      "speed": 1,
+      "audio_cut": 3.875,
+      "picture_cut": null
+    },
+    {
+      "id": "S4",
+      "phrases": [
+        "P4"
+      ],
+      "src_in": 6.86,
+      "src_out": 8.18,
+      "out_in": 6.02,
+      "out_out": 7.34,
+      "offset": -0.84,
+      "speed": 1,
+      "audio_cut": 6,
+      "picture_cut": 6
+    }
+  ],
+  "phrases": [
+    {
+      "id": "P1",
+      "segment": "S1",
+      "text": "Morning light on a quiet desk.",
+      "src_start": 0.4,
+      "src_end": 1.9,
+      "start": 0.06,
+      "end": 1.56,
+      "words": [
+        {
+          "text": "Morning",
+          "start": 0.06,
+          "end": 0.44
+        },
+        {
+          "text": "light",
+          "start": 0.48,
+          "end": 0.74
+        },
+        {
+          "text": "on",
+          "start": 0.78,
+          "end": 0.86
+        },
+        {
+          "text": "a",
+          "start": 0.9,
+          "end": 0.94
+        },
+        {
+          "text": "quiet",
+          "start": 0.98,
+          "end": 1.26
+        },
+        {
+          "text": "desk.",
+          "start": 1.3,
+          "end": 1.56
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "segment": "S2",
+      "text": "Open the planner, pick one task.",
+      "src_start": 2.6,
+      "src_end": 4.2,
+      "start": 1.935,
+      "end": 3.535,
+      "words": [
+        {
+          "text": "Open",
+          "start": 1.935,
+          "end": 2.175
+        },
+        {
+          "text": "the",
+          "start": 2.215,
+          "end": 2.295
+        },
+        {
+          "text": "planner,",
+          "start": 2.335,
+          "end": 2.735
+        },
+        {
+          "text": "pick",
+          "start": 2.955,
+          "end": 3.135
+        },
+        {
+          "text": "one",
+          "start": 3.175,
+          "end": 3.315
+        },
+        {
+          "text": "task.",
+          "start": 3.355,
+          "end": 3.535
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "segment": "S3",
+      "text": "Finish it before lunch.",
+      "src_start": 5,
+      "src_end": 6.3,
+      "start": 3.935,
+      "end": 5.235,
+      "words": [
+        {
+          "text": "Finish",
+          "start": 3.935,
+          "end": 4.295
+        },
+        {
+          "text": "it",
+          "start": 4.335,
+          "end": 4.435
+        },
+        {
+          "text": "before",
+          "start": 4.475,
+          "end": 4.835
+        },
+        {
+          "text": "lunch.",
+          "start": 4.875,
+          "end": 5.235
+        }
+      ]
+    },
+    {
+      "id": "P4",
+      "segment": "S4",
+      "text": "Try the planner today.",
+      "src_start": 6.9,
+      "src_end": 8.1,
+      "start": 6.06,
+      "end": 7.26,
+      "words": [
+        {
+          "text": "Try",
+          "start": 6.06,
+          "end": 6.26
+        },
+        {
+          "text": "the",
+          "start": 6.3,
+          "end": 6.38
+        },
+        {
+          "text": "planner",
+          "start": 6.42,
+          "end": 6.86
+        },
+        {
+          "text": "today.",
+          "start": 6.9,
+          "end": 7.26
+        }
+      ]
+    }
+  ],
+  "points": [
+    {
+      "id": "toDesk",
+      "kind": "cut",
+      "t": 2.125
+    },
+    {
+      "id": "tick",
+      "kind": "event",
+      "t": 3.875
+    },
+    {
+      "id": "card",
+      "kind": "cut",
+      "t": 6
+    }
+  ],
+  "shots": [
+    {
+      "id": "face",
+      "source": "face",
+      "file": "media/face.mp4",
+      "label": "presenter to camera",
+      "out_in": 0,
+      "out_out": 2.125,
+      "src_in": 0.04,
+      "src_out": 2.165,
+      "src_fps": 25,
+      "src_duration": 9,
+      "reject": [
+        {
+          "lo": 0,
+          "hi": 0.03,
+          "why": "lead-in before the first word"
+        }
+      ],
+      "residual": []
+    },
+    {
+      "id": "desk",
+      "source": "desk",
+      "file": "media/desk.mp4",
+      "label": "desk and planner",
+      "out_in": 2.125,
+      "out_out": 6,
+      "src_in": 0.5,
+      "src_out": 4.375,
+      "src_fps": 24,
+      "src_duration": 6,
+      "reject": [
+        {
+          "lo": 5.5,
+          "hi": 6,
+          "why": "camera bump at the end of the take"
+        }
+      ],
+      "residual": [
+        {
+          "lo": 0.6,
+          "hi": 0.8,
+          "why": "soft focus for a moment, accepted"
+        }
+      ]
+    },
+    {
+      "id": "card",
+      "source": null,
+      "file": null,
+      "label": "end card (composition)",
+      "out_in": 6,
+      "out_out": 8.46,
+      "src_in": null,
+      "src_out": null,
+      "src_fps": null,
+      "src_duration": null,
+      "reject": [],
+      "residual": []
+    }
+  ],
+  "scenes": [
+    {
+      "id": "s1",
+      "role": "hook",
+      "start": 0,
+      "end": 2.125,
+      "visual": "Presenter to camera at a tidy desk"
+    },
+    {
+      "id": "s2",
+      "role": "show",
+      "start": 2.125,
+      "end": 6,
+      "visual": "The planner open on the desk, one task ticked"
+    },
+    {
+      "id": "s3",
+      "role": "cta",
+      "start": 6,
+      "end": 8.46,
+      "visual": "End card with the call to action"
+    }
+  ],
+  "storyboard": {
+    "brief_id": "SYN-01",
+    "tone": "calm product demo",
+    "poster_at": 0.4,
+    "lufs": -14,
+    "ratios": [
+      {
+        "ratio": "9:16",
+        "width": 1080,
+        "height": 1920
+      },
+      {
+        "ratio": "1:1",
+        "width": 1080,
+        "height": 1080
+      }
+    ],
+    "modes": [
+      "cap",
+      "clean"
+    ]
+  },
+  "captions": {
+    "builder": "auto",
+    "rules": {
+      "energy": "conversational",
+      "max_chars_line": 42,
+      "max_lines": 2,
+      "max_cps": 20,
+      "min_gap_frames": 2,
+      "exit_fade": 0.12,
+      "snap_to_shot": 0.5,
+      "pause_break": 0.15,
+      "min_cue": 0.67
+    },
+    "groups": [
+      {
+        "id": "hook",
+        "kind": "hook",
+        "source": "copy_architecture.hook",
+        "deliver": [
+          "burn"
+        ],
+        "start": 0,
+        "end": 2.125,
+        "text": "One task, done before lunch",
+        "lines": [
+          "One task, done before lunch"
+        ],
+        "words": [
+          {
+            "text": "One",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "task,",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "done",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "before",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "lunch",
+            "start": null,
+            "end": null,
+            "line": 0
+          }
+        ],
+        "phrases": [],
+        "cls": null,
+        "enter": "rise",
+        "enter_dur": 0.3,
+        "exit_fade": null
+      },
+      {
+        "id": "vo1",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 0.033,
+        "end": 0.7,
+        "text": "Morning light",
+        "lines": [
+          "Morning light"
+        ],
+        "words": [
+          {
+            "text": "Morning",
+            "start": 0.06,
+            "end": 0.44,
+            "line": 0
+          },
+          {
+            "text": "light",
+            "start": 0.48,
+            "end": 0.74,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "P1"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": 0.12
+      },
+      {
+        "id": "vo2",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 0.767,
+        "end": 1.867,
+        "text": "on a quiet desk.",
+        "lines": [
+          "on a quiet desk."
+        ],
+        "words": [
+          {
+            "text": "on",
+            "start": 0.78,
+            "end": 0.86,
+            "line": 0
+          },
+          {
+            "text": "a",
+            "start": 0.9,
+            "end": 0.94,
+            "line": 0
+          },
+          {
+            "text": "quiet",
+            "start": 0.98,
+            "end": 1.26,
+            "line": 0
+          },
+          {
+            "text": "desk.",
+            "start": 1.3,
+            "end": 1.56,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "P1"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": 0.12
+      },
+      {
+        "id": "vo3",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 1.933,
+        "end": 2.867,
+        "text": "Open the planner,",
+        "lines": [
+          "Open the planner,"
+        ],
+        "words": [
+          {
+            "text": "Open",
+            "start": 1.935,
+            "end": 2.175,
+            "line": 0
+          },
+          {
+            "text": "the",
+            "start": 2.215,
+            "end": 2.295,
+            "line": 0
+          },
+          {
+            "text": "planner,",
+            "start": 2.335,
+            "end": 2.735,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "P2"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": 0.12
+      },
+      {
+        "id": "vo4",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 2.933,
+        "end": 3.867,
+        "text": "pick one task.",
+        "lines": [
+          "pick one task."
+        ],
+        "words": [
+          {
+            "text": "pick",
+            "start": 2.955,
+            "end": 3.135,
+            "line": 0
+          },
+          {
+            "text": "one",
+            "start": 3.175,
+            "end": 3.315,
+            "line": 0
+          },
+          {
+            "text": "task.",
+            "start": 3.355,
+            "end": 3.535,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "P2"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": 0.12
+      },
+      {
+        "id": "vo5",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 3.933,
+        "end": 5.267,
+        "text": "Finish it before lunch.",
+        "lines": [
+          "Finish it before lunch."
+        ],
+        "words": [
+          {
+            "text": "Finish",
+            "start": 3.935,
+            "end": 4.295,
+            "line": 0
+          },
+          {
+            "text": "it",
+            "start": 4.335,
+            "end": 4.435,
+            "line": 0
+          },
+          {
+            "text": "before",
+            "start": 4.475,
+            "end": 4.835,
+            "line": 0
+          },
+          {
+            "text": "lunch.",
+            "start": 4.875,
+            "end": 5.235,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "P3"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": 0.12
+      },
+      {
+        "id": "cta",
+        "kind": "cta",
+        "source": "copy_architecture.cta",
+        "deliver": [
+          "burn"
+        ],
+        "start": 6,
+        "end": 8.46,
+        "text": "Try the planner",
+        "lines": [
+          "Try the planner"
+        ],
+        "words": [
+          {
+            "text": "Try",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "the",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "planner",
+            "start": null,
+            "end": null,
+            "line": 0
+          }
+        ],
+        "phrases": [],
+        "cls": null,
+        "enter": "fade",
+        "enter_dur": 0.2,
+        "exit_fade": null
+      },
+      {
+        "id": "vo6",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 6,
+        "end": 7.267,
+        "text": "Try the planner today.",
+        "lines": [
+          "Try the planner today."
+        ],
+        "words": [
+          {
+            "text": "Try",
+            "start": 6.06,
+            "end": 6.26,
+            "line": 0
+          },
+          {
+            "text": "the",
+            "start": 6.3,
+            "end": 6.38,
+            "line": 0
+          },
+          {
+            "text": "planner",
+            "start": 6.42,
+            "end": 6.86,
+            "line": 0
+          },
+          {
+            "text": "today.",
+            "start": 6.9,
+            "end": 7.26,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "P4"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": 0.12
+      }
+    ]
+  },
+  "audio": {
+    "voice": {
+      "file": "media/voice.wav",
+      "chain": null
+    },
+    "sfx": [
+      {
+        "id": "tick",
+        "file": "sfx/interface/click_002.ogg",
+        "at": 3.425,
+        "volume": 0.4,
+        "why": "the task is ticked"
+      }
+    ],
+    "music": {
+      "file": "media/bed.wav",
+      "volume": 0.25,
+      "fade_in": 0.05,
+      "fade_out": 0.6,
+      "licence": "original, compose-bed.mjs",
+      "sections": [
+        {
+          "from": 0,
+          "to": 2.5,
+          "energy": 0
+        },
+        {
+          "from": 2.5,
+          "to": 6,
+          "energy": 1
+        },
+        {
+          "from": 6,
+          "to": 8.46,
+          "energy": 2,
+          "chord": [
+            48,
+            55,
+            60,
+            64
+          ],
+          "root": 36
+        }
+      ]
+    }
+  },
+  "tm": {
+    "toDesk": 2.125,
+    "ui": {
+      "tick": 3.875
+    },
+    "card": 6,
+    "end": 8.46
+  }
+}
