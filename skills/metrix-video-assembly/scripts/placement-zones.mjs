@@ -39,7 +39,8 @@ export function loadTable(file = TABLE_PATH) {
   return t;
 }
 
-const norm = (s) => String(s).trim().toLowerCase().replace(/[\s-]+/g, "_");
+// Placement name to table id ("Instagram Reels" -> "instagram_reels"). Not the copy norm() in timeline/rules.mjs.
+const placementKey = (s) => String(s).trim().toLowerCase().replace(/[\s-]+/g, "_");
 const ratiosOf = (z) => z.ratios ?? [z.ratio];
 const runsAt = (z, ratio) => ratiosOf(z).some((r) => r === "*" || r === ratio);
 
@@ -58,9 +59,9 @@ export function zoneFor({ ratio, placement } = {}, table = loadTable()) {
     warnings.push(`no placement declared: legacy ${z.id} zone (top ${z.top}, bottom ${z.bottom}, side ${z.side}) applied; declare format.placement to be held to the placement's overlay`);
     return view(z, warnings);
   }
-  const key = norm(placement);
+  const key = placementKey(placement);
   const target = table.aliases?.[key] ?? key;
-  const z = table.zones.find((r) => r.source !== "legacy" && (r.id === target || r.placements.some((p) => norm(p) === target)));
+  const z = table.zones.find((r) => r.source !== "legacy" && (r.id === target || r.placements.some((p) => placementKey(p) === target)));
   if (!z) throw new Error(`unknown placement "${placement}"; known: ${table.zones.filter((r) => r.source !== "legacy").map((r) => r.id).join(", ")}`);
   if (!runsAt(z, ratio)) throw new Error(`placement "${placement}" (${z.id}) runs at ${ratiosOf(z).join(", ")}, not ${ratio}`);
   if (z.source_grade === "third_party") warnings.push(`${z.id} zone is third_party grade (no Meta page states it): band violations WARN, never FAIL`);
