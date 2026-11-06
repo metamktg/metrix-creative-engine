@@ -33,6 +33,18 @@ jobs:
           ffmpeg -version
           ffprobe -version
 
+      # render-health.test.ts drives render.mjs over a real headless Chrome and FAILs (never
+      # skips) under CI when none launches. ubuntu-latest ships google-chrome. Ubuntu 24.04
+      # restricts unprivileged user namespaces through AppArmor, which Chrome's sandbox needs:
+      # lift that for the job here; never pass --no-sandbox instead. Prove the launch before
+      # verify so a browser problem reads as one, not as a test failure.
+      - name: Browser for the render tests
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || echo "no apparmor userns knob on this runner"
+          google-chrome --version
+          google-chrome --headless=new --dump-dom about:blank > /dev/null
+          echo "google-chrome launched headless"
+
       - run: pnpm install --frozen-lockfile
 
       # The repository gate, the same command a contributor runs locally. It
