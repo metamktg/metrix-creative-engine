@@ -25,6 +25,12 @@ jobs:
         with:
           python-version: "3.12"
 
+      # The audio-length, onset-guard and phrase-map tests build fixtures with
+      # ffmpeg and read them with ffprobe (silencedetect, libx264, aac). They use
+      # a saved words file, so the whisper filter is not needed here.
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg && ffmpeg -hide_banner -version | head -1
+
       - run: pnpm install --frozen-lockfile
 
       # The repository gate, the same command a contributor runs locally. It
