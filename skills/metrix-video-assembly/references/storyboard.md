@@ -67,12 +67,21 @@ folder unless absolute.
 | `text[].label` | `true` for a fixed label that is read once and stays put: a disclosure, a legal line, a source credit, the brand name beside its mark. Labels still need their reading floor, but they do not count against scene density or the stagger rule. Lines sourced from `kit.disclosure` or `kit.identity` are labels automatically |
 | `text[].in` / `out` | When the line starts entering and when it is gone |
 | `text[].enter` / `dur` | Entrance (`none`, `fade`, `rise`, `slam`, `pop`, `type`, `wipe`) and its length. Settled time is `out - (in + dur)`, or `out - in` for `none` |
-| `audio.music` | Bed file, offset into the track (`start`), volume (max 0.5), fades, and the licence it runs under |
+| `text[].claim_source` | A voiced line that asserts (a digit, money, `#1`, a superlative or guarantee) names the brief or kit field that carries it, for example `copy_architecture.proof`. A forbidden or avoid list is never a source |
+| `text[].kind` | Optional: what the line is (`voiceover`, `hook`, `cta`, `label`, `framing`), as an emitted storyboard records it |
+| `audio.music` | Bed file, offset into the track (`start`), volume (max 0.5), fades, and the licence it runs under. `licence` is required whenever `file` is set |
 | `audio.sfx[]` | Effect file, the time it fires, volume |
-| `audio.voiceover` | `{ "file", "at", "volume" }` or null. Requires caption lines |
+| `audio.voiceover` | `{ "file", "at", "volume", "script", "script_sha256" }` or null. Requires captions: burned lines (CAP) or `delivery.srt` (CLEAN) |
+| `audio.voiceover.script` | The words as the author typed them. Grounds nothing; with a locked script it must say the same words |
+| `audio.voiceover.script_sha256` | sha256 of the locked script file's bytes, passed to the check with `--script`. Voiced captions ground in that file or the brief's copy |
 | `audio.lufs` | Loudness target, default -14 |
 | `audio.silence_reason` | Required if there is no music bed |
 | `slot` | Inside an MST only: `{ "scene": "s1" }`, the one scene that varies across the row |
+| `delivery.captions` | `"cap"`: voiceover captions burned in. `"clean"`: none burned; sound off is carried by `delivery.srt` |
+| `delivery.srt` | Caption file, relative to the storyboard. For CLEAN its words must equal the voiced script in order and its cues cover every phrase (checked with `--phrases`) |
+| `derived_from` | Written by the timeline emitter: `{ "path", "sha256", "schema": "mce.timeline/1", "tm_sha256" }`. The check fails a stale stamp, and a storyboard with a `timeline.json` beside it and no stamp (`references/timeline.md`) |
+| `schema_version` | Omit for the original format; `2` requires `format.placement`. `format.kind` (`video`, `still`, `carousel`), `delivery` and `derived_from` are optional in either and checked when present |
+| `format.placement` | Where it runs (`"Instagram Reels"`, `"facebook_stories"`, `"feed"`), resolved through `references/placement-zones.json`; an unknown placement fails |
 
 The composition mirrors this: each scene is a `section` with the same
 `data-scene`, `data-start` and `data-end`; each text item an element with the

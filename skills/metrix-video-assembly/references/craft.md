@@ -167,7 +167,8 @@ before the first visible frame); a success sound fires when the thing is fully
 visible. In a staggered sequence, accent the first and last, not every item.
 Fewer cues, better timed. Over a voiced ad the voice wins: no effect starts in
 the 0.25 s before a phrase onset, where a slide or whoosh reads as a breath or a
-clipped word (`check-storyboard.mjs --phrases <phrase-map output>` fails it).
+clipped word (`check-storyboard.mjs <storyboard> --brief <brief> --phrases <phrase-map output>`
+fails it; grounding is strict, so the brief goes with it).
 Move the effect, or drop it.
 
 | Moment | File in `assets/sfx/` |
