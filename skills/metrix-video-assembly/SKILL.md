@@ -307,6 +307,49 @@ maps a brand name the recogniser always mishears. Pass the output to
 `check-storyboard.mjs --phrases` so no effect lands just before a phrase. A
 recogniser match is not a listening pass.
 
+## HyperFrames layer (captions, motion, finishing)
+
+HyperFrames v0.9.19 (Apache-2.0) is pinned in the engine's `package.json`, and its
+nine official skills ship beside this one: `hyperframes` (read it first: the render
+contract and work loop), `hyperframes-cli`, `hyperframes-registry` (about 450
+caption, transition, overlay and kinetic-type blocks), `media-use` (grades, looks,
+transcripts, audio placement), `reverse-any-video`, `remotion-to-hyperframes`,
+`style-sampling`, `slideshow` and `figma`. Their sources are pinned in
+`skills/VENDORED.json`; refresh them only by bumping that pin.
+
+They build on this skill rather than replace it. The engine stays the source of
+truth for words and timing; HyperFrames draws on top of it:
+
+```
+node scripts/phrase-map.mjs <voice.wav> --script script.txt --out <run>/work/phrases.json
+npx hyperframes add caption-highlight            (in the HyperFrames project; any caption-* block)
+node scripts/hyperframes/captions-from-phrases.mjs <run>/work/phrases.json \
+     --component compositions/components/caption-highlight.html \
+     --out compositions/captions.html --width 1080 --height 1920 [--offset <voice at>]
+npx hyperframes check                            (its readability, layout and audio gate)
+npx hyperframes render --output <name>.mp4
+node scripts/qa-video.mjs <name>.mp4 --ratio 9:16 --duration <s>     (this engine's gate, unchanged)
+```
+
+The adapter refuses a phrase map whose script check did not match, groups words
+inside each phrase so a caption never runs across a pause, closes the blank frame
+registry blocks leave between groups, holds the closing line to the end and, on
+vertical video, lifts captions to 36 % of the height so they clear the platform's
+bottom overlay. Both gates must pass: `hyperframes check` and `qa-video.mjs`.
+
+Operating rules:
+- Set `HYPERFRAMES_NO_TELEMETRY=1` (and run `npx hyperframes telemetry disable`
+  once per machine). Use only the local, free routes in `media-use`; its paid
+  generation and cloud render routes need a quote and owner approval like any spend.
+- Point `TEMP`/`TMP` at a drive with room before rendering; the CLI refuses under
+  about 1 GB free.
+- Its own transcription needs whisper.cpp. Use this engine's `phrase-map.mjs`
+  words instead; they are the ones that passed the script check.
+- `reverse-any-video` and `style-sampling` are for internal analysis of reference
+  ads: measure pacing, cuts and caption density. Never republish or reuse the
+  footage.
+- `remotion-to-hyperframes` is only for porting work the owner already licenses.
+
 ## What this skill will not do
 
 - Invent a claim, a number, a testimonial or a rating. Connective framing is
