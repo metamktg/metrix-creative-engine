@@ -335,12 +335,13 @@ describe.runIf(browser && ffmpeg)("render.mjs in a real browser", { concurrent: 
   it("shows source frame i at ad frame i for a 30 fps WebM at offset 0 (stills and a real render)", async () => {
     const at0: Edit = ['data-start="0.5" data-offset="0.3"', 'data-start="0" data-offset="0"'];
     const c = makeCase("seek30", [at0], () => {}, () => clip30);
-    const times = Array.from({ length: 15 }, (_, i) => i / 30);
+    // Four passes over frames 0 to 14: a lagging capture is intermittent, so one pass can miss it.
+    const times = Array.from({ length: 60 }, (_, i) => (i % 15) / 30);
     const r = await run([c.comp, "--storyboard", c.sb, "--mode", "stills", "--times", times.join(",")]);
     expect(r.status, r.stderr).toBe(0);
     const out = JSON.parse(r.stdout);
     expect(out.health.clips).toEqual([{ src: "clip.webm", fps: 30, mapping: "frame-centre" }]);
-    expect(out.stills.map((s: any) => decodedFrame(path.join(out.dir, s.file)))).toEqual(times.map((_, i) => i));
+    expect(out.stills.map((s: any) => decodedFrame(path.join(out.dir, s.file)))).toEqual(times.map((_, i) => i % 15));
     // the render loop seeks i / fps through the same frameAt: every encoded frame is the next source frame
     const rc = makeCase("render30", [at0], (sb) => { sb.duration = 1; }, () => clip30);
     const ad = path.join(rc.dir, "ad.mp4");
