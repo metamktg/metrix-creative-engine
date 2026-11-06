@@ -24,8 +24,9 @@
 import fs from "node:fs";
 
 import path from "node:path";
-import { spawnSync } from "node:child_process";
-import { assignWords, parseWhisperWords, phrasesToSrt, scriptDiff, speechIslands } from "./phrase-align.mjs";
+import { assignWords, phrasesToSrt, scriptDiff } from "./phrase-align.mjs";
+import { islands as speechIslandsOf, readWords, words as whisperWords } from "./media/asr.mjs";
+import { probe } from "./media/probe.mjs";
 
 const argv = process.argv.slice(2);
 const valued = ["--script", "--alias", "--noise", "--min-gap", "--model", "--words", "--out", "--srt"];
@@ -36,37 +37,19 @@ const die = (m) => { console.error(`phrase-map: ${m}`); process.exit(1); };
 if (!input) die("usage: phrase-map.mjs <voice.wav> [--script script.txt] [--alias heard=meant] [--words words.jsonl] [--out phrases.json] [--srt out.srt]");
 if (!fs.existsSync(input)) die(`no such file: ${input}`);
 
-const ff = (args, opts = {}) => spawnSync("ffmpeg", ["-hide_banner", "-nostats", ...args], { encoding: "utf8", maxBuffer: 64 << 20, ...opts });
-
-const probe = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", input], { encoding: "utf8" });
-const duration = Number(probe.stdout.trim());
+let duration = NaN;
+try { duration = probe(input).format.duration; } catch { /* reported below */ }
 if (!Number.isFinite(duration) || duration <= 0) die(`cannot read the duration of ${input} (is ffprobe installed?)`);
 
 const noise = flag("--noise", "-40dB");
 const minGap = Number(flag("--min-gap", "0.15"));
-const sd = ff(["-i", input, "-af", `silencedetect=noise=${noise}:d=${minGap}`, "-f", "null", "-"]);
-if (sd.status !== 0) die(`silencedetect failed: ${sd.stderr.slice(-400)}`);
-const islands = speechIslands(sd.stderr, duration);
+const attempt = (fn) => { try { return fn(); } catch (e) { return die(e.message); } };
+const islands = attempt(() => speechIslandsOf(input, { noise, minGap, duration }));
 if (!islands.length) die(`no speech found above ${noise}`);
 
-let wordsText;
+// Words come from a saved --words file, or from the ffmpeg whisper filter (media/asr.mjs).
 const wordsFile = flag("--words");
-if (wordsFile) {
-  wordsText = fs.readFileSync(wordsFile, "utf8");
-} else {
-  const model = flag("--model", process.env.METRIX_WHISPER_MODEL);
-  if (!model || !fs.existsSync(model)) die("no Whisper model: pass --model <ggml-*.bin>, set METRIX_WHISPER_MODEL, or pass --words");
-  // The filter's option parser splits on ':', so a Windows drive path cannot go in it.
-  // Run from the model's folder and give the model and destination as bare names.
-  const dir = path.dirname(path.resolve(model));
-  const dest = `phrase-map-${process.pid}.jsonl`;
-  const w = ff(["-i", path.resolve(input), "-af", `whisper=model=${path.basename(model)}:language=en:queue=20:max_len=1:format=json:destination=${dest}`, "-f", "null", "-"], { cwd: dir });
-  const out = path.join(dir, dest);
-  if (w.status !== 0 || !fs.existsSync(out)) die(`whisper failed (needs an ffmpeg build with the whisper filter): ${w.stderr.slice(-400)}`);
-  wordsText = fs.readFileSync(out, "utf8");
-  fs.rmSync(out, { force: true });
-}
-const words = parseWhisperWords(wordsText);
+const words = attempt(() => (wordsFile ? readWords(wordsFile) : whisperWords(input, { model: flag("--model", process.env.METRIX_WHISPER_MODEL) })));
 const phrases = assignWords(islands, words);
 
 const result = { input: path.resolve(input), duration, silencedetect: { noise, min_gap: minGap }, phrases, script_check: null };
