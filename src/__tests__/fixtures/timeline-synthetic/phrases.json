@@ -1,0 +1,157 @@
+{
+  "schema": "mce.phrasemap/1",
+  "clock": "voice",
+  "voice": {
+    "path": "media/voice_master.wav",
+    "sha256": null,
+    "duration": 9.5,
+    "sample_rate": 48000,
+    "channels": 1
+  },
+  "edges": {
+    "method": "silencedetect",
+    "noise": "-40dB",
+    "min_gap": 0.15
+  },
+  "words_source": {
+    "method": "words-file",
+    "model": null,
+    "qualified_against": null
+  },
+  "phrases": [
+    {
+      "id": "P1",
+      "start": 0.4,
+      "end": 1.9,
+      "text": "Morning light on a quiet desk.",
+      "words": [
+        {
+          "text": "Morning",
+          "start": 0.4,
+          "end": 0.78
+        },
+        {
+          "text": "light",
+          "start": 0.82,
+          "end": 1.08
+        },
+        {
+          "text": "on",
+          "start": 1.12,
+          "end": 1.2
+        },
+        {
+          "text": "a",
+          "start": 1.24,
+          "end": 1.28
+        },
+        {
+          "text": "quiet",
+          "start": 1.32,
+          "end": 1.6
+        },
+        {
+          "text": "desk.",
+          "start": 1.64,
+          "end": 1.9
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "start": 2.6,
+      "end": 4.2,
+      "text": "Open the planner, pick one task.",
+      "words": [
+        {
+          "text": "Open",
+          "start": 2.6,
+          "end": 2.84
+        },
+        {
+          "text": "the",
+          "start": 2.88,
+          "end": 2.96
+        },
+        {
+          "text": "planner,",
+          "start": 3,
+          "end": 3.4
+        },
+        {
+          "text": "pick",
+          "start": 3.62,
+          "end": 3.8
+        },
+        {
+          "text": "one",
+          "start": 3.84,
+          "end": 3.98
+        },
+        {
+          "text": "task.",
+          "start": 4.02,
+          "end": 4.2
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "start": 5,
+      "end": 6.3,
+      "text": "Finish it before lunch.",
+      "words": [
+        {
+          "text": "Finish",
+          "start": 5,
+          "end": 5.36
+        },
+        {
+          "text": "it",
+          "start": 5.4,
+          "end": 5.5
+        },
+        {
+          "text": "before",
+          "start": 5.54,
+          "end": 5.9
+        },
+        {
+          "text": "lunch.",
+          "start": 5.94,
+          "end": 6.3
+        }
+      ]
+    },
+    {
+      "id": "P4",
+      "start": 6.9,
+      "end": 8.1,
+      "text": "Try the planner today.",
+      "words": [
+        {
+          "text": "Try",
+          "start": 6.9,
+          "end": 7.1
+        },
+        {
+          "text": "the",
+          "start": 7.14,
+          "end": 7.22
+        },
+        {
+          "text": "planner",
+          "start": 7.26,
+          "end": 7.7
+        },
+        {
+          "text": "today.",
+          "start": 7.74,
+          "end": 8.1
+        }
+      ]
+    }
+  ],
+  "splits": [],
+  "script_check": null
+}

@@ -85,7 +85,8 @@ There is no script equivalent. The brief gate exists only on the MCP server.
 
 ## `kie_validate_ugc_preproduction`
 
-Checks a local version-1 UGC preproduction packet without spending: exact source hashes, locked copy,
+Checks a local version-2 UGC preproduction packet (version 1 only for allowlisted run IDs) without spending: exact source hashes, locked copy,
+presenter acceptance of the exact stills, look and eye sheet by a reviewer other than `prepared_by`,
 presenter, voice and scene acceptance records, proof roles, and the current request, capability and
 budget bindings. Read-only; no credits and no provider call.
 
@@ -101,7 +102,8 @@ served as `kie://ugc-preproduction`. The script equivalent is `node kie.mjs ugc-
 
 ## `kie_create_ugc_lipsync`
 
-Submits approved-full-voice creator lip sync through Kie after the same checks pass. It loads the exact
+Submits approved-full-voice creator lip sync through Kie after the same checks pass, or, for a version-2
+packet whose route is `motion`, silent image-to-video from an accepted presenter still. It loads the exact
 model and input from the packet, revalidates hashes and acceptance, creates an exclusive durable
 submission receipt, then makes one provider call.
 

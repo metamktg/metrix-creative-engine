@@ -1,0 +1,32 @@
+<!doctype html>
+<!--
+  render-health fixture: a 320 x 320 composition with one clip, one image, one font and two lines.
+  The clip (clip.webm) is made by the test: 25 fps lossless VP9 whose top 80 rows carry the frame
+  number in binary, ten 32 px stripes, least significant bit at the left. The test copies this
+  folder per case and edits marked strings to break one thing at a time.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: G; src: url("fonts/Geist-Regular.ttf"); font-weight: 400; }
+  html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: G; }
+  section[data-scene] { position: absolute; inset: 0; }
+  .clip { position: absolute; left: 0; top: 0; width: 320px; height: 320px; object-fit: fill; }
+  .hook { position: absolute; left: 24px; top: 190px; margin: 0; font: 400 24px/1.2 G; color: #fff; }
+  .label { position: absolute; left: 24px; top: 240px; margin: 0; font: 400 20px/1.2 G; color: #ff0; }
+  .logo { position: absolute; right: 24px; bottom: 24px; width: 32px; height: 32px; }
+</style>
+</head>
+<body>
+<section data-scene="s1" data-start="0" data-end="6" data-trans-in="cut" data-trans-out="cut">
+  <video class="clip" data-clip src="clip.webm" data-start="0.5" data-offset="0.3" muted preload="auto"></video>
+  <h1 class="hook" data-text="hook" data-in="0" data-out="2.4" data-enter="none">Hook line here</h1>
+  <p class="label" data-text="label" data-in="2.4" data-out="6">See the second line</p>
+  <img class="logo" src="logo.svg" alt="">
+  <!--EXTRA-->
+</section>
+<script src="runtime.js"></script>
+<!--AFTER-RUNTIME-->
+</body>
+</html>

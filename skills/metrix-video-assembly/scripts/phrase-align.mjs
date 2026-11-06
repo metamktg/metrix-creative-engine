@@ -57,7 +57,7 @@ export function assignWords(islands, words) {
 // Apostrophes are dropped, so ASR "Works" matches the script's "Work's"; that difference is not audible.
 export const normalize = (s) => s.toLowerCase().replace(/[‘’']/g, "").replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
 
-/** Apply "heard=meant" aliases (e.g. "license fast=licensepass") to normalized ASR text. */
+/** Apply "heard=meant" aliases (e.g. "north wind=northwind") to normalized ASR text. */
 export function applyAliases(text, aliases = []) {
   let out = ` ${text} `;
   for (const a of aliases) {

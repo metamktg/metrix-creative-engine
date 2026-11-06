@@ -1,0 +1,388 @@
+{
+  "schema": "mce.phrasemap/1",
+  "clock": "voice",
+  "voice": {
+    "path": "media/voice_master.wav",
+    "sha256": "6b59c2b145287c6fecd8970fb8f027253a64c70120b86c45c296eceb26fc3f0c",
+    "duration": 25.3,
+    "sample_rate": 48000,
+    "channels": 1
+  },
+  "edges": {
+    "method": "silencedetect",
+    "noise": "-40dB",
+    "min_gap": 0.15
+  },
+  "words_source": {
+    "method": "whisper-cli-dtw",
+    "model": "ggml-base.en.bin",
+    "qualified_against": null
+  },
+  "phrases": [
+    {
+      "id": "A",
+      "start": 1.001,
+      "end": 1.815,
+      "text": "Bemo'n dinu.",
+      "words": [
+        {
+          "text": "Bemo'n",
+          "start": 1.12,
+          "end": 1.48,
+          "p": 0.435
+        },
+        {
+          "text": "dinu.",
+          "start": 1.48,
+          "end": 1.815,
+          "p": 0.529
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "start": 2.842,
+      "end": 3.966,
+      "text": "Pad fopa ref gu tig.",
+      "words": [
+        {
+          "text": "Pad",
+          "start": 2.88,
+          "end": 3.1,
+          "p": 0.998
+        },
+        {
+          "text": "fopa",
+          "start": 3.1,
+          "end": 3.3,
+          "p": 0.998
+        },
+        {
+          "text": "ref",
+          "start": 3.3,
+          "end": 3.42,
+          "p": 0.999
+        },
+        {
+          "text": "gu",
+          "start": 3.42,
+          "end": 3.6,
+          "p": 1
+        },
+        {
+          "text": "tig.",
+          "start": 3.6,
+          "end": 3.966,
+          "p": 0.992
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "start": 4.235,
+      "end": 7.162,
+      "text": "Kat vok levok zule mi bamiz nob deno pude fipude rafi.",
+      "words": [
+        {
+          "text": "Kat",
+          "start": 4.32,
+          "end": 4.62,
+          "p": 0.461
+        },
+        {
+          "text": "vok",
+          "start": 4.62,
+          "end": 4.84,
+          "p": 0.988
+        },
+        {
+          "text": "levok",
+          "start": 4.84,
+          "end": 5.06,
+          "p": 0.99
+        },
+        {
+          "text": "zule",
+          "start": 5.06,
+          "end": 5.18,
+          "p": 0.989
+        },
+        {
+          "text": "mi",
+          "start": 5.18,
+          "end": 5.44,
+          "p": 0.98
+        },
+        {
+          "text": "bamiz",
+          "start": 5.44,
+          "end": 5.66,
+          "p": 0.997
+        },
+        {
+          "text": "nob",
+          "start": 5.66,
+          "end": 5.78,
+          "p": 0.93
+        },
+        {
+          "text": "deno",
+          "start": 5.78,
+          "end": 5.94,
+          "p": 0.98
+        },
+        {
+          "text": "pude",
+          "start": 5.94,
+          "end": 6.2,
+          "p": 0.933
+        },
+        {
+          "text": "fipude",
+          "start": 6.2,
+          "end": 6.58,
+          "p": 0.995
+        },
+        {
+          "text": "rafi.",
+          "start": 6.58,
+          "end": 7.162,
+          "p": 0.974
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "start": 7.801,
+      "end": 8.822,
+      "text": "Gora TegorafIpud,",
+      "words": [
+        {
+          "text": "Gora",
+          "start": 7.88,
+          "end": 8.16,
+          "p": 0.999
+        },
+        {
+          "text": "TegorafIpud,",
+          "start": 8.16,
+          "end": 8.822,
+          "p": 0.58
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "start": 9.162,
+      "end": 9.895,
+      "text": "kute v lavik,",
+      "words": [
+        {
+          "text": "kute",
+          "start": 9.22,
+          "end": 9.28,
+          "p": 0.987
+        },
+        {
+          "text": "v",
+          "start": 9.28,
+          "end": 9.62,
+          "p": 0.998
+        },
+        {
+          "text": "lavik,",
+          "start": 9.62,
+          "end": 9.895,
+          "p": 0.715
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "start": 11.709,
+      "end": 12.736,
+      "text": "zo mezolav pad bumezo,",
+      "words": [
+        {
+          "text": "zo",
+          "start": 11.86,
+          "end": 12.02,
+          "p": 0.98
+        },
+        {
+          "text": "mezolav",
+          "start": 12.02,
+          "end": 12.16,
+          "p": 0.995
+        },
+        {
+          "text": "pad",
+          "start": 12.16,
+          "end": 12.46,
+          "p": 0.997
+        },
+        {
+          "text": "bumezo,",
+          "start": 12.46,
+          "end": 12.736,
+          "p": 0.88
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "start": 14.466,
+      "end": 16.115,
+      "text": "nibu dan pad podanibu fepodanib.",
+      "words": [
+        {
+          "text": "nibu",
+          "start": 14.56,
+          "end": 14.72,
+          "p": 0.874
+        },
+        {
+          "text": "dan",
+          "start": 14.72,
+          "end": 14.88,
+          "p": 0.993
+        },
+        {
+          "text": "pad",
+          "start": 14.88,
+          "end": 15.18,
+          "p": 0.979
+        },
+        {
+          "text": "podanibu",
+          "start": 15.18,
+          "end": 15.62,
+          "p": 0.976
+        },
+        {
+          "text": "fepodanib.",
+          "start": 15.62,
+          "end": 16.115,
+          "p": 0.957
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "start": 18.358,
+      "end": 21.26,
+      "text": "Rufep giru tagir kota vekotag lu ziluvekot maziluve.",
+      "words": [
+        {
+          "text": "Rufep",
+          "start": 18.48,
+          "end": 18.72,
+          "p": 0.987
+        },
+        {
+          "text": "giru",
+          "start": 18.72,
+          "end": 18.94,
+          "p": 0.998
+        },
+        {
+          "text": "tagir",
+          "start": 18.94,
+          "end": 19.38,
+          "p": 0.997
+        },
+        {
+          "text": "kota",
+          "start": 19.38,
+          "end": 19.7,
+          "p": 0.999
+        },
+        {
+          "text": "vekotag",
+          "start": 19.7,
+          "end": 20.04,
+          "p": 0.996
+        },
+        {
+          "text": "lu",
+          "start": 20.04,
+          "end": 20.46,
+          "p": 0.998
+        },
+        {
+          "text": "ziluvekot",
+          "start": 20.46,
+          "end": 20.98,
+          "p": 0.999
+        },
+        {
+          "text": "maziluve.",
+          "start": 20.98,
+          "end": 21.26,
+          "p": 0.959
+        }
+      ]
+    },
+    {
+      "id": "I",
+      "start": 21.865,
+      "end": 23.016,
+      "text": "Boma v nebo du TegorafIpud.",
+      "words": [
+        {
+          "text": "Boma",
+          "start": 21.96,
+          "end": 22.08,
+          "p": 0.869
+        },
+        {
+          "text": "v",
+          "start": 22.08,
+          "end": 22.2,
+          "p": 0.999
+        },
+        {
+          "text": "nebo",
+          "start": 22.2,
+          "end": 22.28,
+          "p": 0.999
+        },
+        {
+          "text": "du",
+          "start": 22.28,
+          "end": 22.54,
+          "p": 0.999
+        },
+        {
+          "text": "TegorafIpud.",
+          "start": 22.54,
+          "end": 23.016,
+          "p": 0.969
+        }
+      ]
+    }
+  ],
+  "splits": [
+    {
+      "id": "c_split",
+      "phrase": "C",
+      "at": 5.59,
+      "window": [
+        5.45,
+        5.75
+      ],
+      "method": "energy-dip"
+    },
+    {
+      "id": "h_split",
+      "phrase": "H",
+      "at": 19.72,
+      "window": [
+        19.35,
+        19.95
+      ],
+      "method": "energy-dip"
+    }
+  ],
+  "script_check": null
+}

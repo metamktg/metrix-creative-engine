@@ -43,7 +43,8 @@ function fixture(audio: (base: string, root: string) => Audio | null | undefined
     fs.mkdirSync(path.dirname(source), { recursive: true });
     fs.writeFileSync(source, `audio fixture ${i}: ${track.file}`);
   }
-  const brief = { copy_architecture: { hook: "Look closer", cta: "Find yours" }, testing_framework: {
+  // "See it" is the voiced line: strict grounding reads it from the brief, not from audio.voiceover.script.
+  const brief = { copy_architecture: { hook: "Look closer", cta: "Find yours", voiceover: "See it" }, testing_framework: {
     matrix_naming_convention: "cell-{UniqueID}", cells: [{ unique_id: "a", hook: "Look closer" }, { unique_id: "b", hook: "Meet something" }],
   } };
   fs.writeFileSync(path.join(base, "storyboard.json"), JSON.stringify(sb));
@@ -75,7 +76,7 @@ describe("make-row audio dependencies", () => {
 
   it("packages music, voiceover and every effect, including absolute and parent paths, without escaping the cell", () => {
     const f = fixture((_base, root) => ({
-      music: { file: "../shared/track.wav", volume: 0.25 },
+      music: { file: "../shared/track.wav", volume: 0.25, licence: "anonymous fixture" },
       voiceover: { file: path.join(root, "voice", "track.wav"), at: 0.1, volume: 0.9, script: "See it" },
       sfx: [
         { file: "composition/media/click.ogg", at: 2, volume: 0.2 },

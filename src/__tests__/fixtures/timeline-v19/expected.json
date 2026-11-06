@@ -1,0 +1,838 @@
+{
+  "note": "Numbers copied from the delivered v19 timing.json, edl.json, cues.json, the four storyboards, the captions SRT and the voice graph its builder ran (recomputed by the builder's own lines from edl.json). Copy replaced word for word by neutral tokens of the same length.",
+  "tm": {
+    "picC": 3.438,
+    "pushC": 4.219,
+    "picApp": 5.234,
+    "cutHer": 12.109,
+    "endCard": 15.469,
+    "cutD": 5.625,
+    "end": 18.13,
+    "app": {
+      "tap": 7.344,
+      "sel": 7.414,
+      "lesson": 7.969,
+      "expand": 8.349,
+      "qa": 9.219,
+      "tapB": 10.938,
+      "right": 10.998,
+      "ok": 11.057
+    },
+    "iIn": 15.529
+  },
+  "captions": [
+    {
+      "id": "cap_de",
+      "copy": "Gora TegorafIpud, kute v lavik,",
+      "in": 5.625,
+      "out": 7.969
+    },
+    {
+      "id": "cap_f",
+      "copy": "zo mezolav pad bumezo,",
+      "in": 7.969,
+      "out": 9.219
+    },
+    {
+      "id": "cap_g",
+      "copy": "nibu dan pad podanibu fepodanib.",
+      "in": 9.219,
+      "out": 11.178
+    },
+    {
+      "id": "cap_h1",
+      "copy": "Rufep giru tagir kota",
+      "in": 11.64,
+      "out": 13.002
+    },
+    {
+      "id": "cap_h2",
+      "copy": "vekotag lu ziluvekot maziluve.",
+      "in": 13.002,
+      "out": 14.852
+    }
+  ],
+  "splits": {
+    "c": 5.59,
+    "h": 19.72
+  },
+  "edl": {
+    "pre": 0.04,
+    "post": 0.08,
+    "lead": 0.06,
+    "bpm": 96,
+    "duration": 18.13,
+    "segments": [
+      {
+        "id": "A",
+        "src_in": 0.961,
+        "src_out": 1.895,
+        "out_in": 0.02,
+        "out_out": 0.954,
+        "offset": -0.941,
+        "speed": 1,
+        "grid_cut": 0,
+        "phrases": [
+          {
+            "id": "A",
+            "text": "Bemo'n dinu.",
+            "src": [
+              1.001,
+              1.815
+            ],
+            "out": [
+              0.06,
+              0.874
+            ]
+          }
+        ]
+      },
+      {
+        "id": "B+C",
+        "src_in": 2.802,
+        "src_out": 7.242,
+        "out_in": 1.192,
+        "out_out": 5.632,
+        "offset": -1.6101,
+        "speed": 1,
+        "grid_cut": 1.172,
+        "phrases": [
+          {
+            "id": "B",
+            "text": "Pad fopa ref gu tig.",
+            "src": [
+              2.842,
+              3.966
+            ],
+            "out": [
+              1.232,
+              2.356
+            ]
+          },
+          {
+            "id": "C",
+            "text": "Kat vok levok zule mi bamiz nob deno pude fipude rafi.",
+            "src": [
+              4.235,
+              7.162
+            ],
+            "out": [
+              2.625,
+              5.552
+            ]
+          }
+        ]
+      },
+      {
+        "id": "D+E",
+        "src_in": 7.761,
+        "src_out": 9.975,
+        "out_in": 5.645,
+        "out_out": 7.859,
+        "offset": -2.116,
+        "speed": 1,
+        "grid_cut": 5.625,
+        "phrases": [
+          {
+            "id": "D",
+            "text": "Gora TegorafIpud,",
+            "src": [
+              7.801,
+              8.822
+            ],
+            "out": [
+              5.685,
+              6.706
+            ]
+          },
+          {
+            "id": "E",
+            "text": "kute v lavik,",
+            "src": [
+              9.162,
+              9.895
+            ],
+            "out": [
+              7.046,
+              7.779
+            ]
+          }
+        ]
+      },
+      {
+        "id": "F",
+        "src_in": 11.669,
+        "src_out": 12.816,
+        "out_in": 7.989,
+        "out_out": 9.136,
+        "offset": -3.6802,
+        "speed": 1,
+        "grid_cut": 7.969,
+        "phrases": [
+          {
+            "id": "F",
+            "text": "zo mezolav pad bumezo,",
+            "src": [
+              11.709,
+              12.736
+            ],
+            "out": [
+              8.029,
+              9.056
+            ]
+          }
+        ]
+      },
+      {
+        "id": "G",
+        "src_in": 14.426,
+        "src_out": 16.195,
+        "out_in": 9.239,
+        "out_out": 11.008,
+        "offset": -5.1872,
+        "speed": 1,
+        "grid_cut": 9.219,
+        "phrases": [
+          {
+            "id": "G",
+            "text": "nibu dan pad podanibu fepodanib.",
+            "src": [
+              14.466,
+              16.115
+            ],
+            "out": [
+              9.279,
+              10.928
+            ]
+          }
+        ]
+      },
+      {
+        "id": "H",
+        "src_in": 18.318,
+        "src_out": 21.34,
+        "out_in": 11.66,
+        "out_out": 14.682,
+        "offset": -6.6576,
+        "speed": 1,
+        "grid_cut": 11.64,
+        "phrases": [
+          {
+            "id": "H",
+            "text": "Rufep giru tagir kota vekotag lu ziluvekot maziluve.",
+            "src": [
+              18.358,
+              21.26
+            ],
+            "out": [
+              11.7,
+              14.602
+            ]
+          }
+        ]
+      },
+      {
+        "id": "I",
+        "src_in": 21.825,
+        "src_out": 23.096,
+        "out_in": 15.489,
+        "out_out": 16.76,
+        "offset": -6.3362,
+        "speed": 1,
+        "grid_cut": 15.469,
+        "phrases": [
+          {
+            "id": "I",
+            "text": "Boma v nebo du TegorafIpud.",
+            "src": [
+              21.865,
+              23.016
+            ],
+            "out": [
+              15.529,
+              16.68
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "cues": {
+    "duration": 18.13,
+    "bpm": 96,
+    "grid_start": 0,
+    "sections": [
+      {
+        "from": 0,
+        "to": 5.625,
+        "chord": [
+          57,
+          60,
+          64,
+          67
+        ],
+        "root": 45,
+        "energy": 0
+      },
+      {
+        "from": 5.625,
+        "to": 8.125,
+        "chord": [
+          53,
+          57,
+          60,
+          64
+        ],
+        "root": 41,
+        "energy": 1
+      },
+      {
+        "from": 8.125,
+        "to": 11.25,
+        "chord": [
+          48,
+          55,
+          60,
+          64
+        ],
+        "root": 36,
+        "energy": 2
+      },
+      {
+        "from": 11.25,
+        "to": 15.625,
+        "chord": [
+          55,
+          59,
+          62,
+          67
+        ],
+        "root": 43,
+        "energy": 3
+      },
+      {
+        "from": 15.625,
+        "to": 18.13,
+        "chord": [
+          48,
+          55,
+          60,
+          64,
+          67
+        ],
+        "root": 36,
+        "energy": 4
+      }
+    ]
+  },
+  "storyboards": {
+    "9x16_CAP": {
+      "format": {
+        "ratio": "9:16",
+        "width": 1080,
+        "height": 1920,
+        "fps": 30
+      },
+      "duration": 18.13,
+      "poster_at": 0.5,
+      "scenes": [
+        {
+          "id": "s1",
+          "role": "hook",
+          "start": 0,
+          "end": 5.234,
+          "text": [
+            {
+              "id": "hook",
+              "copy": "Pidunebo nob deno pude fipude rafi fapid bemo?",
+              "in": 0,
+              "out": 5.234,
+              "enter": "none"
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "role": "show",
+          "start": 5.234,
+          "end": 15.469,
+          "text": [
+            {
+              "id": "cap_de",
+              "copy": "Gora TegorafIpud, kute v lavik,",
+              "in": 5.625,
+              "out": 7.969,
+              "enter": "none"
+            },
+            {
+              "id": "cap_f",
+              "copy": "zo mezolav pad bumezo,",
+              "in": 7.969,
+              "out": 9.219,
+              "enter": "none"
+            },
+            {
+              "id": "cap_g",
+              "copy": "nibu dan pad podanibu fepodanib.",
+              "in": 9.219,
+              "out": 11.178,
+              "enter": "none"
+            },
+            {
+              "id": "cap_h1",
+              "copy": "Rufep giru tagir kota",
+              "in": 11.64,
+              "out": 13.002,
+              "enter": "none"
+            },
+            {
+              "id": "cap_h2",
+              "copy": "vekotag lu ziluvekot maziluve.",
+              "in": 13.002,
+              "out": 14.852,
+              "enter": "none"
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "role": "cta",
+          "start": 15.469,
+          "end": 18.13,
+          "text": [
+            {
+              "id": "cta",
+              "copy": "Boma v nebo du TegorafIpud.",
+              "in": 15.469,
+              "out": 18.13,
+              "enter": "none"
+            },
+            {
+              "id": "url",
+              "copy": "tegorafipud.test",
+              "label": true,
+              "in": 15.589,
+              "out": 18.13,
+              "enter": "fade",
+              "dur": 0.2
+            }
+          ]
+        }
+      ],
+      "audio": {
+        "music": {
+          "start": 0,
+          "volume": 0.27,
+          "fade_in": 0.05,
+          "fade_out": 0.8
+        },
+        "sfx": [
+          {
+            "at": 1.91,
+            "volume": 0.2
+          },
+          {
+            "at": 7.324,
+            "volume": 0.45
+          },
+          {
+            "at": 10.918,
+            "volume": 0.45
+          },
+          {
+            "at": 10.998,
+            "volume": 0.3
+          },
+          {
+            "at": 15.469,
+            "volume": 0.26
+          }
+        ],
+        "voiceover": {
+          "at": 0,
+          "volume": 1,
+          "script": "Bemo'n dinu. Pad fopa ref gu tig. Kat vok levok zule mi bamiz nob deno pude fipude rafi. Gora TegorafIpud, kute v lavik, zo mezolav pad bumezo, nibu dan pad podanibu fepodanib. Rufep giru tagir kota vekotag lu ziluvekot maziluve. Boma v nebo du TegorafIpud."
+        },
+        "lufs": -14
+      }
+    },
+    "9x16_CLEAN": {
+      "format": {
+        "ratio": "9:16",
+        "width": 1080,
+        "height": 1920,
+        "fps": 30
+      },
+      "duration": 18.13,
+      "poster_at": 0.5,
+      "scenes": [
+        {
+          "id": "s1",
+          "role": "hook",
+          "start": 0,
+          "end": 5.234,
+          "text": [
+            {
+              "id": "hook",
+              "copy": "Pidunebo nob deno pude fipude rafi fapid bemo?",
+              "in": 0,
+              "out": 5.234,
+              "enter": "none"
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "role": "show",
+          "start": 5.234,
+          "end": 15.469,
+          "text": []
+        },
+        {
+          "id": "s3",
+          "role": "cta",
+          "start": 15.469,
+          "end": 18.13,
+          "text": [
+            {
+              "id": "cta",
+              "copy": "Boma v nebo du TegorafIpud.",
+              "in": 15.469,
+              "out": 18.13,
+              "enter": "none"
+            },
+            {
+              "id": "url",
+              "copy": "tegorafipud.test",
+              "label": true,
+              "in": 15.589,
+              "out": 18.13,
+              "enter": "fade",
+              "dur": 0.2
+            }
+          ]
+        }
+      ],
+      "audio": {
+        "music": {
+          "start": 0,
+          "volume": 0.27,
+          "fade_in": 0.05,
+          "fade_out": 0.8
+        },
+        "sfx": [
+          {
+            "at": 1.91,
+            "volume": 0.2
+          },
+          {
+            "at": 7.324,
+            "volume": 0.45
+          },
+          {
+            "at": 10.918,
+            "volume": 0.45
+          },
+          {
+            "at": 10.998,
+            "volume": 0.3
+          },
+          {
+            "at": 15.469,
+            "volume": 0.26
+          }
+        ],
+        "voiceover": {
+          "at": 0,
+          "volume": 1,
+          "script": "Bemo'n dinu. Pad fopa ref gu tig. Kat vok levok zule mi bamiz nob deno pude fipude rafi. Gora TegorafIpud, kute v lavik, zo mezolav pad bumezo, nibu dan pad podanibu fepodanib. Rufep giru tagir kota vekotag lu ziluvekot maziluve. Boma v nebo du TegorafIpud."
+        },
+        "lufs": -14
+      }
+    },
+    "4x5_CAP": {
+      "format": {
+        "ratio": "4:5",
+        "width": 1080,
+        "height": 1350,
+        "fps": 30
+      },
+      "duration": 18.13,
+      "poster_at": 0.5,
+      "scenes": [
+        {
+          "id": "s1",
+          "role": "hook",
+          "start": 0,
+          "end": 5.234,
+          "text": [
+            {
+              "id": "hook",
+              "copy": "Pidunebo nob deno pude fipude rafi fapid bemo?",
+              "in": 0,
+              "out": 5.234,
+              "enter": "none"
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "role": "show",
+          "start": 5.234,
+          "end": 15.469,
+          "text": [
+            {
+              "id": "cap_de",
+              "copy": "Gora TegorafIpud, kute v lavik,",
+              "in": 5.625,
+              "out": 7.969,
+              "enter": "none"
+            },
+            {
+              "id": "cap_f",
+              "copy": "zo mezolav pad bumezo,",
+              "in": 7.969,
+              "out": 9.219,
+              "enter": "none"
+            },
+            {
+              "id": "cap_g",
+              "copy": "nibu dan pad podanibu fepodanib.",
+              "in": 9.219,
+              "out": 11.178,
+              "enter": "none"
+            },
+            {
+              "id": "cap_h1",
+              "copy": "Rufep giru tagir kota",
+              "in": 11.64,
+              "out": 13.002,
+              "enter": "none"
+            },
+            {
+              "id": "cap_h2",
+              "copy": "vekotag lu ziluvekot maziluve.",
+              "in": 13.002,
+              "out": 14.852,
+              "enter": "none"
+            }
+          ]
+        },
+        {
+          "id": "s3",
+          "role": "cta",
+          "start": 15.469,
+          "end": 18.13,
+          "text": [
+            {
+              "id": "cta",
+              "copy": "Boma v nebo du TegorafIpud.",
+              "in": 15.469,
+              "out": 18.13,
+              "enter": "none"
+            },
+            {
+              "id": "url",
+              "copy": "tegorafipud.test",
+              "label": true,
+              "in": 15.589,
+              "out": 18.13,
+              "enter": "fade",
+              "dur": 0.2
+            }
+          ]
+        }
+      ],
+      "audio": {
+        "music": {
+          "start": 0,
+          "volume": 0.27,
+          "fade_in": 0.05,
+          "fade_out": 0.8
+        },
+        "sfx": [
+          {
+            "at": 1.91,
+            "volume": 0.2
+          },
+          {
+            "at": 7.324,
+            "volume": 0.45
+          },
+          {
+            "at": 10.918,
+            "volume": 0.45
+          },
+          {
+            "at": 10.998,
+            "volume": 0.3
+          },
+          {
+            "at": 15.469,
+            "volume": 0.26
+          }
+        ],
+        "voiceover": {
+          "at": 0,
+          "volume": 1,
+          "script": "Bemo'n dinu. Pad fopa ref gu tig. Kat vok levok zule mi bamiz nob deno pude fipude rafi. Gora TegorafIpud, kute v lavik, zo mezolav pad bumezo, nibu dan pad podanibu fepodanib. Rufep giru tagir kota vekotag lu ziluvekot maziluve. Boma v nebo du TegorafIpud."
+        },
+        "lufs": -14
+      }
+    },
+    "4x5_CLEAN": {
+      "format": {
+        "ratio": "4:5",
+        "width": 1080,
+        "height": 1350,
+        "fps": 30
+      },
+      "duration": 18.13,
+      "poster_at": 0.5,
+      "scenes": [
+        {
+          "id": "s1",
+          "role": "hook",
+          "start": 0,
+          "end": 5.234,
+          "text": [
+            {
+              "id": "hook",
+              "copy": "Pidunebo nob deno pude fipude rafi fapid bemo?",
+              "in": 0,
+              "out": 5.234,
+              "enter": "none"
+            }
+          ]
+        },
+        {
+          "id": "s2",
+          "role": "show",
+          "start": 5.234,
+          "end": 15.469,
+          "text": []
+        },
+        {
+          "id": "s3",
+          "role": "cta",
+          "start": 15.469,
+          "end": 18.13,
+          "text": [
+            {
+              "id": "cta",
+              "copy": "Boma v nebo du TegorafIpud.",
+              "in": 15.469,
+              "out": 18.13,
+              "enter": "none"
+            },
+            {
+              "id": "url",
+              "copy": "tegorafipud.test",
+              "label": true,
+              "in": 15.589,
+              "out": 18.13,
+              "enter": "fade",
+              "dur": 0.2
+            }
+          ]
+        }
+      ],
+      "audio": {
+        "music": {
+          "start": 0,
+          "volume": 0.27,
+          "fade_in": 0.05,
+          "fade_out": 0.8
+        },
+        "sfx": [
+          {
+            "at": 1.91,
+            "volume": 0.2
+          },
+          {
+            "at": 7.324,
+            "volume": 0.45
+          },
+          {
+            "at": 10.918,
+            "volume": 0.45
+          },
+          {
+            "at": 10.998,
+            "volume": 0.3
+          },
+          {
+            "at": 15.469,
+            "volume": 0.26
+          }
+        ],
+        "voiceover": {
+          "at": 0,
+          "volume": 1,
+          "script": "Bemo'n dinu. Pad fopa ref gu tig. Kat vok levok zule mi bamiz nob deno pude fipude rafi. Gora TegorafIpud, kute v lavik, zo mezolav pad bumezo, nibu dan pad podanibu fepodanib. Rufep giru tagir kota vekotag lu ziluvekot maziluve. Boma v nebo du TegorafIpud."
+        },
+        "lufs": -14
+      }
+    }
+  },
+  "srt": [
+    {
+      "index": 1,
+      "times": "00:00:00,000 --> 00:00:01,172",
+      "text": "Bemo'n dinu."
+    },
+    {
+      "index": 2,
+      "times": "00:00:01,172 --> 00:00:02,565",
+      "text": "Pad fopa ref gu tig."
+    },
+    {
+      "index": 3,
+      "times": "00:00:02,565 --> 00:00:03,980",
+      "text": "Kat vok levok zule mi bamiz"
+    },
+    {
+      "index": 4,
+      "times": "00:00:03,980 --> 00:00:05,625",
+      "text": "nob deno pude fipude rafi."
+    },
+    {
+      "index": 5,
+      "times": "00:00:05,625 --> 00:00:07,969",
+      "text": "Gora TegorafIpud, kute v lavik,"
+    },
+    {
+      "index": 6,
+      "times": "00:00:07,969 --> 00:00:09,219",
+      "text": "zo mezolav pad bumezo,"
+    },
+    {
+      "index": 7,
+      "times": "00:00:09,219 --> 00:00:11,178",
+      "text": "nibu dan pad podanibu fepodanib."
+    },
+    {
+      "index": 8,
+      "times": "00:00:11,640 --> 00:00:13,002",
+      "text": "Rufep giru tagir kota"
+    },
+    {
+      "index": 9,
+      "times": "00:00:13,002 --> 00:00:14,852",
+      "text": "vekotag lu ziluvekot maziluve."
+    },
+    {
+      "index": 10,
+      "times": "00:00:15,469 --> 00:00:18,130",
+      "text": "Boma v nebo du TegorafIpud."
+    }
+  ],
+  "srt_trailing_blank_line": true,
+  "voice_graph": "[0]atrim=0.961:1.895,asetpts=PTS-STARTPTS,afade=t=in:d=0.01,afade=t=out:st=0.924:d=0.01,adelay=20:all=1[s0];[0]atrim=2.802:7.242,asetpts=PTS-STARTPTS,afade=t=in:d=0.01,afade=t=out:st=4.430:d=0.01,adelay=1192:all=1[s1];[0]atrim=7.761:9.975,asetpts=PTS-STARTPTS,afade=t=in:d=0.01,afade=t=out:st=2.204:d=0.01,adelay=5645:all=1[s2];[0]atrim=11.669:12.816,asetpts=PTS-STARTPTS,afade=t=in:d=0.01,afade=t=out:st=1.137:d=0.01,adelay=7989:all=1[s3];[0]atrim=14.426:16.195,asetpts=PTS-STARTPTS,afade=t=in:d=0.01,afade=t=out:st=1.759:d=0.01,adelay=9239:all=1[s4];[0]atrim=18.318:21.34,asetpts=PTS-STARTPTS,afade=t=in:d=0.01,afade=t=out:st=3.012:d=0.01,adelay=11660:all=1[s5];[0]atrim=21.825:23.096,asetpts=PTS-STARTPTS,afade=t=in:d=0.01,afade=t=out:st=1.261:d=0.01,adelay=15489:all=1[s6];[s0][s1][s2][s3][s4][s5][s6]amix=inputs=7:normalize=0,apad,atrim=0:18.13[out]",
+  "transcript": "Bemo'n dinu. Pad fopa ref gu tig. Kat vok levok zule mi bamiz nob deno pude fipude rafi. Gora TegorafIpud, kute v lavik, zo mezolav pad bumezo, nibu dan pad podanibu fepodanib. Rufep giru tagir kota vekotag lu ziluvekot maziluve. Boma v nebo du TegorafIpud.",
+  "shot_src_in": {
+    "S1a": 1.048,
+    "Hs": 0.809,
+    "clipA": 0
+  }
+}

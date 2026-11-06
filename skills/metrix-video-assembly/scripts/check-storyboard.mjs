@@ -2,11 +2,32 @@
 /*
  * Check a storyboard against the assembly laws before anything is rendered.
  *
- *   node check-storyboard.mjs <storyboard.json> [--brief brief.json] [--kit brand-kit.json] [--phrases phrases.json]
+ *   node check-storyboard.mjs <storyboard.json> --brief brief.json [--kit brand-kit.json] [--phrases phrases.json]
+ *        [--script locked-script.(txt|json)] [--packet preproduction.json] [--allow-ungrounded]
  *   node check-storyboard.mjs --row a.json b.json c.json      (Matrix Sprint Test row isolation)
  *
  * Prints a JSON report; exit 1 on any FAIL. WARN never fails the run, it is
  * something a person should look at.
+ *
+ * Grounding is strict. Without --brief every line that is not "framing" or "kit." FAILs, and
+ * without --kit every "kit." line FAILs, because nothing it asserts can be checked. Pass
+ * --allow-ungrounded to report those lines as WARN instead; the report then lists the override
+ * under "overrides", so an unchecked run cannot be mistaken for a checked one.
+ *
+ * Voiceover captions ground against the brief's copy_architecture or the LOCKED script: the file
+ * given with --script (or the packet's script with --packet) whose sha256 equals
+ * audio.voiceover.script_sha256. audio.voiceover.script is author text and grounds nothing; when
+ * a locked script is given it must say the same words. A voiced line that asserts (a digit, money,
+ * '#1', a superlative or guarantee) also needs claim_source: a brief or kit field, not a
+ * forbidden/avoid list, that contains the line.
+ *
+ * Delivery (delivery.captions "cap" or "clean"): a CAP storyboard burns its voiceover captions; a
+ * CLEAN one burns none and satisfies sound-off only through delivery.srt, a caption file whose
+ * words equal the voiced script in order and, with --phrases, whose cues overlap every phrase.
+ *
+ * Also: audio.music.licence is required when audio.music.file is set; a storyboard stamped with
+ * derived_from must match its timeline.json byte for byte (sha256) and TM hash, and a storyboard
+ * with a timeline.json beside it must carry the stamp; schema_version 2 requires format.placement.
  *
  * --phrases takes phrase-map.mjs output for the voiceover. Any effect starting in the 0.25 s
  * before a phrase onset fails: there it reads as a breath or a clipped word (heard in a recorded
@@ -20,25 +41,28 @@
  *       connective craft the brief did not write. Free to invent, but it may not
  *       assert anything: no digits, no money, no percentages, no superlatives
  *       or guarantees. A claim belongs in the brief, with its evidence.
+ *   "voiceover"
+ *       a caption of a voiced line, grounded as above.
  */
+import crypto from "node:crypto";
 import fs from "node:fs";
+import path from "node:path";
+import { zoneFor } from "./placement-zones.mjs";
+import { floorFor, norm, ONSET_GUARD, onsetGuard, settled, voFloorFor, words } from "./timeline/rules.mjs";
+import { TIMELINE, tmSha256, validateDerivedFrom } from "./timeline/schema.mjs";
 
 const argv = process.argv.slice(2);
+const VALUED = ["--brief", "--kit", "--phrases", "--script", "--packet"];
 const flag = (k) => {
   const i = argv.indexOf(k);
   return i === -1 ? null : argv[i + 1];
 };
 const load = (p) => (p ? JSON.parse(fs.readFileSync(p, "utf8")) : null);
+const sha256 = (buf) => crypto.createHash("sha256").update(buf).digest("hex");
 const results = [];
+const overrides = [];
 const add = (rule, verdict, detail) => results.push({ rule, verdict, detail });
-const words = (s) => s.trim().split(/\s+/).filter(Boolean).length;
-const norm = (s) => String(s).toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim();
-
-// Reading floor from brag, kept as is: a short label needs ~0.8s settled, a
-// sentence ~0.3s per word with a 1.2s minimum. Pace comes from motion and
-// cuts, never from pulling text before it can be read.
-const floorFor = (copy) => (words(copy) <= 3 ? 0.8 : Math.max(1.2, 0.3 * words(copy)));
-const settled = (t) => ({ from: t.in + (t.enter === "none" ? 0 : t.dur ?? 0.35), to: t.out });
+// words, norm, settled, floorFor, voFloorFor and onsetGuard live in timeline/rules.mjs.
 
 const ASSERTIVE = [
   [/\d/, "a digit"],
@@ -58,10 +82,186 @@ function resolve(pathStr, brief, kit) {
   return cur;
 }
 const flat = (v) => (v == null ? [] : Array.isArray(v) ? v.flatMap(flat) : typeof v === "object" ? Object.values(v).flatMap(flat) : [String(v)]);
+// Caption text compared without sentence punctuation (a caption may drop the full stop).
+const bare = (s) => norm(s).replace(/[.,!?;:]/g, "");
+// Spoken words for coverage: case, apostrophes and punctuation ignored ("Work's" = "Works").
+const spoken = (s) => norm(s).replace(/'/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim().split(" ").filter(Boolean);
+const FORBIDDEN_FIELD = /forbidden|banned|avoid|unverified|unsourced/i;
 
-const ONSET_GUARD = 0.25;
+// A locked script file: plain text, or JSON carrying lines[].text (the packet's script.json),
+// spoken_script, script or text. The hash is over the file's bytes either way.
+function scriptText(buf) {
+  const raw = buf.toString("utf8").replace(/^﻿/, "");
+  let j;
+  try { j = JSON.parse(raw); } catch { return raw.trim(); }
+  if (Array.isArray(j?.lines) && j.lines.length && j.lines.every((l) => typeof l?.text === "string")) return j.lines.map((l) => l.text).join(" ");
+  for (const k of ["spoken_script", "script", "text"]) if (typeof j?.[k] === "string") return j[k];
+  throw new Error("locked script JSON has no lines[].text, spoken_script, script or text");
+}
 
-function checkOne(sb, brief, kit, phrases) {
+// SRT -> cues [{n, start, end, text}]; throws on a block that is not a cue.
+function parseSrt(text) {
+  const stamp = (h, m, s, ms) => Number(h) * 3600 + Number(m) * 60 + Number(s) + Number(ms) / 1000;
+  return text.replace(/^﻿/, "").replace(/\r/g, "").split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean).map((b, i) => {
+    const lines = b.split("\n");
+    const at = lines.findIndex((l) => l.includes("-->"));
+    const m = at === -1 ? null : lines[at].match(/(\d+):(\d\d):(\d\d)[,.](\d{3})\s*-->\s*(\d+):(\d\d):(\d\d)[,.](\d{3})/);
+    if (!m || at > 1) throw new Error(`block ${i + 1} has no "hh:mm:ss,mmm --> hh:mm:ss,mmm" line`);
+    return { n: i + 1, start: stamp(m[1], m[2], m[3], m[4]), end: stamp(m[5], m[6], m[7], m[8]), text: lines.slice(at + 1).join(" ").trim() };
+  });
+}
+
+// Strict grounding: a line that cannot be checked FAILs, unless --allow-ungrounded was passed,
+// which turns it into a WARN and records the rule under the report's overrides.
+function ungrounded(ctx, rule, detail) {
+  if (!ctx.allowUngrounded) return add(rule, "FAIL", `${detail}; pass the missing input (or --allow-ungrounded to record an unchecked run)`);
+  ctx.unchecked.push(rule);
+  add(rule, "WARN", `${detail}; unchecked under --allow-ungrounded`);
+}
+
+// The locked voiceover script: --script (or the packet's script) whose bytes hash to
+// audio.voiceover.script_sha256, and to the packet's script hashes when --packet is given.
+function lockScript(sb, ctx) {
+  const vo = sb.audio?.voiceover;
+  const want = vo?.script_sha256;
+  let file = ctx.scriptPath;
+  let packet = null;
+  if (ctx.packetPath) {
+    packet = load(ctx.packetPath);
+    if (!file && packet?.script?.path) file = path.resolve(path.dirname(path.resolve(ctx.packetPath)), packet.script.path);
+  }
+  if (!file) {
+    if (ctx.packetPath) add("voiceover.lock", "FAIL", "--packet given but it names no script.path and no --script was passed");
+    else if (want) add("voiceover.lock", "WARN", "audio.voiceover.script_sha256 is set but no --script was given; voiced lines ground only against the brief");
+    if (vo?.script != null) add("voiceover.script", "WARN", "audio.voiceover.script is author text and grounds nothing; lock it (script_sha256 plus --script)");
+    return null;
+  }
+  if (!fs.existsSync(file)) { add("voiceover.lock", "FAIL", `locked script ${file} does not exist`); return null; }
+  const buf = fs.readFileSync(file);
+  const got = sha256(buf);
+  if (!vo) { add("voiceover.lock", "FAIL", "a locked script was given but the storyboard has no audio.voiceover"); return null; }
+  if (!want) { add("voiceover.lock", "FAIL", `audio.voiceover.script_sha256 missing; the storyboard must name the locked script (${path.basename(file)} is ${got})`); return null; }
+  if (got !== want) { add("voiceover.lock", "FAIL", `${path.basename(file)} hashes ${got}, storyboard locks ${want}`); return null; }
+  if (packet) {
+    const ph = [["script.sha256", packet.script?.sha256], ["voice.accepted_bindings.script_sha256", packet.voice?.accepted_bindings?.script_sha256]];
+    const bad = ph.filter(([, h]) => h !== got);
+    if (bad.length) { add("voiceover.lock", "FAIL", `packet ${bad.map(([k, h]) => `${k} ${h ?? "missing"}`).join(", ")} is not the locked script ${got}`); return null; }
+  }
+  let text;
+  try { text = scriptText(buf); } catch (e) { add("voiceover.lock", "FAIL", `${path.basename(file)}: ${e.message}`); return null; }
+  add("voiceover.lock", "PASS", `${path.basename(file)} sha256 ${got} matches audio.voiceover.script_sha256${packet ? " and the packet" : ""}`);
+  if (vo.script != null) {
+    const same = spoken(vo.script).join(" ") === spoken(text).join(" ");
+    add("voiceover.script", same ? "PASS" : "FAIL", same ? "audio.voiceover.script says the locked words" : "audio.voiceover.script differs from the locked script; the locked file wins, fix the storyboard");
+  }
+  return { file, sha256: got, text };
+}
+
+// The voiced script a caption file must cover: the locked script, else the brief's.
+function voicedText(ctx) {
+  if (ctx.locked) return { text: ctx.locked.text, from: `locked script (${path.basename(ctx.locked.file)})` };
+  const ca = ctx.brief?.copy_architecture;
+  for (const k of ["spoken_script", "script"]) if (typeof ca?.[k] === "string" && ca[k].trim()) return { text: ca[k], from: `brief copy_architecture.${k}` };
+  return null;
+}
+
+// A delivered SRT covers the voice: its words equal the voiced script in order, its cues sit
+// inside the ad and do not overlap, and (with --phrases) every phrase has a cue over it.
+function srtCovers(sb, ctx, rel) {
+  const file = path.resolve(ctx.sbDir, rel);
+  if (!fs.existsSync(file)) return { ok: false, detail: `delivery.srt ${rel} does not exist` };
+  const bytes = fs.readFileSync(file);
+  let cues;
+  try { cues = parseSrt(bytes.toString("utf8")); } catch (e) { return { ok: false, detail: `delivery.srt ${rel}: ${e.message}` }; }
+  const tag = `${rel} (sha256 ${sha256(bytes).slice(0, 12)}, ${cues.length} cues)`;
+  if (!cues.length) return { ok: false, detail: `${tag} has no cues` };
+  const timing = [];
+  cues.forEach((c, i) => {
+    if (!(c.end > c.start)) timing.push(`cue ${c.n} has no length`);
+    if (c.start < -1e-6 || c.end > sb.duration + 1e-3) timing.push(`cue ${c.n} ${c.start}-${c.end} runs outside 0-${sb.duration}s`);
+    if (i > 0 && c.start < cues[i - 1].end - 1e-6) timing.push(`cue ${c.n} starts before cue ${cues[i - 1].n} ends`);
+  });
+  if (timing.length) return { ok: false, detail: `${tag}: ${timing.join("; ")}` };
+  const voiced = voicedText(ctx);
+  if (!voiced) return { ok: false, detail: `${tag}: no voiced script to check it against; pass --script (locked) or a brief with copy_architecture.script` };
+  const want = spoken(voiced.text);
+  const got = cues.flatMap((c) => spoken(c.text));
+  const k = want.findIndex((w, i) => got[i] !== w);
+  if (k !== -1 || got.length !== want.length) {
+    const at = k === -1 ? want.length : k;
+    const what = at >= got.length ? `missing from word ${at + 1} ("${want.slice(at, at + 4).join(" ")}")` : at >= want.length ? `adds "${got.slice(at, at + 4).join(" ")}" after the script ends` : `word ${at + 1} is "${got[at]}", the script says "${want[at]}"`;
+    return { ok: false, detail: `${tag} does not carry the ${voiced.from} word for word: ${what}` };
+  }
+  let phraseNote = "phrase timing not checked; pass --phrases";
+  if (ctx.phrases) {
+    const at = sb.audio?.voiceover?.at ?? 0;
+    const missed = (ctx.phrases.phrases || []).filter((p) => !cues.some((c) => c.start < p.end + at - 1e-6 && c.end > p.start + at + 1e-6));
+    if (missed.length) return { ok: false, detail: `${tag}: no cue over phrase ${missed.map((p) => `${p.id} ${(p.start + at).toFixed(3)}-${(p.end + at).toFixed(3)}s`).join(", ")}` };
+    phraseNote = `every one of ${(ctx.phrases.phrases || []).length} phrases has a cue over it`;
+  }
+  return { ok: true, phrasesChecked: Boolean(ctx.phrases), detail: `${tag} carries all ${want.length} words of the ${voiced.from}; ${phraseNote}` };
+}
+
+function checkDelivery(sb, ctx, scenes) {
+  const d = sb.delivery;
+  const vo = sb.audio?.voiceover;
+  const burned = scenes.flatMap((s) => (s.text || []).filter((t) => t.source === "voiceover"));
+  if (d == null) {
+    // No delivery block: the original rule, burned captions carry the voice.
+    if (vo && !burned.length) add("sound_off", "FAIL", "voiceover present but no caption lines (source: voiceover) carry it on screen");
+    return;
+  }
+  if (!["cap", "clean"].includes(d.captions)) return add("delivery.captions", "FAIL", `delivery.captions is ${JSON.stringify(d.captions)}, not "cap" or "clean"`);
+  if (d.srt != null && typeof d.srt !== "string") return add("delivery.srt", "FAIL", "delivery.srt must be a path to the caption file");
+  if (d.captions === "clean" && burned.length) add("delivery.clean", "FAIL", `a CLEAN deliverable burns no captions, but ${burned.length} voiceover line(s) are on screen (${burned.map((t) => t.id).join(", ")})`);
+  const srt = d.srt ? srtCovers(sb, ctx, d.srt) : null;
+  if (srt) add("delivery.srt", srt.ok ? (srt.phrasesChecked || !vo ? "PASS" : "WARN") : "FAIL", srt.detail);
+  if (!vo) return add("delivery", "PASS", `${d.captions.toUpperCase()}, no voiceover`);
+  if (d.captions === "cap") {
+    add("sound_off", burned.length ? "PASS" : "FAIL", burned.length ? `CAP: ${burned.length} burned voiceover caption line(s)` : "CAP delivery with a voiceover but no caption lines (source: voiceover) on screen");
+  } else if (!d.srt) add("sound_off", "FAIL", "CLEAN delivery with a voiceover needs delivery.srt naming a caption file that covers every voiced phrase");
+  else add("sound_off", srt.ok ? "PASS" : "FAIL", srt.ok ? `CLEAN: sound-off carried by ${d.srt}` : `CLEAN: ${d.srt} does not cover the voice, see delivery.srt`);
+}
+
+// derived_from: the stamp an emitted storyboard carries back to its timeline.json.
+function checkDerived(sb, ctx) {
+  const df = sb.derived_from;
+  const beside = path.join(ctx.sbDir, "timeline.json");
+  if (df === undefined) {
+    if (fs.existsSync(beside)) add("derived_from", "FAIL", "timeline.json sits beside this storyboard but it carries no derived_from; emit it with timeline.mjs, do not hand-edit");
+    return;
+  }
+  const errs = validateDerivedFrom(df);
+  if (errs.length) return add("derived_from", "FAIL", errs.join("; "));
+  const file = path.resolve(ctx.sbDir, df.path);
+  if (!fs.existsSync(file)) return add("derived_from", "FAIL", `derived_from.path ${df.path} does not exist beside the storyboard`);
+  const bytes = fs.readFileSync(file);
+  const got = sha256(bytes);
+  if (got !== df.sha256) return add("derived_from", "FAIL", `${df.path} hashes ${got}, the storyboard was emitted from ${df.sha256}; re-emit it`);
+  let tl;
+  try { tl = JSON.parse(bytes.toString("utf8")); } catch (e) { return add("derived_from", "FAIL", `${df.path} is not JSON: ${e.message}`); }
+  if (tl?.schema !== TIMELINE) return add("derived_from", "FAIL", `${df.path} has schema ${JSON.stringify(tl?.schema)}, not ${TIMELINE}`);
+  const tm = tl.tm == null ? null : tmSha256(tl.tm);
+  if (tm !== df.tm_sha256) return add("derived_from", "FAIL", `derived_from.tm_sha256 ${df.tm_sha256} but the timeline's TM hashes ${tm}`);
+  add("derived_from", "PASS", `${df.path} sha256 ${got.slice(0, 12)} and TM ${tm ? tm.slice(0, 12) : "null"} match`);
+}
+
+function checkVersion(sb) {
+  const f = sb.format || {};
+  if (sb.schema_version != null && sb.schema_version !== 2) add("schema_version", "FAIL", `schema_version ${JSON.stringify(sb.schema_version)}; only 2 is defined (omit it for the original format)`);
+  if (sb.schema_version === 2 && !f.placement) add("format.placement", "FAIL", "schema_version 2 requires format.placement");
+  if (f.kind != null && !["video", "still", "carousel"].includes(f.kind)) add("format.kind", "FAIL", `format.kind ${JSON.stringify(f.kind)} is not video, still or carousel`);
+  if (f.placement) {
+    try {
+      const z = zoneFor({ ratio: f.ratio, placement: f.placement });
+      add("format.placement", "PASS", `${f.placement} -> zone ${z.id} (${z.source_grade})`);
+    } catch (e) { add("format.placement", "FAIL", e.message); }
+  }
+}
+
+function checkOne(sb, ctx) {
+  const { brief, kit, phrases } = ctx;
+  checkVersion(sb);
   const ratios = { "9:16": [9, 16], "4:5": [4, 5], "1:1": [1, 1], "16:9": [16, 9] };
   const f = sb.format || {};
   const r = ratios[f.ratio];
@@ -114,9 +314,8 @@ function checkOne(sb, brief, kit, phrases) {
     for (const t of items) {
       const w = settled(t);
       const hold = w.to - w.from;
-      // Captions of speech the viewer also hears are read along at speaking
-      // pace: about 4 words a second, never under 0.6s.
-      const need = t.source === "voiceover" ? Math.max(0.6, 0.25 * words(t.copy)) : floorFor(t.copy);
+      // Captions of speech the viewer also hears are read along at speaking pace.
+      const need = t.source === "voiceover" ? voFloorFor(t.copy) : floorFor(t.copy);
       if (t.in < s.start - 1e-6 || t.out > s.end + 1e-6) add(`read.${t.id}`, "FAIL", `"${t.copy}" runs outside its scene ${s.id}`);
       else if (hold + 1e-6 < need) add(`read.${t.id}`, "FAIL", `"${t.copy}" holds ${hold.toFixed(2)}s settled, needs ${need.toFixed(2)}s (${words(t.copy)} words)`);
       else add(`read.${t.id}`, "PASS", `${hold.toFixed(2)}s >= ${need.toFixed(2)}s`);
@@ -153,27 +352,43 @@ function checkOne(sb, brief, kit, phrases) {
     if (want != null) add("cta.verbatim", norm(want) === norm(ctaItem.copy) ? "PASS" : "FAIL", `brief "${want}" vs on screen "${ctaItem.copy}"`);
   }
 
-  // Grounding. What the ad asserts must come from the brief or the kit.
+  // Grounding. What the ad asserts must come from the brief, the kit or the locked script.
+  ctx.locked = lockScript(sb, ctx);
   for (const t of scenes.flatMap((s) => s.text || [])) {
     if (!t.source) { add(`ground.${t.id}`, "FAIL", `"${t.copy}" has no source`); continue; }
+    const assertive = ASSERTIVE.find(([re]) => re.test(t.copy));
     if (t.source === "framing") {
-      const hit = ASSERTIVE.find(([re]) => re.test(t.copy));
-      add(`ground.${t.id}`, hit ? "FAIL" : "PASS", hit ? `framing line "${t.copy}" contains ${hit[1]}; a claim needs a sourced field` : "framing, asserts nothing");
+      add(`ground.${t.id}`, assertive ? "FAIL" : "PASS", assertive ? `framing line "${t.copy}" contains ${assertive[1]}; a claim needs a sourced field` : "framing, asserts nothing");
       continue;
     }
-    // A caption of a voiced line is grounded in the script it captions: the
-    // brief's copy, or audio.voiceover.script when the storyboard carries one.
+    // A caption of a voiced line grounds in the brief's copy or the locked script, never in
+    // audio.voiceover.script, which the storyboard's author writes.
     if (t.source === "voiceover") {
-      const script = [sb.audio?.voiceover?.script, ...flat(brief?.copy_architecture)].filter(Boolean);
-      if (!script.length) { add(`ground.${t.id}`, "WARN", `caption "${t.copy}": no brief copy or voiceover script to check it against`); continue; }
-      const ok = script.some((v) => norm(v).replace(/[.,!?;:]/g, "").includes(norm(t.copy).replace(/[.,!?;:]/g, "")));
-      add(`ground.${t.id}`, ok ? "PASS" : "FAIL", ok ? `caption found in the voiced script` : `caption "${t.copy}" is not in the brief copy or voiceover script`);
+      const grounds = [...(ctx.locked ? [{ v: ctx.locked.text, from: "the locked script" }] : []), ...flat(brief?.copy_architecture).map((v) => ({ v, from: "the brief copy" }))];
+      if (!grounds.length) ungrounded(ctx, `ground.${t.id}`, `caption "${t.copy}": no --brief copy and no locked --script to check it against`);
+      else {
+        const hit = grounds.find((g) => bare(g.v).includes(bare(t.copy)));
+        const why = sb.audio?.voiceover?.script != null && !ctx.locked ? " (audio.voiceover.script grounds nothing)" : "";
+        add(`ground.${t.id}`, hit ? "PASS" : "FAIL", hit ? `caption found in ${hit.from}` : `caption "${t.copy}" is not in ${ctx.locked ? "the locked script or " : ""}the brief copy${why}`);
+      }
+      // A voiced claim is still a claim: it needs a field that carries it, with its evidence.
+      if (assertive) {
+        const cs = t.claim_source;
+        if (!cs) add(`claim.${t.id}`, "FAIL", `voiced line "${t.copy}" contains ${assertive[1]}; it needs claim_source naming the brief or kit field that carries it`);
+        else if (FORBIDDEN_FIELD.test(cs)) add(`claim.${t.id}`, "FAIL", `claim_source ${cs} is a list of claims that may NOT run`);
+        else if (!(cs.startsWith("kit.") ? kit : brief)) ungrounded(ctx, `claim.${t.id}`, `voiced claim "${t.copy}": claim_source ${cs} cannot be read without --${cs.startsWith("kit.") ? "kit" : "brief"}`);
+        else {
+          const vals = flat(resolve(cs, brief, kit));
+          const ok = vals.some((v) => bare(v).includes(bare(t.copy)));
+          add(`claim.${t.id}`, ok ? "PASS" : "FAIL", !vals.length ? `claim_source ${cs} is empty or missing` : ok ? `voiced claim found in ${cs}` : `voiced claim "${t.copy}" NOT found in ${cs}`);
+        }
+      }
       continue;
     }
-    if (!brief && !t.source.startsWith("kit.")) { add(`ground.${t.id}`, "WARN", `no --brief given, cannot verify "${t.copy}" against ${t.source}`); continue; }
-    if (!kit && t.source.startsWith("kit.")) { add(`ground.${t.id}`, "WARN", `no --kit given, cannot verify "${t.copy}" against ${t.source}`); continue; }
+    if (!brief && !t.source.startsWith("kit.")) { ungrounded(ctx, `ground.${t.id}`, `no --brief given, cannot verify "${t.copy}" against ${t.source}`); continue; }
+    if (!kit && t.source.startsWith("kit.")) { ungrounded(ctx, `ground.${t.id}`, `no --kit given, cannot verify "${t.copy}" against ${t.source}`); continue; }
     // A field that names forbidden or unproven claims is not a source for them.
-    if (/forbidden|banned|avoid|unverified|unsourced/i.test(t.source)) { add(`ground.${t.id}`, "FAIL", `source ${t.source} is a list of claims that may NOT run`); continue; }
+    if (FORBIDDEN_FIELD.test(t.source)) { add(`ground.${t.id}`, "FAIL", `source ${t.source} is a list of claims that may NOT run`); continue; }
     const vals = flat(resolve(t.source, brief, kit));
     if (!vals.length) add(`ground.${t.id}`, "FAIL", `source ${t.source} is empty or missing`);
     else add(`ground.${t.id}`, vals.some((v) => norm(v).includes(norm(t.copy))) ? "PASS" : "FAIL", `"${t.copy}" ${vals.some((v) => norm(v).includes(norm(t.copy))) ? "found in" : "NOT found in"} ${t.source}`);
@@ -189,8 +404,14 @@ function checkOne(sb, brief, kit, phrases) {
     if (hit) add(`forbidden.${t.id}`, "FAIL", `"${t.copy}" matches the kit's forbidden claim "${hit}"`);
   }
 
-  // Sound off is the default viewing condition.
-  if (sb.audio?.voiceover && !scenes.some((s) => (s.text || []).some((t) => t.source === "voiceover"))) add("sound_off", "FAIL", "voiceover present but no caption lines (source: voiceover) carry it on screen");
+  // Sound off is the default viewing condition: burned captions (CAP), or a covering SRT (CLEAN).
+  checkDelivery(sb, ctx, scenes);
+  // A bed whose licence cannot be named does not run.
+  const music = sb.audio?.music;
+  if (music?.file) {
+    const lic = typeof music.licence === "string" ? music.licence.trim() : "";
+    add("music.licence", lic ? "PASS" : "FAIL", lic ? `music runs under: ${lic}` : `audio.music.file ${music.file} has no audio.music.licence; name the licence or drop the track`);
+  }
   const mv = sb.audio?.music?.volume;
   if (mv != null && mv > 0.5) add("mix.music", "FAIL", `music volume ${mv} above 0.5`);
   const sfx = sb.audio?.sfx || [];
@@ -202,11 +423,12 @@ function checkOne(sb, brief, kit, phrases) {
     else {
       const at = sb.audio.voiceover.at ?? 0;
       const onsets = (phrases.phrases || []).map((p) => p.start + at);
-      const hits = sfx.flatMap((x) => onsets.filter((o) => x.at >= o - ONSET_GUARD && x.at < o).map((o) => `${x.file} at ${x.at}s, ${(o - x.at).toFixed(3)}s before the phrase at ${o.toFixed(3)}s`));
+      const hits = onsetGuard(sfx, onsets).map((h) => `${h.file} at ${h.at}s, ${h.lead.toFixed(3)}s before the phrase at ${h.onset.toFixed(3)}s`);
       add("mix.onsets", hits.length ? "FAIL" : "PASS", hits.length ? hits.join("; ") : `no effect in the ${ONSET_GUARD}s before any of ${onsets.length} phrase onsets`);
     }
   }
   if (sb.audio && !sb.audio.music && !sb.audio.silence_reason) add("mix.music", "WARN", "no music bed and no silence_reason");
+  checkDerived(sb, ctx);
 }
 
 // Row isolation: across a Matrix Sprint Test row everything is identical
@@ -236,9 +458,25 @@ function checkRow(paths) {
 }
 
 if (argv[0] === "--row") checkRow(argv.slice(1));
-else checkOne(load(argv[0]), load(flag("--brief")), load(flag("--kit")), load(flag("--phrases")));
+else {
+  const sbPath = argv.find((a, i) => !a.startsWith("--") && !VALUED.includes(argv[i - 1]));
+  if (!sbPath) {
+    console.error("usage: check-storyboard.mjs <storyboard.json> --brief brief.json [--kit kit.json] [--phrases phrases.json] [--script locked] [--packet packet.json] [--allow-ungrounded]");
+    process.exit(2);
+  }
+  const ctx = {
+    brief: load(flag("--brief")), kit: load(flag("--kit")), phrases: load(flag("--phrases")),
+    scriptPath: flag("--script"), packetPath: flag("--packet"), allowUngrounded: argv.includes("--allow-ungrounded"),
+    sbDir: path.dirname(path.resolve(sbPath)), unchecked: [], locked: null,
+  };
+  checkOne(load(sbPath), ctx);
+  if (ctx.allowUngrounded) {
+    overrides.push({ flag: "--allow-ungrounded", effect: "rules that could not be grounded are WARN, not FAIL", unchecked: ctx.unchecked });
+    console.error(`check-storyboard: OVERRIDE --allow-ungrounded, ${ctx.unchecked.length} rule(s) unchecked${ctx.unchecked.length ? `: ${ctx.unchecked.join(", ")}` : ""}`);
+  }
+}
 
 const fails = results.filter((r) => r.verdict === "FAIL").length;
 const warns = results.filter((r) => r.verdict === "WARN").length;
-console.log(JSON.stringify({ verdict: fails ? "FAIL" : "PASS", fails, warns, results }, null, 2));
+console.log(JSON.stringify({ verdict: fails ? "FAIL" : "PASS", fails, warns, overrides, results }, null, 2));
 process.exit(fails ? 1 : 0);

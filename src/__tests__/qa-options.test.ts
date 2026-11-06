@@ -78,7 +78,16 @@ const ffmpeg = spawnSync("ffmpeg", ["-version"], { encoding: "utf8" }).status ==
 const dirs: string[] = [];
 afterAll(() => dirs.forEach((d) => fs.rmSync(d, { recursive: true, force: true })));
 
-describe.skipIf(!ffmpeg)("qa-video.mjs reads the same facts (real ffmpeg)", () => {
+// The CI-missing-binary rule (as in render-health.test.ts): a missing ffmpeg FAILs, it is never
+// a silent skip. Under CI the message points at the workflow; locally it says how to fix it.
+it("has ffmpeg on PATH for the qa-video checks", () => {
+  const why = process.env.CI
+    ? "ffmpeg missing under CI: .github/workflows/ci.yml must install it"
+    : "ffmpeg not found: install it (winget install Gyan.FFmpeg, apt install ffmpeg, brew install ffmpeg) and put it on PATH";
+  expect(ffmpeg, why).toBe(true);
+});
+
+describe.runIf(ffmpeg)("qa-video.mjs reads the same facts (real ffmpeg)", () => {
   function clip() {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qa-video-"));
     dirs.push(dir);

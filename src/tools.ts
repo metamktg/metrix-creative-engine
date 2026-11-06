@@ -197,7 +197,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
     "kie_validate_ugc_preproduction",
     {
       title: "Check UGC preproduction dependencies without spending",
-      description: "Validate a local version-1 UGC preproduction packet, exact source hashes, locked copy, presenter/voice/scene acceptance records, proof roles and current request/capability/budget bindings. Does not certify listening or performance. Optional observed duration detects returned-duration changes that require replanning.",
+      description: "Validate a local version-2 UGC preproduction packet (version 1 only for allowlisted run IDs), exact source hashes, locked copy, presenter acceptance of the exact stills, look and eye sheet by a reviewer other than prepared_by, presenter/voice/scene acceptance records, proof roles and current request/capability/budget bindings for a lip_sync or motion route. Does not certify listening or performance. Optional observed duration detects returned-duration changes that require replanning.",
       inputSchema: { packetPath: z.string().min(1), observedDurationSeconds: z.number().positive().optional() },
       outputSchema: briefVerdictShape,
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -212,7 +212,7 @@ export function registerKieTools(server: McpServer, deps: ToolDeps): void {
     "kie_create_ugc_lipsync",
     {
       title: "Submit approved-voice UGC lip sync after dependency checks",
-      description: "Use for dependent creator lip-sync production. Loads exact model/input from the private packet, revalidates current hashes/acceptance and creates an exclusive durable submission receipt before one provider call. A submitted or uncertain receipt blocks duplicate calls; recover the recorded task. Raw generation tools remain raw and do not provide this guard. No account-wide atomic budget or media-quality guarantee.",
+      description: "Use for dependent creator lip-sync production, or motion from an accepted still with a version-2 packet. Loads exact model/input from the private packet, revalidates current hashes/presenter acceptance and creates an exclusive durable submission receipt before one provider call. A submitted or uncertain receipt blocks duplicate calls; recover the recorded task. Raw generation tools remain raw and do not provide this guard. No account-wide atomic budget or media-quality guarantee.",
       inputSchema: { packetPath: z.string().min(1) },
       outputSchema: { ...createOutputShape, receiptPath: z.string(), warnings: z.array(z.string()) },
       annotations: { readOnlyHint: false, openWorldHint: true },

@@ -29,7 +29,7 @@ Describe voice fit in practical listening terms. A wide shot with unexplained in
 
 Reuse a current accepted identity reference when authorized. Resolve uncertainty with the smallest useful preview before dependent expensive work. Frame, expression, headroom, lower-face visibility, lighting and dimensions must fit the selected operation. A lip-sync still needs a usable visible mouth, not one universal camera specification.
 
-Inspect the actual still for the brief's traits, identity, scene, unwanted text/logos and framing. A still cannot approve motion, voice or lip sync. Additional views need supported inputs and a concrete reason; no fixed model, resolution, seed availability or view count governs every run.
+Inspect the actual still for the brief's traits, identity, scene, unwanted text/logos and framing. A still cannot approve motion, voice or lip sync. Before any motion or lip-sync spend, a reviewer other than the person who prepared the packet records presenter acceptance of the exact stills, look and eye sheet (mood, look, eyes open on the lens, expression); see the `presenter.acceptance` row in [preproduction-director.md](preproduction-director.md). Additional views need supported inputs and a concrete reason; no fixed model, resolution, seed availability or view count governs every run.
 
 Carry actual files through supported reference inputs. Text repetition can reinforce continuity but cannot guarantee pixels. Distinguish identity, style, performance, product and exact UI proof references. A failed identity upload stops or repairs that binding; it does not authorize a replacement face.
 

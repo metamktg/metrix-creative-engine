@@ -67,17 +67,52 @@ folder unless absolute.
 | `text[].label` | `true` for a fixed label that is read once and stays put: a disclosure, a legal line, a source credit, the brand name beside its mark. Labels still need their reading floor, but they do not count against scene density or the stagger rule. Lines sourced from `kit.disclosure` or `kit.identity` are labels automatically |
 | `text[].in` / `out` | When the line starts entering and when it is gone |
 | `text[].enter` / `dur` | Entrance (`none`, `fade`, `rise`, `slam`, `pop`, `type`, `wipe`) and its length. Settled time is `out - (in + dur)`, or `out - in` for `none` |
-| `audio.music` | Bed file, offset into the track (`start`), volume (max 0.5), fades, and the licence it runs under |
+| `text[].claim_source` | A voiced line that asserts (a digit, money, `#1`, a superlative or guarantee) names the brief or kit field that carries it, for example `copy_architecture.proof`. A forbidden or avoid list is never a source |
+| `text[].kind` | Optional: what the line is (`voiceover`, `hook`, `cta`, `label`, `framing`), as an emitted storyboard records it |
+| `audio.music` | Bed file, offset into the track (`start`), volume (max 0.5), fades, and the licence it runs under. `licence` is required whenever `file` is set |
 | `audio.sfx[]` | Effect file, the time it fires, volume |
-| `audio.voiceover` | `{ "file", "at", "volume" }` or null. Requires caption lines |
+| `audio.voiceover` | `{ "file", "at", "volume", "script", "script_sha256" }` or null. Requires captions: burned lines (CAP) or `delivery.srt` (CLEAN) |
+| `audio.voiceover.script` | The words as the author typed them. Grounds nothing; with a locked script it must say the same words |
+| `audio.voiceover.script_sha256` | sha256 of the locked script file's bytes, passed to the check with `--script`. Voiced captions ground in that file or the brief's copy |
 | `audio.lufs` | Loudness target, default -14 |
 | `audio.silence_reason` | Required if there is no music bed |
-| `slot` | Inside an MST only: `{ "scene": "s1" }`, the one scene that varies across the row |
+| `slot` | Inside an MST only: `{ "scene": "s1" }`, the one scene that varies across the row; `null` otherwise |
+| `delivery.captions` | `"cap"`: voiceover captions burned in. `"clean"`: none burned; sound off is carried by `delivery.srt` |
+| `delivery.srt` | Caption file, relative to the storyboard. For CLEAN its words must equal the voiced script in order and its cues cover every phrase (checked with `--phrases`) |
+| `derived_from` | Written by the timeline emitter: `{ "path", "sha256", "schema": "mce.timeline/1", "tm_sha256" }`. The check fails a stale stamp, and a storyboard with a `timeline.json` beside it and no stamp (`references/timeline.md`) |
+| `schema_version` | Omit for the original format; `2` requires `format.placement`. `format.kind` (`video`, `still`, `carousel`), `delivery` and `derived_from` are optional in either and checked when present |
+| `format.placement` | Where it runs (`"Instagram Reels"`, `"facebook_stories"`, `"feed"`), resolved through `references/placement-zones.json`; an unknown placement fails |
 
 The composition mirrors this: each scene is a `section` with the same
 `data-scene`, `data-start` and `data-end`; each text item an element with the
 same `data-text`, `data-in`, `data-out`, `data-enter` and `data-dur`. The
-layout check fails any line whose on-screen text differs from `copy`.
+layout check fails any line whose on-screen text differs from `copy`, and
+render.mjs refuses to render when the authored DOM disagrees with the storyboard
+(see the parity check in SKILL.md, step 6).
+
+## Emitted storyboards
+
+When the ad is planned as a `timeline.json`, `timeline.mjs emit --all` writes one
+`storyboard_{ratio}_{cap|clean}.json` per canvas and caption mode
+([timeline.md](timeline.md)). Re-emit after a change; never edit one by hand.
+Beyond the fields above, an emitted storyboard always carries:
+
+| Field | Value |
+| --- | --- |
+| `derived_from` | `{ "path", "sha256", "schema", "tm_sha256" }`: the timeline relative to the storyboard, the sha256 of its bytes, `"mce.timeline/1"`, and `tmSha256` of its TM block (null when it has none) |
+| `delivery` | `{ "captions": "cap" or "clean", "srt": "captions.srt" }` |
+| `audio.voiceover.script_sha256` | sha256 of the emitted `transcript.txt` (the spoken script plus a newline); pass that file with `--script` |
+| `slot` | `null`: an emitted storyboard is not an MST row base until someone sets it |
+| `text[].copy` | The caption group's `lines` joined by a newline; CLEAN drops the burned voiceover lines |
+
+Stills land in `work/stills` beside the storyboard, and each `--mode stills` run
+empties that folder first. The emitter writes every storyboard into one folder,
+so they share one `work/stills` and the last stills run replaces the others.
+Give each storyboard its own stills directory: emit it into its own folder
+(`timeline.mjs emit timeline.json --target storyboard --ratio 9:16 --captions cap
+--out <folder>/storyboard_9x16_cap.json`, which writes `derived_from.path`
+relative to that folder), or copy `work/stills` away before the next stills run.
+render.mjs has no flag for the stills directory.
 
 ## Creator performance and proof handoff
 

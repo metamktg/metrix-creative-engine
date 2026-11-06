@@ -1,0 +1,117 @@
+{
+  "schema": "mce.zones/1",
+  "note": "Canonical placement safe-zone table. Edit here only, then npm run sync:copies (the copy lives in skills/metrix-video-assembly/references/). Fractions of the frame: top, bottom and each side kept free of text, logos, products, faces and CTAs. source: meta (Meta ads guide page), house (our own rule where Meta publishes none), legacy (the values render.mjs --mode check hard-codes today). source_grade: primary (read on the Meta page named in url on the retrieved date), third_party (no Meta page states it), house, legacy. A row's enforcement decides what a box inside its bands produces: fail, or warn. A third_party row never fails.",
+  "tolerance": 0.002,
+  "min_font_ratio": 0.03,
+  "zones": [
+    {
+      "id": "instagram_reels",
+      "ratio": "9:16",
+      "placements": ["instagram_reels", "Instagram Reels"],
+      "top": 0.14,
+      "bottom": 0.35,
+      "side": 0.06,
+      "source": "meta",
+      "source_grade": "primary",
+      "enforcement": "fail",
+      "url": "https://www.facebook.com/business/ads-guide/update/video/instagram-reels",
+      "also": ["https://www.facebook.com/business/ads-guide/update/image/instagram-reels"],
+      "retrieved": "2026-11-06",
+      "basis": "Video page: leave at least 14% of the top, 35% of the bottom and 6% on each side free of text, logos or other key elements. Image page says roughly. Ratio 9:16, 1440 x 2560."
+    },
+    {
+      "id": "instagram_stories",
+      "ratio": "9:16",
+      "placements": ["instagram_stories", "Instagram Stories", "Instagram Story"],
+      "top": 0.14,
+      "bottom": 0.35,
+      "side": 0.06,
+      "source": "meta",
+      "source_grade": "primary",
+      "enforcement": "fail",
+      "url": "https://www.facebook.com/business/ads-guide/update/video/instagram-story",
+      "retrieved": "2026-11-06",
+      "basis": "Leave roughly 14% of the top, 35% of the bottom and 6% on each side free of text, logos and key elements. Ratio 9:16, 1440 x 2560."
+    },
+    {
+      "id": "facebook_stories",
+      "ratio": "9:16",
+      "placements": ["facebook_stories", "Facebook Stories", "Facebook Story"],
+      "top": 0.14,
+      "bottom": 0.35,
+      "side": 0.06,
+      "source": "meta",
+      "source_grade": "primary",
+      "enforcement": "fail",
+      "url": "https://www.facebook.com/business/ads-guide/update/video/facebook-story",
+      "retrieved": "2026-11-06",
+      "basis": "Leave roughly 14% of the top, 35% of the bottom and 6% on each side free of text and logos, so UI such as the call-to-action does not cover them. Ratio 9:16, 1440 x 2560."
+    },
+    {
+      "id": "facebook_reels",
+      "ratio": "9:16",
+      "placements": ["facebook_reels", "Facebook Reels"],
+      "top": 0.14,
+      "bottom": 0.35,
+      "side": 0.06,
+      "source": "meta",
+      "source_grade": "third_party",
+      "enforcement": "warn",
+      "url": "https://www.facebook.com/business/ads/facebook-instagram-reels-ads",
+      "retrieved": "2026-11-06",
+      "basis": "No Meta spec page for Facebook Reels was found (ads-guide/update/video/facebook-reels returns 404 on 2026-11-06). Meta's joint Facebook and Instagram Reels ads page names a Reels safe zone without percentages and links only the Instagram Reels spec. The 14/35/6 figures for Facebook Reels come from third-party guides, which disagree on the side margin. WARN only until a Meta page states them."
+    },
+    {
+      "id": "feed",
+      "ratios": ["4:5", "1:1", "9:16", "16:9"],
+      "placements": ["feed", "facebook_feed", "instagram_feed", "Facebook Feed", "Instagram Feed", "carousel", "right_column", "in_stream"],
+      "top": 0.05,
+      "bottom": 0.05,
+      "side": 0.05,
+      "source": "house",
+      "source_grade": "house",
+      "enforcement": "fail",
+      "url": "https://www.facebook.com/business/ads-guide/update/video",
+      "also": [
+        "https://www.facebook.com/business/ads-guide/update/image",
+        "https://www.facebook.com/business/ads-guide/update/image/instagram-feed",
+        "https://www.facebook.com/business/ads-guide/update/video/instagram-feed"
+      ],
+      "retrieved": "2026-11-06",
+      "basis": "House rule, not Meta: the Facebook Feed (4:5, 1440 x 1800) and Instagram Feed (image 4:5, 1440 x 1800; video 9:16, 1080 x 1920) pages state no safe zone. 5% on every edge keeps type off device rounding and crop tolerance."
+    },
+    {
+      "id": "legacy_9x16",
+      "ratio": "9:16",
+      "placements": [],
+      "top": 0.14,
+      "bottom": 0.2,
+      "side": 0.06,
+      "source": "legacy",
+      "source_grade": "legacy",
+      "enforcement": "fail",
+      "url": null,
+      "retrieved": null,
+      "basis": "What render.mjs --mode check enforces today for any 9:16 storyboard (render.mjs const zone). Used only when a storyboard declares no placement; zoneFor marks it with a WARN. Bottom 20% is looser than Meta's 35% for Reels and Stories."
+    },
+    {
+      "id": "legacy_other",
+      "ratio": "*",
+      "placements": [],
+      "top": 0.05,
+      "bottom": 0.05,
+      "side": 0.05,
+      "source": "legacy",
+      "source_grade": "legacy",
+      "enforcement": "fail",
+      "url": null,
+      "retrieved": null,
+      "basis": "What render.mjs --mode check enforces today for every ratio other than 9:16. Used only when a storyboard declares no placement; zoneFor marks it with a WARN."
+    }
+  ],
+  "aliases": {
+    "reels_stories": "instagram_reels",
+    "reels": "instagram_reels",
+    "stories": "instagram_stories"
+  }
+}

@@ -1,0 +1,545 @@
+{
+ "schema": "mce.eyestate-calibration/1",
+ "measured_on": "2026-11-06",
+ "scorer": {
+  "mediapipe": "1.1.1",
+  "model_sha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+  "running_mode": "VIDEO",
+  "scored_size": [
+   1080,
+   1920
+  ],
+  "deterministic": "two runs per clip gave identical frames"
+ },
+ "clips": {
+  "S3H": {
+   "file": "v19_S3H_phonegrade.mp4",
+   "sha256": "c48e4514ed2da444493f90ceb9f08429902cdbdcbc7fb8c8c09da0247f3f73ab",
+   "frames": 125,
+   "fps": 25,
+   "faces_found": 125
+  },
+  "S1": {
+   "file": "v17_S1_phonegrade.mp4",
+   "sha256": "b2928f04666af42ba90eddaf0eb6123ebd4d82821464c3ee990b3728a035ef34",
+   "frames": 125,
+   "fps": 25,
+   "faces_found": 125
+  },
+  "S3": {
+   "file": "v16_S3_phonegrade.mp4",
+   "sha256": "6aeb0d80fba9f91a8b9e95a6bcdeffae467a2e7e6d89a38b81e0f445035d5eaa",
+   "frames": 185,
+   "fps": 25,
+   "faces_found": 185
+  }
+ },
+ "named_windows": {
+  "S3H": [
+   [
+    0.44,
+    0.68,
+    "v19 build: both eyes closed 0.44 to 0.64, half-lidded to 0.68"
+   ]
+  ],
+  "S1": [
+   [
+    1.44,
+    1.72,
+    "v17 output 2.23 to 2.50 = S1 source 1.44 to 1.74 (build-v18/v19 RESIDUAL)"
+   ]
+  ],
+  "S3": [
+   [
+    4.72,
+    4.76,
+    "v17 output 13.37 to 13.43 = S3 source 4.70 to 4.76 (v18 REJECT 4.69 to 4.92)"
+   ]
+  ]
+ },
+ "owner_recorded_eye_windows": {
+  "S3H": [
+   [
+    0.42,
+    0.72,
+    "both eyes closed 0.44 to 0.64, half-lidded to 0.68"
+   ]
+  ],
+  "S1": [
+   [
+    0.53,
+    1.03,
+    "eyes closed 4 frames, head tilt, half-lidded to 1.03"
+   ],
+   [
+    1.44,
+    1.74,
+    "slow blink at 'study | for'"
+   ],
+   [
+    2.88,
+    3.2,
+    "slow eye-close on a stressed word"
+   ],
+   [
+    3.2,
+    5,
+    "head tilt, squint"
+   ]
+  ],
+  "S3": [
+   [
+    2.75,
+    3.01,
+    "eyes closed 7 frames on the closing phrase"
+   ],
+   [
+    3.9,
+    3.99,
+    "squint at the CTA entry"
+   ],
+   [
+    4.69,
+    4.92,
+    "eyes close on the product name"
+   ]
+  ]
+ },
+ "visually_confirmed_unrecorded": {
+  "S3H": [
+   [
+    2.8,
+    3,
+    "requested one-eye gesture on the last word: both eyes closed 2.84 to 2.92 on the sheet"
+   ]
+  ],
+  "S3": [
+   [
+    0.4,
+    0.6,
+    "eyes closed 0.40 to 0.56 on an eye-crop sheet"
+   ],
+   [
+    0.76,
+    1.2,
+    "eyes closed 0.84 to 1.12, half-lidded after"
+   ],
+   [
+    6.84,
+    7.04,
+    "eyes closed"
+   ],
+   [
+    7.16,
+    7.36,
+    "eyes closed"
+   ]
+  ]
+ },
+ "chosen": {
+  "close": 0.4,
+  "open": 0.3,
+  "edge_seconds": 0.12,
+  "named_windows_found": "3/3",
+  "named_frame_recall": "14/17",
+  "event_precision_vs_owner_record": "7/12",
+  "event_precision_vs_record_plus_visual": "12/12",
+  "frame_precision_vs_owner_record": "36/77",
+  "frame_precision_vs_record_plus_visual": "72/77"
+ },
+ "edits_checked": {
+  "v17 S1 pC 0.175-3.222 cut 1.6595 (owner/v18 fixed the punch-in on closed lids and cut to the app before the stressed word)": {
+   "verdict": "FAIL",
+   "findings": [
+    "WARN mid_closure 0.56-0.72",
+    "FAIL cut_closure 1.44-1.64",
+    "FAIL edge_closure 2.92-3.12"
+   ]
+  },
+  "v17 S3 pH 1.726-3.445, pI 3.905-6.567 (v18 hid the CTA-entry squint, then the 4.69 close)": {
+   "verdict": "FAIL",
+   "findings": [
+    "WARN mid_closure 2.76-3.08",
+    "FAIL edge_closure 3.80-3.96",
+    "WARN mid_closure 4.72-4.84"
+   ]
+  },
+  "v18 S3 pI 3.983-6.567": {
+   "verdict": "WARN",
+   "findings": [
+    "WARN mid_closure 4.72-4.84"
+   ]
+  },
+  "v19 S1 pC 1.048-2.844 cut 1.829 (owner-passed)": {
+   "verdict": "WARN",
+   "findings": [
+    "WARN mid_closure 1.44-1.64"
+   ]
+  },
+  "v19 S3H 0.809-4.169 (owner-passed)": {
+   "verdict": "WARN",
+   "findings": [
+    "WARN mid_closure 2.80-3.00"
+   ]
+  },
+  "v19 S3H with the reject window included, 0.40-4.169": {
+   "verdict": "FAIL",
+   "findings": [
+    "FAIL edge_closure 0.48-0.68",
+    "WARN mid_closure 2.80-3.00"
+   ]
+  }
+ },
+ "sweep": [
+  {
+   "close": 0.3,
+   "open": 0.2,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "16/17",
+   "event_precision_vs_owner_record": "7/11",
+   "event_precision_vs_record_plus_visual": "11/11",
+   "frame_precision_vs_owner_record": "40/91",
+   "frame_precision_vs_record_plus_visual": "76/91"
+  },
+  {
+   "close": 0.3,
+   "open": 0.25,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "38/81",
+   "frame_precision_vs_record_plus_visual": "74/81"
+  },
+  {
+   "close": 0.3,
+   "open": 0.3,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "36/77",
+   "frame_precision_vs_record_plus_visual": "72/77"
+  },
+  {
+   "close": 0.35,
+   "open": 0.2,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "16/17",
+   "event_precision_vs_owner_record": "7/11",
+   "event_precision_vs_record_plus_visual": "11/11",
+   "frame_precision_vs_owner_record": "40/91",
+   "frame_precision_vs_record_plus_visual": "76/91"
+  },
+  {
+   "close": 0.35,
+   "open": 0.25,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "38/81",
+   "frame_precision_vs_record_plus_visual": "74/81"
+  },
+  {
+   "close": 0.35,
+   "open": 0.3,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "36/77",
+   "frame_precision_vs_record_plus_visual": "72/77"
+  },
+  {
+   "close": 0.35,
+   "open": 0.35,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "34/70",
+   "frame_precision_vs_record_plus_visual": "66/70"
+  },
+  {
+   "close": 0.4,
+   "open": 0.2,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "16/17",
+   "event_precision_vs_owner_record": "7/11",
+   "event_precision_vs_record_plus_visual": "11/11",
+   "frame_precision_vs_owner_record": "40/91",
+   "frame_precision_vs_record_plus_visual": "76/91"
+  },
+  {
+   "close": 0.4,
+   "open": 0.25,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "38/81",
+   "frame_precision_vs_record_plus_visual": "74/81"
+  },
+  {
+   "close": 0.4,
+   "open": 0.3,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "36/77",
+   "frame_precision_vs_record_plus_visual": "72/77"
+  },
+  {
+   "close": 0.4,
+   "open": 0.35,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "34/70",
+   "frame_precision_vs_record_plus_visual": "66/70"
+  },
+  {
+   "close": 0.45,
+   "open": 0.2,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "16/17",
+   "event_precision_vs_owner_record": "7/11",
+   "event_precision_vs_record_plus_visual": "11/11",
+   "frame_precision_vs_owner_record": "40/91",
+   "frame_precision_vs_record_plus_visual": "76/91"
+  },
+  {
+   "close": 0.45,
+   "open": 0.25,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "38/81",
+   "frame_precision_vs_record_plus_visual": "74/81"
+  },
+  {
+   "close": 0.45,
+   "open": 0.3,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "36/77",
+   "frame_precision_vs_record_plus_visual": "72/77"
+  },
+  {
+   "close": 0.45,
+   "open": 0.35,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "34/70",
+   "frame_precision_vs_record_plus_visual": "66/70"
+  },
+  {
+   "close": 0.5,
+   "open": 0.2,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "16/17",
+   "event_precision_vs_owner_record": "7/11",
+   "event_precision_vs_record_plus_visual": "11/11",
+   "frame_precision_vs_owner_record": "40/91",
+   "frame_precision_vs_record_plus_visual": "76/91"
+  },
+  {
+   "close": 0.5,
+   "open": 0.25,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "38/81",
+   "frame_precision_vs_record_plus_visual": "74/81"
+  },
+  {
+   "close": 0.5,
+   "open": 0.3,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "36/77",
+   "frame_precision_vs_record_plus_visual": "72/77"
+  },
+  {
+   "close": 0.5,
+   "open": 0.35,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/12",
+   "event_precision_vs_record_plus_visual": "12/12",
+   "frame_precision_vs_owner_record": "34/70",
+   "frame_precision_vs_record_plus_visual": "66/70"
+  },
+  {
+   "close": 0.55,
+   "open": 0.2,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "16/17",
+   "event_precision_vs_owner_record": "7/10",
+   "event_precision_vs_record_plus_visual": "10/10",
+   "frame_precision_vs_owner_record": "40/83",
+   "frame_precision_vs_record_plus_visual": "70/83"
+  },
+  {
+   "close": 0.55,
+   "open": 0.25,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/11",
+   "event_precision_vs_record_plus_visual": "11/11",
+   "frame_precision_vs_owner_record": "38/74",
+   "frame_precision_vs_record_plus_visual": "68/74"
+  },
+  {
+   "close": 0.55,
+   "open": 0.3,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/11",
+   "event_precision_vs_record_plus_visual": "11/11",
+   "frame_precision_vs_owner_record": "36/71",
+   "frame_precision_vs_record_plus_visual": "66/71"
+  },
+  {
+   "close": 0.55,
+   "open": 0.35,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/11",
+   "event_precision_vs_record_plus_visual": "11/11",
+   "frame_precision_vs_owner_record": "34/64",
+   "frame_precision_vs_record_plus_visual": "60/64"
+  },
+  {
+   "close": 0.6,
+   "open": 0.2,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "16/17",
+   "event_precision_vs_owner_record": "7/9",
+   "event_precision_vs_record_plus_visual": "9/9",
+   "frame_precision_vs_owner_record": "40/76",
+   "frame_precision_vs_record_plus_visual": "64/76"
+  },
+  {
+   "close": 0.6,
+   "open": 0.25,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/10",
+   "event_precision_vs_record_plus_visual": "10/10",
+   "frame_precision_vs_owner_record": "38/68",
+   "frame_precision_vs_record_plus_visual": "62/68"
+  },
+  {
+   "close": 0.6,
+   "open": 0.3,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/10",
+   "event_precision_vs_record_plus_visual": "10/10",
+   "frame_precision_vs_owner_record": "36/65",
+   "frame_precision_vs_record_plus_visual": "60/65"
+  },
+  {
+   "close": 0.6,
+   "open": 0.35,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/10",
+   "event_precision_vs_record_plus_visual": "10/10",
+   "frame_precision_vs_owner_record": "34/59",
+   "frame_precision_vs_record_plus_visual": "55/59"
+  },
+  {
+   "close": 0.65,
+   "open": 0.2,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "16/17",
+   "event_precision_vs_owner_record": "7/9",
+   "event_precision_vs_record_plus_visual": "9/9",
+   "frame_precision_vs_owner_record": "40/76",
+   "frame_precision_vs_record_plus_visual": "64/76"
+  },
+  {
+   "close": 0.65,
+   "open": 0.25,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/10",
+   "event_precision_vs_record_plus_visual": "10/10",
+   "frame_precision_vs_owner_record": "38/68",
+   "frame_precision_vs_record_plus_visual": "62/68"
+  },
+  {
+   "close": 0.65,
+   "open": 0.3,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/10",
+   "event_precision_vs_record_plus_visual": "10/10",
+   "frame_precision_vs_owner_record": "36/65",
+   "frame_precision_vs_record_plus_visual": "60/65"
+  },
+  {
+   "close": 0.65,
+   "open": 0.35,
+   "named_windows_found": "3/3",
+   "named_frame_recall": "14/17",
+   "event_precision_vs_owner_record": "7/10",
+   "event_precision_vs_record_plus_visual": "10/10",
+   "frame_precision_vs_owner_record": "34/59",
+   "frame_precision_vs_record_plus_visual": "55/59"
+  },
+  {
+   "close": 0.7,
+   "open": 0.2,
+   "named_windows_found": "1/3",
+   "named_frame_recall": "7/17",
+   "event_precision_vs_owner_record": "4/6",
+   "event_precision_vs_record_plus_visual": "6/6",
+   "frame_precision_vs_owner_record": "26/57",
+   "frame_precision_vs_record_plus_visual": "50/57"
+  },
+  {
+   "close": 0.7,
+   "open": 0.25,
+   "named_windows_found": "1/3",
+   "named_frame_recall": "6/17",
+   "event_precision_vs_owner_record": "4/6",
+   "event_precision_vs_record_plus_visual": "6/6",
+   "frame_precision_vs_owner_record": "25/46",
+   "frame_precision_vs_record_plus_visual": "43/46"
+  },
+  {
+   "close": 0.7,
+   "open": 0.3,
+   "named_windows_found": "1/3",
+   "named_frame_recall": "6/17",
+   "event_precision_vs_owner_record": "4/6",
+   "event_precision_vs_record_plus_visual": "6/6",
+   "frame_precision_vs_owner_record": "24/44",
+   "frame_precision_vs_record_plus_visual": "42/44"
+  },
+  {
+   "close": 0.7,
+   "open": 0.35,
+   "named_windows_found": "1/3",
+   "named_frame_recall": "6/17",
+   "event_precision_vs_owner_record": "4/6",
+   "event_precision_vs_record_plus_visual": "6/6",
+   "frame_precision_vs_owner_record": "23/40",
+   "frame_precision_vs_record_plus_visual": "39/40"
+  }
+ ]
+}

@@ -46,12 +46,17 @@ renders the same way twice. The scripts need Node 22+, ffmpeg and an installed
 Chrome or Edge. Nothing to install.
 
 ```
-node scripts/check-storyboard.mjs <run>/storyboard.json --brief brief.json --kit brand-kit.json
+node scripts/timeline.mjs plan --phrases <run>/phrases.json --cut <run>/cut.json          (voice-cut ads)
+node scripts/timeline.mjs check <run>/timeline.json
+node scripts/timeline.mjs emit <run>/timeline.json --all
+node scripts/check-storyboard.mjs <run>/storyboard.json --brief brief.json --kit brand-kit.json [--script <locked script>] [--phrases phrases.json]
 node scripts/render.mjs <run>/composition --storyboard <run>/storyboard.json --mode check
-node scripts/render.mjs <run>/composition --storyboard <run>/storyboard.json --mode stills
-node scripts/render.mjs <run>/composition --storyboard <run>/storyboard.json [--draft]
+node scripts/render.mjs <run>/composition --storyboard <run>/storyboard.json --mode stills [--times 1.2,0.4]
+node scripts/render.mjs <run>/composition --storyboard <run>/storyboard.json [--draft] [--timeouts '{"evaluate":5000}']
 node scripts/beats.mjs <track> --window 30 --out <run>/work/cues.json
-node scripts/qa-video.mjs <run>/<name>.mp4 --storyboard <run>/storyboard.json --poster <run>/<name>.jpg
+node scripts/qa-video.mjs <run>/<name>.mp4 --storyboard <run>/storyboard.json [--timeline <run>/timeline.json] [--exempt exemptions.json] --poster <run>/<name>.jpg
+node scripts/asr-check.mjs --script <locked.txt> --aliases <client asr-aliases.json> raw=<take.wav> polish=<polished.wav> master=<ad.mp4>
+node scripts/media/eye-state.mjs <clip> --scores <clip>.eyes.json --range <src_in>-<src_out> [--cut t]
 node scripts/make-row.mjs --base <base-run> --brief brief.json --out <row-dir>     (MST rows only)
 node scripts/make-srt.mjs <run>/storyboard.json --out <run>/captions.srt
 node scripts/phrase-map.mjs <voice.wav> --script script.txt --out <run>/work/phrases.json [--srt captions.srt]
@@ -92,6 +97,24 @@ stops the scroll with the sound off, the 2 to 3 things shown, the proof, the
 CTA, the tone, the audio arc. Then write `storyboard.json` to the format in
 `references/storyboard.md`.
 
+When the ad is cut from a voice take, do not write the storyboard by hand. Write
+the cut plan (`cut.json`, references and constraints, no times) against the
+phrase map, then run `timeline.mjs` (`references/timeline.md`):
+
+```
+node scripts/timeline.mjs plan --phrases <run>/phrases.json --cut <run>/cut.json     writes <run>/timeline.json
+node scripts/timeline.mjs check <run>/timeline.json                                    exit 0 PASS or WARN, 1 FAIL, 2 input error
+node scripts/timeline.mjs emit <run>/timeline.json --all [--dir <folder>]
+```
+
+`emit --all` writes every storyboard (`storyboard_{ratio}_{cap|clean}.json`, each
+stamped with `derived_from`), `captions.srt`, `transcript.txt`, `stills-times.json`
+and `edge-times.json`, plus `cues.json`, `tm.json`, `voice-graph.txt` and `edl.json`
+when the timeline has a bed, a TM block, voice segments and readable plan inputs.
+All of them come from `timeline.json`; do not hand-edit them. Change `cut.json`,
+re-plan, re-check, re-emit. Caption text is the script's words, never the ASR
+spelling: the recogniser only supplies the times.
+
 The default shape for a feed ad:
 
 ```
@@ -106,7 +129,8 @@ it to read as a still.
 ### 3. Check the storyboard
 
 ```
-node scripts/check-storyboard.mjs <run>/storyboard.json --brief <brief> --kit <kit>
+node scripts/check-storyboard.mjs <run>/storyboard.json --brief <brief> --kit <kit> \
+  [--script <locked script>] [--packet <preproduction packet>] [--phrases <run>/work/phrases.json]
 ```
 
 It fails on: a hook not on screen by 1.0s; any line held under its reading
@@ -117,11 +141,48 @@ timeline; a duration or ratio that disagrees with the brief; a poster that is
 not on settled copy. Fix the storyboard, not the check. A WARN is for you to
 judge and mention.
 
+Grounding is strict:
+
+- **No `--brief`, no pass.** Without it every line that is not `framing` or `kit.`
+  fails, and without `--kit` every `kit.` line fails. `--allow-ungrounded` turns
+  those into WARN for a deliberate unchecked run; the JSON report then lists the
+  override and every unchecked rule under `overrides`, and stderr says so. Report
+  the override; never call such a run checked.
+- **Voiced captions ground in the brief or the locked script.** A
+  `source: "voiceover"` line must appear in the brief's `copy_architecture` or in
+  the file given with `--script` (or the packet's `script.path` with `--packet`),
+  and that file's sha256 must equal `audio.voiceover.script_sha256` (and the
+  packet's `script.sha256` and `voice.accepted_bindings.script_sha256` with
+  `--packet`). `audio.voiceover.script` is author text: it grounds nothing, and
+  with a locked script it must say the same words. A locked script is plain text
+  or JSON with `lines[].text`, `spoken_script`, `script` or `text`.
+- **A voiced claim needs its field.** A voiced line with a digit, money, `#1`, a
+  superlative or a guarantee needs `claim_source`: a brief or kit field, not a
+  forbidden or avoid list, that contains the line.
+- **Music names its licence.** `audio.music.file` without `audio.music.licence` fails.
+- **Delivery.** `delivery.captions` is `"cap"` (voiceover captions burned in) or
+  `"clean"` (none burned). A CLEAN storyboard passes sound off only through
+  `delivery.srt`: a caption file whose words equal the voiced script in order
+  (the locked script, else the brief's `copy_architecture.script` or
+  `spoken_script`), with cues inside the ad that do not overlap, and with
+  `--phrases` a cue over every phrase. Without `--phrases` the timing is a WARN.
+  Without a `delivery` block the original rule holds: a voiceover needs burned captions.
+- **Emitted storyboards stay emitted.** A storyboard with `derived_from` must
+  match its `timeline.json` (sha256 of the bytes, `mce.timeline/1`, and
+  `tm_sha256` of the timeline's `tm`), and a storyboard with a `timeline.json`
+  beside it must carry the stamp. Re-emit; do not hand-edit.
+- **`schema_version: 2`** requires `format.placement`, resolved through the
+  placement-zone table (below); an unknown placement fails.
+
 ### 4. Gather media
 
 - **Clips and stills.** Generate through `metrix-ad-creative`: still first, one
   action per clip, one model locked across the ad, no type in any generated
   layer (prompt the empty space where type will land). Name each for its scene.
+  For AI UGC, no motion or lip-sync job is submitted until the run's version 2
+  preproduction packet passes `kie_validate_ugc_preproduction` with
+  `presenter.acceptance` recorded by someone other than `prepared_by` (see
+  `kie://ugc-preproduction`).
 - **Real product imagery** from the brand kit beats a generated stand-in.
   Download it into `composition/media/`. Showing the actual product is the
   strongest material there is.
@@ -157,7 +218,24 @@ judge and mention.
   use the selected currently verified provider/voice route. A remembered model
   ID is not current capability evidence. Check phrase consistency and possible
   competing vocal layers before the final mix. Every voiced line also appears
-  on screen as a caption (`source: "voiceover"`).
+  on screen as a caption (`source: "voiceover"`) in a CAP deliverable, or in the
+  `delivery.srt` caption file of a CLEAN one. Lock the accepted script: write its
+  sha256 into `audio.voiceover.script_sha256` and pass the file with `--script`.
+- **Script check after every audio stage.** Each stage that touches the voice
+  (the raw take, each processing pass, the mix, every rendered master) is
+  checked against the locked script:
+
+  ```
+  node scripts/asr-check.mjs --script <locked.txt> --aliases <client asr-aliases.json> \
+    raw=<take.wav> polish=<polished.wav> master=<ad.mp4> ...
+  ```
+
+  Aliases for a brand word the recogniser always mishears come only from the
+  per-client file (`mce.asraliases/1`, each alias with a `why`); `--alias` on the
+  command line is refused. The report gives `first_failing_stage`, the first
+  stage whose words differ from the script, and each stage's added and removed
+  differences. Exit 0 every stage MATCH, 1 a MISMATCH or a failed transcript,
+  2 bad input or no recogniser. ASR agreement is not a listening pass.
 
 Uploaded and result URLs on Kie expire in 1 to 3 days. Download what you use.
 
@@ -178,9 +256,40 @@ and will render differently every time.
 ### 6. Look before rendering
 
 ```
-render.mjs ... --mode check     safe zones, overflow, minimum type size, per readable line
+render.mjs ... --mode check     safe zones, overflow, minimum type size, per readable line; craft checks
 render.mjs ... --mode stills    each scene settled, both sides of every cut, the poster; contact.png
+render.mjs ... --mode stills --times 1.2,0.4    exact ad-clock times instead, in the order given
 ```
+
+Both modes also print two page reports, health and parity, and exit 1 on a FAIL
+in either. A render checks the same two before it draws a single frame and
+refuses to start on a FAIL:
+
+- **Health.** A broken image, a font that did not load, a video with
+  `readyState` under 1 or a NaN duration, a page running a `runtime.js` that
+  differs from the skill's, or a page settle default that differs from
+  `timeline/rules.mjs`. Clip seeks are checked as the frames are drawn: a seek
+  that gave up after the fallback wait, or one that presented a different source
+  frame from the one the timeline maps to, FAILs the run after encoding (exit 1).
+- **Parity.** The authored DOM must match the storyboard: each text item's
+  `data-in`, `data-out` and `data-dur`, its `data-exit`, its copy, and each
+  scene's `data-start` and `data-end` where the composition has them. An entrance
+  of `none` against any other FAILs, because one settles at once and the other
+  after its `dur`; two different moving entrances only WARN.
+
+The craft checks (`line_unread`, `dead_stretch`, `type_floor`) and their
+thresholds are in `references/craft.md`, section 4.
+
+render.mjs copies the skill's `runtime.js` into the folder it is given, and
+only that folder. A composition whose `index.html` uses `<base href>` to borrow
+another folder's `runtime.js` runs that copy, so render the folder that owns the
+runtime first, or the health check FAILs on a stale runtime. A past run's CLEAN
+composition borrowed `../composition/runtime.js` this way.
+
+For presenter clips, run the eye-state gate on every kept range before the
+render (`media/eye-state.mjs`, under "Media checks" below). A FAIL is a closed
+or closing eye at a range edge or next to a cut: move the edge. Look at the eye
+sheet as well; the gate does not replace it.
 
 For a scene cut from a recording or a generated clip (`data-clip`), the clip
 plays from `data-offset` seconds into its source at the scene's start, so
@@ -205,6 +314,18 @@ an already accepted mix. Report actual measurements. Neither normalization
 nor automatic voiceover ducking proves audible music, coherent narration or
 natural performance. Check the encoded mix through actual listening.
 
+Every browser call has a budget: 30 s for launch, page load and readiness, 20 s
+for each in-page evaluate, 10 s for each capture, and the whole run 30 s plus
+2 s per seek (one seek a frame for a render). Override any of them, in
+milliseconds, with `--timeouts '{"evaluate":5000}'` (JSON or a file path; keys
+`load`, `evaluate`, `capture`, `perFrame`, `seekFallback`, `readyVideo`). On a
+timeout render.mjs kills the browser's whole process tree and the encoder and
+exits 3. Exit 0 is a pass, WARNs included; 1 a FAIL or an error; 2 bad usage or
+a refused backend. `--backend` takes `mce-cdp` only. `hyperframes` exits 2 and points to
+its own route: a HyperFrames project renders through its CLI (see HyperFrames
+layer below) and its export still has to pass `qa-video.mjs`. `remotion` is
+refused because there is no licence record.
+
 One ad per ratio the brief's placements need. Render each from the same
 composition with a storyboard per ratio; check each one, since a layout that
 clears 4:5 can still sit under the Reels overlay at 9:16.
@@ -212,8 +333,23 @@ clears 4:5 can still sit under the Reels overlay at 9:16.
 ### 8. Validate, then report
 
 ```
-node scripts/qa-video.mjs <name>.mp4 --storyboard <run>/storyboard.json --poster <name>.jpg [--lufs <approved>]
+node scripts/qa-video.mjs <name>.mp4 --storyboard <run>/storyboard.json --timeline <run>/timeline.json \
+  [--exempt exemptions.json] --poster <name>.jpg [--lufs <approved>]
 ```
+
+Pass `--timeline` whenever the ad has one. Deliberate holds (shots with no
+source clip: an app screen, an end card) come only from it, so without it every
+hold FAILs the freeze check; it also supplies the shot list for the short-shot
+gate and adds the stricter blend check at each timeline cut. Do not lower a
+threshold to pass a hold; pass the timeline. A double-exposure hit is
+adjudicated from stills before any exemption is written (`references/craft.md`,
+section 8). An exemption file (`mce.qaexempt/1`) binds to the sha256 of the exact
+file under QA; each entry names the check, a time window, a reason, a reviewer
+and a still with its sha256. An exempted check reports EXEMPT, never PASS, and
+keeps its raw measurement. Only `black_frames`, `freeze`, `short_shot`,
+`transitions` and `transitions.at_cuts` can be exempted; `audio.length`,
+loudness, format, poster and colour cannot. Exit 0 PASS or EXEMPT, 1 FAIL, 2 bad
+input.
 
 It checks the file itself: ratio, duration, an audio stream that runs as long as the
 picture, loudness within
@@ -268,7 +404,9 @@ audio file the storyboard names (music, voiceover and each effect, from a
 storyboard-relative, absolute or `../` path) into the cell under `_row_audio/`,
 puts the cell's copy into the slot line in both the storyboard and the HTML,
 names the cell by `matrix_naming_convention`, and runs `check-storyboard.mjs
---row` over the result. A cell is self-contained: it renders and moves without
+--row` over the result. The row check covers isolation only; check each cell on
+its own as well, with `check-storyboard.mjs <cell>/storyboard.json --brief
+brief.json`, because grounding needs the brief. A cell is self-contained: it renders and moves without
 the base run. A missing audio input stops the script before any cell is made. Render each cell, run `qa-video.mjs` on each, and keep the poster
 time identical across the row.
 
@@ -349,6 +487,114 @@ Operating rules:
   ads: measure pacing, cuts and caption density. Never republish or reuse the
   footage.
 - `remotion-to-hyperframes` is only for porting work the owner already licenses.
+
+## Caption cues from word times
+
+```
+node scripts/captions/cues.mjs --phrases <run>/work/phrases.json --script script.txt --energy conversational \
+  [--fps 30] [--cuts 3.438,5.234] [--offset <voiceover.at>] [--alias "heard=meant"] --out <run>/work/cues.json --srt cues.srt
+```
+
+Groups the locked script into caption cues on the ad clock: 2 to 3 words for high energy, 3 to
+5 conversational, 4 to 6 calm, breaking at a sentence end, a pause of 150 ms or more, or the word
+limit (HyperFrames rules). Cue text is always the script's words, matched to heard words by
+position; a word-count mismatch after `--alias` is an error. Timing follows Netflix: 42
+characters a line, 2 lines, 20 characters a second, a 2-frame gap, a 20-frame minimum cue, in
+and out snapped to a shot change within 0.5 s. Each cue fades over its last 0.12 s and is hidden
+at its end. The lint fails overlaps, short cues, fast cues, long lines and anything visible after
+its end, and exits 1. A fast speaker can fail 20 characters a second with verbatim text; that is
+a decision for a human, not something the builder hides. `--whisper-cli` reads whisper-cli JSON
+(`-ml 1`) and `--words` a plain `[{text,start,end}]` list.
+
+## Media checks (`scripts/media/`)
+
+Every ffmpeg and ffprobe call in these modules goes through `media/probe.mjs`;
+`MCE_FFMPEG` and `MCE_FFPROBE` override the binaries. Errors carry a code
+(`ENOFFMPEG`, `ENOFFPROBE`, `UNREADABLE`, `BADARG`, `FFMPEG`, `SHEET_MISMATCH`, ...).
+
+```
+node scripts/media/scdet.mjs <video>... [--threshold 10] [--min-shot 0.75] [--allow 15.4-18.1]... [--json]
+node scripts/media/stage.mjs <src> <dst> [--fps 30]        |   node scripts/media/stage.mjs --check <file> [--fps 30]
+node scripts/media/eye-sheet.mjs <clip> --out sheet.png --font F.ttf (--from a --to b | --range a-b... --edges N) \
+  [--cols 8] [--tile-width 180] [--scores scores.json]
+<py312> -I scripts/media/eye_state.py <clip> --out <clip>.eyes.json [--width 540]
+node scripts/media/eye-state.mjs <clip> (--scores <clip>.eyes.json | --out <clip>.eyes.json) --range <src_in>-<src_out>... \
+  [--cut t]... [--no-face warn] [--json]
+```
+
+- **`scdet.mjs`**: cuts from ffmpeg scdet (threshold 10), then two gates. Short
+  shot: any interval between cuts under 0.75 s fails, first and last shot
+  included (`--min-shot` or `MCE_MIN_SHOT` to change it). Freeze and drops:
+  freezedetect (noise 0.001, 0.1 s) fails any freeze outside an `--allow` range,
+  and the decoded frame count must equal round(duration x fps) with no pts step
+  over 1.5 frames. A deliberate hold is an `--allow` range taken from the plan,
+  never a looser threshold. scdet can miss a soft cut such as a punch-in, so the
+  storyboard's or timeline's cut list is the truth and scdet the cross-check.
+  Exit 0 PASS, 1 FAIL, 2 unreadable or no ffmpeg.
+- **`stage.mjs`**: re-encodes a source clip with a keyframe every second
+  (`-c:v libx264 -crf 18 -g <fps> -keyint_min <fps>`, audio copied, fps defaults to
+  the source's rounded rate), then proves it: first keyframe on the first frame,
+  no keyframe interval over one second of frames, decoded frame count equal to
+  the source. Sparse GOPs as the cause of seek freezes in renders is inferred,
+  not proven; staging removes the condition. `--check` verifies an existing file.
+- **`eye-sheet.mjs`**: a contact sheet of every decoded source frame in a range,
+  or the first and last N frames of each `--range` with `--edges N`, each tile
+  stamped with its index and source time, plus `<sheet>.json` (`mce.eyesheet/1`).
+  No fps filter is applied, and the call fails if ffmpeg drew other frames than
+  ffprobe planned. It is the human review record for blinks and eye state at
+  kept-range edges and cuts; it detects nothing itself. `--scores` attaches
+  per-frame scores (for example MediaPipe blendshapes) within half a frame.
+- **`eye-state.mjs`** (eye-state gate, presenter clips): score each clip once with
+  `eye_state.py` (MediaPipe Face Landmarker blink blendshapes on every decoded
+  frame, no fps filter; `mce.eyestate/1`). It runs in the Python 3.12 venv that
+  holds MediaPipe: `MCE_PY312`, else the `venv312` entry of `INSTALLED.json`
+  (on this machine `X:/Metrix/venv312/Scripts/python.exe`). `--out` without
+  `--scores` scores the clip itself when that venv is found; `--scores` refuses a
+  record made from a different file. Then judge the kept source ranges
+  (`--range`, the timeline shot's `src_in`-`src_out`) and any cut inside them
+  (`--cut`, source seconds). A closure is a run where the weaker eye's blink
+  score reaches 0.3 with at least one frame at 0.4 (`--open`, `--close`). FAIL:
+  a closure in the first or last 0.12 s of a range (3 frames at 25 fps, 4 at 30;
+  `--edge-frames` to set it) or that close to a cut, or a frame of the range with
+  no score. WARN: a closure mid-range; look at it on the eye sheet. No face at an
+  edge FAILs unless `--no-face warn` (a shot where the face legitimately leaves);
+  mid-range it WARNs. Exit 0 PASS or WARN, 1 FAIL, 2 error. The eye sheet stays
+  the human record; the gate does not replace looking at it.
+- **`asr.mjs`** (library, used by `phrase-map.mjs`): `islands()` is silencedetect
+  (-40 dB, 0.15 s) and gives the cut points; `words()` runs ffmpeg's whisper
+  filter and needs a model file; `filters()` reports whether this ffmpeg build has
+  whisper, silencedetect, scdet and freezedetect.
+- **`probe.mjs`** (library): `probe(file)` returns duration, video size, frame
+  rate, frame count, pixel format and audio rate and channels; `framePts(file)`
+  lists every decoded frame time.
+
+## Placement zones
+
+`scripts/placement-zones.mjs` reads `references/placement-zones.json`
+(`mce.zones/1`; the canonical copy is in `metrix-ad-creative/references`, edit it
+there). `zoneFor({ ratio, placement })` returns the overlay bands for a placement:
+Instagram Reels, Instagram Stories and Facebook Stories at 9:16 are 14 % top, 35 %
+bottom, 6 % sides from Meta's own page (enforced); Facebook Reels is a third-party
+row that only warns; feed is a 5 % house margin. Names are matched loosely
+(`"Instagram Reels"`, `instagram-reels`, `reels`). No placement falls back to the
+legacy row with a warning; an unknown placement, or one that does not run at the
+ratio, throws. `checkBoxes(items, zone, minPx)` checks normalised boxes against
+the bands and the type floor. `check-storyboard.mjs` resolves `format.placement`
+through it. At the time of writing the render check still uses its own legacy values;
+treat its zone verdict as legacy until the renderer reads this table.
+
+## Timeline contracts
+
+`scripts/timeline/schema.mjs` holds the frozen formats `mce.phrasemap/1` (voice
+clock), `mce.cutplan/1` (authored) and `mce.timeline/1` (ad clock), and the
+`derived_from` stamp; `references/timeline.md` is the prose. Each `validate*`
+function returns a list of errors, empty for a pass, and unknown fields fail.
+`serialize()` is the one byte form every sha256 is taken over, `tmSha256()` the
+hash of a TM block, `roundTime()` rounds the way Python does. `check-storyboard.mjs`
+uses `validateDerivedFrom` and `tmSha256` to hold an emitted storyboard to its timeline;
+it does not validate the timeline itself, which is `timeline.mjs check`'s job.
+`scripts/timeline.mjs` is the one writer of `timeline.json` and every file emitted
+from it (step 2).
 
 ## What this skill will not do
 

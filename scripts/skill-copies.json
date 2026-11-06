@@ -104,6 +104,12 @@
       "targets": [
         "scripts/test_client_library.py"
       ]
+    },
+    {
+      "source": "skills/metrix-ad-creative/references/placement-zones.json",
+      "targets": [
+        "skills/metrix-video-assembly/references/placement-zones.json"
+      ]
     }
   ]
 }

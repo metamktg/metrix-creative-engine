@@ -1,0 +1,17 @@
+{
+  "name": "render-health",
+  "format": { "ratio": "1:1", "width": 320, "height": 320, "fps": 30 },
+  "duration": 6,
+  "scenes": [
+    {
+      "id": "s1",
+      "role": "hook",
+      "start": 0,
+      "end": 6,
+      "text": [
+        { "id": "hook", "copy": "Hook line here", "source": "framing", "in": 0, "out": 2.4, "enter": "none" },
+        { "id": "label", "copy": "See the second line", "source": "framing", "in": 2.4, "out": 6 }
+      ]
+    }
+  ]
+}

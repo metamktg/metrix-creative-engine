@@ -25,11 +25,28 @@ pixel column above as authoritative on the day.
 
 ## Safe zones
 
-Stories and Reels overlay UI on the creative. Keep anything that must be read,
-a logo, a product, on-image text, a face, inside the middle band:
+Stories and Reels overlay UI on the creative: the profile row at the top, the
+caption, CTA and action buttons at the bottom. Keep anything that must be read,
+a logo, a product, on-image text, a face, a CTA, inside the middle band.
 
-- top: leave roughly the first 14% clear
-- bottom: leave roughly the last 20% clear
+The numbers live in one table, `references/placement-zones.json` (copied to
+`metrix-video-assembly/references/`, read by `scripts/placement-zones.mjs`).
+Each row carries the Meta page it was read from and the retrieval date. As
+retrieved 2026-11-06:
+
+| Placement | Ratio | Keep clear | Source |
+| --- | --- | --- | --- |
+| Instagram Reels, Instagram Stories, Facebook Stories | 9:16 | top 14%, bottom 35%, sides 6% each | Meta ads guide spec pages (primary) |
+| Facebook Reels | 9:16 | top 14%, bottom 35%, sides 6% each | third party only; WARN, never FAIL |
+| Feed (Facebook, Instagram), carousel, in-stream | 4:5, 1:1, 9:16, 16:9 | 5% every edge | house rule; Meta publishes no feed safe zone |
+
+At 1080 x 1920 the 9:16 band is 269 px top, 672 px bottom, 65 px each side
+(computed). The bottom band is the one that bites: a caption or CTA below 65%
+of the frame height sits under Meta's UI on Reels and Stories.
+
+`render.mjs --mode check` does not read the table yet. It still applies the
+legacy rows (9:16: 14% top, 20% foot, 6% sides; every other ratio 5%), which
+is looser at the bottom. Compose to the table, not to what the check accepts.
 
 Generation models do not respect safe zones and cannot be reliably told to.
 Compose for it instead: prompt the subject as centred, and treat the outer bands
