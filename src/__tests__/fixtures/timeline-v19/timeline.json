@@ -1,0 +1,1530 @@
+{
+  "schema": "mce.timeline/1",
+  "name": "anon-v19",
+  "clock": "ad",
+  "fps": 30,
+  "duration": 18.13,
+  "grid": {
+    "bpm": 96,
+    "div": 8,
+    "unit": 0.078125,
+    "origin": 0
+  },
+  "inputs": {
+    "phrasemap": {
+      "path": "phrases.json",
+      "sha256": "8726874236a7e9f6d23450e159fdaf7fbad6e2522fd0c760b8df225e0b8594f7",
+      "schema": "mce.phrasemap/1"
+    },
+    "cutplan": {
+      "path": "cut.json",
+      "sha256": "8e3b162264380db31b4062558ab83084674f29a5d6953bf1b10c16c325bb4778",
+      "schema": "mce.cutplan/1"
+    }
+  },
+  "segments": [
+    {
+      "id": "A",
+      "phrases": [
+        "A"
+      ],
+      "src_in": 0.961,
+      "src_out": 1.895,
+      "out_in": 0.02,
+      "out_out": 0.954,
+      "offset": -0.941,
+      "speed": 1,
+      "audio_cut": 0,
+      "picture_cut": 0
+    },
+    {
+      "id": "B+C",
+      "phrases": [
+        "B",
+        "C"
+      ],
+      "src_in": 2.802,
+      "src_out": 7.242,
+      "out_in": 1.192,
+      "out_out": 5.632,
+      "offset": -1.6101,
+      "speed": 1,
+      "audio_cut": 1.172,
+      "picture_cut": null
+    },
+    {
+      "id": "D+E",
+      "phrases": [
+        "D",
+        "E"
+      ],
+      "src_in": 7.761,
+      "src_out": 9.975,
+      "out_in": 5.645,
+      "out_out": 7.859,
+      "offset": -2.116,
+      "speed": 1,
+      "audio_cut": 5.625,
+      "picture_cut": null
+    },
+    {
+      "id": "F",
+      "phrases": [
+        "F"
+      ],
+      "src_in": 11.669,
+      "src_out": 12.816,
+      "out_in": 7.989,
+      "out_out": 9.136,
+      "offset": -3.6802,
+      "speed": 1,
+      "audio_cut": 7.969,
+      "picture_cut": null
+    },
+    {
+      "id": "G",
+      "phrases": [
+        "G"
+      ],
+      "src_in": 14.426,
+      "src_out": 16.195,
+      "out_in": 9.239,
+      "out_out": 11.008,
+      "offset": -5.1872,
+      "speed": 1,
+      "audio_cut": 9.219,
+      "picture_cut": null
+    },
+    {
+      "id": "H",
+      "phrases": [
+        "H"
+      ],
+      "src_in": 18.318,
+      "src_out": 21.34,
+      "out_in": 11.66,
+      "out_out": 14.682,
+      "offset": -6.6576,
+      "speed": 1,
+      "audio_cut": 11.64,
+      "picture_cut": null
+    },
+    {
+      "id": "I",
+      "phrases": [
+        "I"
+      ],
+      "src_in": 21.825,
+      "src_out": 23.096,
+      "out_in": 15.489,
+      "out_out": 16.76,
+      "offset": -6.3362,
+      "speed": 1,
+      "audio_cut": 15.469,
+      "picture_cut": 15.469
+    }
+  ],
+  "phrases": [
+    {
+      "id": "A",
+      "segment": "A",
+      "text": "Bemo'n dinu.",
+      "src_start": 1.001,
+      "src_end": 1.815,
+      "start": 0.06,
+      "end": 0.874,
+      "words": [
+        {
+          "text": "Bemo'n",
+          "start": 0.179,
+          "end": 0.539
+        },
+        {
+          "text": "dinu.",
+          "start": 0.539,
+          "end": 0.874
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "segment": "B+C",
+      "text": "Pad fopa ref gu tig.",
+      "src_start": 2.842,
+      "src_end": 3.966,
+      "start": 1.232,
+      "end": 2.356,
+      "words": [
+        {
+          "text": "Pad",
+          "start": 1.27,
+          "end": 1.49
+        },
+        {
+          "text": "fopa",
+          "start": 1.49,
+          "end": 1.69
+        },
+        {
+          "text": "ref",
+          "start": 1.69,
+          "end": 1.81
+        },
+        {
+          "text": "gu",
+          "start": 1.81,
+          "end": 1.99
+        },
+        {
+          "text": "tig.",
+          "start": 1.99,
+          "end": 2.356
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "segment": "B+C",
+      "text": "Kat vok levok zule mi bamiz nob deno pude fipude rafi.",
+      "src_start": 4.235,
+      "src_end": 7.162,
+      "start": 2.625,
+      "end": 5.552,
+      "words": [
+        {
+          "text": "Kat",
+          "start": 2.71,
+          "end": 3.01
+        },
+        {
+          "text": "vok",
+          "start": 3.01,
+          "end": 3.23
+        },
+        {
+          "text": "levok",
+          "start": 3.23,
+          "end": 3.45
+        },
+        {
+          "text": "zule",
+          "start": 3.45,
+          "end": 3.57
+        },
+        {
+          "text": "mi",
+          "start": 3.57,
+          "end": 3.83
+        },
+        {
+          "text": "bamiz",
+          "start": 3.83,
+          "end": 4.05
+        },
+        {
+          "text": "nob",
+          "start": 4.05,
+          "end": 4.17
+        },
+        {
+          "text": "deno",
+          "start": 4.17,
+          "end": 4.33
+        },
+        {
+          "text": "pude",
+          "start": 4.33,
+          "end": 4.59
+        },
+        {
+          "text": "fipude",
+          "start": 4.59,
+          "end": 4.97
+        },
+        {
+          "text": "rafi.",
+          "start": 4.97,
+          "end": 5.552
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "segment": "D+E",
+      "text": "Gora TegorafIpud,",
+      "src_start": 7.801,
+      "src_end": 8.822,
+      "start": 5.685,
+      "end": 6.706,
+      "words": [
+        {
+          "text": "Gora",
+          "start": 5.764,
+          "end": 6.044
+        },
+        {
+          "text": "TegorafIpud,",
+          "start": 6.044,
+          "end": 6.706
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "segment": "D+E",
+      "text": "kute v lavik,",
+      "src_start": 9.162,
+      "src_end": 9.895,
+      "start": 7.046,
+      "end": 7.779,
+      "words": [
+        {
+          "text": "kute",
+          "start": 7.104,
+          "end": 7.164
+        },
+        {
+          "text": "v",
+          "start": 7.164,
+          "end": 7.504
+        },
+        {
+          "text": "lavik,",
+          "start": 7.504,
+          "end": 7.779
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "segment": "F",
+      "text": "zo mezolav pad bumezo,",
+      "src_start": 11.709,
+      "src_end": 12.736,
+      "start": 8.029,
+      "end": 9.056,
+      "words": [
+        {
+          "text": "zo",
+          "start": 8.18,
+          "end": 8.34
+        },
+        {
+          "text": "mezolav",
+          "start": 8.34,
+          "end": 8.48
+        },
+        {
+          "text": "pad",
+          "start": 8.48,
+          "end": 8.78
+        },
+        {
+          "text": "bumezo,",
+          "start": 8.78,
+          "end": 9.056
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "segment": "G",
+      "text": "nibu dan pad podanibu fepodanib.",
+      "src_start": 14.466,
+      "src_end": 16.115,
+      "start": 9.279,
+      "end": 10.928,
+      "words": [
+        {
+          "text": "nibu",
+          "start": 9.373,
+          "end": 9.533
+        },
+        {
+          "text": "dan",
+          "start": 9.533,
+          "end": 9.693
+        },
+        {
+          "text": "pad",
+          "start": 9.693,
+          "end": 9.993
+        },
+        {
+          "text": "podanibu",
+          "start": 9.993,
+          "end": 10.433
+        },
+        {
+          "text": "fepodanib.",
+          "start": 10.433,
+          "end": 10.928
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "segment": "H",
+      "text": "Rufep giru tagir kota vekotag lu ziluvekot maziluve.",
+      "src_start": 18.358,
+      "src_end": 21.26,
+      "start": 11.7,
+      "end": 14.602,
+      "words": [
+        {
+          "text": "Rufep",
+          "start": 11.822,
+          "end": 12.062
+        },
+        {
+          "text": "giru",
+          "start": 12.062,
+          "end": 12.282
+        },
+        {
+          "text": "tagir",
+          "start": 12.282,
+          "end": 12.722
+        },
+        {
+          "text": "kota",
+          "start": 12.722,
+          "end": 13.042
+        },
+        {
+          "text": "vekotag",
+          "start": 13.042,
+          "end": 13.382
+        },
+        {
+          "text": "lu",
+          "start": 13.382,
+          "end": 13.802
+        },
+        {
+          "text": "ziluvekot",
+          "start": 13.802,
+          "end": 14.322
+        },
+        {
+          "text": "maziluve.",
+          "start": 14.322,
+          "end": 14.602
+        }
+      ]
+    },
+    {
+      "id": "I",
+      "segment": "I",
+      "text": "Boma v nebo du TegorafIpud.",
+      "src_start": 21.865,
+      "src_end": 23.016,
+      "start": 15.529,
+      "end": 16.68,
+      "words": [
+        {
+          "text": "Boma",
+          "start": 15.624,
+          "end": 15.744
+        },
+        {
+          "text": "v",
+          "start": 15.744,
+          "end": 15.864
+        },
+        {
+          "text": "nebo",
+          "start": 15.864,
+          "end": 15.944
+        },
+        {
+          "text": "du",
+          "start": 15.944,
+          "end": 16.204
+        },
+        {
+          "text": "TegorafIpud.",
+          "start": 16.204,
+          "end": 16.68
+        }
+      ]
+    }
+  ],
+  "points": [
+    {
+      "id": "picC",
+      "kind": "cut",
+      "t": 3.438
+    },
+    {
+      "id": "pushC",
+      "kind": "cut",
+      "t": 4.219
+    },
+    {
+      "id": "picApp",
+      "kind": "cut",
+      "t": 5.234
+    },
+    {
+      "id": "cutD",
+      "kind": "event",
+      "t": 5.625
+    },
+    {
+      "id": "tap",
+      "kind": "event",
+      "t": 7.344
+    },
+    {
+      "id": "sel",
+      "kind": "event",
+      "t": 7.414
+    },
+    {
+      "id": "lesson",
+      "kind": "event",
+      "t": 7.969
+    },
+    {
+      "id": "expand",
+      "kind": "event",
+      "t": 8.349
+    },
+    {
+      "id": "qa",
+      "kind": "event",
+      "t": 9.219
+    },
+    {
+      "id": "tapB",
+      "kind": "event",
+      "t": 10.938
+    },
+    {
+      "id": "right",
+      "kind": "event",
+      "t": 10.998
+    },
+    {
+      "id": "ok",
+      "kind": "event",
+      "t": 11.057
+    },
+    {
+      "id": "cutTalk",
+      "kind": "cut",
+      "t": 12.109
+    },
+    {
+      "id": "endCard",
+      "kind": "cut",
+      "t": 15.469
+    }
+  ],
+  "shots": [
+    {
+      "id": "clipA",
+      "source": "clipA",
+      "file": "media/clip_a.mp4",
+      "label": "clip A",
+      "out_in": 0,
+      "out_out": 3.438,
+      "src_in": 0,
+      "src_out": 3.438,
+      "src_fps": 25,
+      "src_duration": 5.04,
+      "reject": [],
+      "residual": []
+    },
+    {
+      "id": "S1a",
+      "source": "S1",
+      "file": "media/clip_b.mp4",
+      "label": "talking shot",
+      "out_in": 3.438,
+      "out_out": 4.219,
+      "src_in": 1.048,
+      "src_out": 1.829,
+      "src_fps": 25,
+      "src_duration": 5,
+      "reject": [
+        {
+          "lo": 0.17,
+          "hi": 0.47,
+          "why": "S1 reject window one"
+        },
+        {
+          "lo": 0.53,
+          "hi": 1.03,
+          "why": "S1 reject window two"
+        },
+        {
+          "lo": 2.88,
+          "hi": 3.2,
+          "why": "S1 reject window three"
+        },
+        {
+          "lo": 3.2,
+          "hi": 5,
+          "why": "S1 reject window four"
+        }
+      ],
+      "residual": [
+        {
+          "lo": 1.44,
+          "hi": 1.74,
+          "why": "S1 accepted residual, no cutaway fits"
+        }
+      ]
+    },
+    {
+      "id": "S1b",
+      "source": "S1",
+      "file": "media/clip_b.mp4",
+      "label": "punch-in",
+      "out_in": 4.219,
+      "out_out": 5.234,
+      "src_in": 1.829,
+      "src_out": 2.845,
+      "src_fps": 25,
+      "src_duration": 5,
+      "reject": [
+        {
+          "lo": 0.17,
+          "hi": 0.47,
+          "why": "S1 reject window one"
+        },
+        {
+          "lo": 0.53,
+          "hi": 1.03,
+          "why": "S1 reject window two"
+        },
+        {
+          "lo": 2.88,
+          "hi": 3.2,
+          "why": "S1 reject window three"
+        },
+        {
+          "lo": 3.2,
+          "hi": 5,
+          "why": "S1 reject window four"
+        }
+      ],
+      "residual": [
+        {
+          "lo": 1.44,
+          "hi": 1.74,
+          "why": "S1 accepted residual, no cutaway fits"
+        }
+      ]
+    },
+    {
+      "id": "app",
+      "source": null,
+      "file": null,
+      "label": "demo (composition)",
+      "out_in": 5.234,
+      "out_out": 12.109,
+      "src_in": null,
+      "src_out": null,
+      "src_fps": null,
+      "src_duration": null,
+      "reject": [],
+      "residual": []
+    },
+    {
+      "id": "Hs",
+      "source": "H",
+      "file": "media/clip_c.mp4",
+      "label": "second talking shot",
+      "out_in": 12.109,
+      "out_out": 15.469,
+      "src_in": 0.809,
+      "src_out": 4.168,
+      "src_fps": 25,
+      "src_duration": 5,
+      "reject": [
+        {
+          "lo": 0,
+          "hi": 0.4,
+          "why": "H reject window one"
+        },
+        {
+          "lo": 0.42,
+          "hi": 0.72,
+          "why": "H reject window two"
+        },
+        {
+          "lo": 4.9,
+          "hi": 5,
+          "why": "H reject window three"
+        }
+      ],
+      "residual": []
+    },
+    {
+      "id": "endcard",
+      "source": null,
+      "file": null,
+      "label": "end card (composition)",
+      "out_in": 15.469,
+      "out_out": 18.13,
+      "src_in": null,
+      "src_out": null,
+      "src_fps": null,
+      "src_duration": null,
+      "reject": [],
+      "residual": []
+    }
+  ],
+  "scenes": [
+    {
+      "id": "s1",
+      "role": "hook",
+      "start": 0,
+      "end": 5.234,
+      "visual": "Opening: clip A, then the talking shot and a punch-in"
+    },
+    {
+      "id": "s2",
+      "role": "show",
+      "start": 5.234,
+      "end": 15.469,
+      "visual": "The demo, then the second talking shot"
+    },
+    {
+      "id": "s3",
+      "role": "cta",
+      "start": 15.469,
+      "end": 18.13,
+      "visual": "End card holds through the last line"
+    }
+  ],
+  "storyboard": {
+    "brief_id": "ANON-01",
+    "tone": "native creator demo",
+    "poster_at": 0.5,
+    "lufs": -14,
+    "ratios": [
+      {
+        "ratio": "9:16",
+        "width": 1080,
+        "height": 1920
+      },
+      {
+        "ratio": "4:5",
+        "width": 1080,
+        "height": 1350
+      }
+    ],
+    "modes": [
+      "cap",
+      "clean"
+    ]
+  },
+  "captions": {
+    "builder": "manual",
+    "rules": {
+      "lead_in": 0.06,
+      "linger": 0.25,
+      "min_cue": 1.2,
+      "per_word": 0.3,
+      "max_lines": 2
+    },
+    "groups": [
+      {
+        "id": "hook",
+        "kind": "hook",
+        "source": "copy_architecture.hook",
+        "deliver": [
+          "burn"
+        ],
+        "start": 0,
+        "end": 5.234,
+        "text": "Pidunebo nob deno pude fipude rafi fapid bemo?",
+        "lines": [
+          "Pidunebo nob deno pude fipude rafi fapid bemo?"
+        ],
+        "words": [
+          {
+            "text": "Pidunebo",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "nob",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "deno",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "pude",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "fipude",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "rafi",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "fapid",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "bemo?",
+            "start": null,
+            "end": null,
+            "line": 0
+          }
+        ],
+        "phrases": [],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "o_a",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "start": 0,
+        "end": 1.172,
+        "text": "Bemo'n dinu.",
+        "lines": [
+          "Bemo'n dinu."
+        ],
+        "words": [
+          {
+            "text": "Bemo'n",
+            "start": 0.179,
+            "end": 0.539,
+            "line": 0
+          },
+          {
+            "text": "dinu.",
+            "start": 0.539,
+            "end": 0.874,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "A"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "o_b",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "start": 1.172,
+        "end": 2.565,
+        "text": "Pad fopa ref gu tig.",
+        "lines": [
+          "Pad fopa ref gu tig."
+        ],
+        "words": [
+          {
+            "text": "Pad",
+            "start": 1.27,
+            "end": 1.49,
+            "line": 0
+          },
+          {
+            "text": "fopa",
+            "start": 1.49,
+            "end": 1.69,
+            "line": 0
+          },
+          {
+            "text": "ref",
+            "start": 1.69,
+            "end": 1.81,
+            "line": 0
+          },
+          {
+            "text": "gu",
+            "start": 1.81,
+            "end": 1.99,
+            "line": 0
+          },
+          {
+            "text": "tig.",
+            "start": 1.99,
+            "end": 2.356,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "B"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "o_c1",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "start": 2.565,
+        "end": 3.98,
+        "text": "Kat vok levok zule mi bamiz",
+        "lines": [
+          "Kat vok levok zule mi bamiz"
+        ],
+        "words": [
+          {
+            "text": "Kat",
+            "start": 2.71,
+            "end": 3.01,
+            "line": 0
+          },
+          {
+            "text": "vok",
+            "start": 3.01,
+            "end": 3.23,
+            "line": 0
+          },
+          {
+            "text": "levok",
+            "start": 3.23,
+            "end": 3.45,
+            "line": 0
+          },
+          {
+            "text": "zule",
+            "start": 3.45,
+            "end": 3.57,
+            "line": 0
+          },
+          {
+            "text": "mi",
+            "start": 3.57,
+            "end": 3.83,
+            "line": 0
+          },
+          {
+            "text": "bamiz",
+            "start": 3.83,
+            "end": 4.05,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "C"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "o_c2",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "start": 3.98,
+        "end": 5.625,
+        "text": "nob deno pude fipude rafi.",
+        "lines": [
+          "nob deno pude fipude rafi."
+        ],
+        "words": [
+          {
+            "text": "nob",
+            "start": 4.05,
+            "end": 4.17,
+            "line": 0
+          },
+          {
+            "text": "deno",
+            "start": 4.17,
+            "end": 4.33,
+            "line": 0
+          },
+          {
+            "text": "pude",
+            "start": 4.33,
+            "end": 4.59,
+            "line": 0
+          },
+          {
+            "text": "fipude",
+            "start": 4.59,
+            "end": 4.97,
+            "line": 0
+          },
+          {
+            "text": "rafi.",
+            "start": 4.97,
+            "end": 5.552,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "C"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "cap_de",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 5.625,
+        "end": 7.969,
+        "text": "Gora TegorafIpud, kute v lavik,",
+        "lines": [
+          "Gora TegorafIpud, kute v lavik,"
+        ],
+        "words": [
+          {
+            "text": "Gora",
+            "start": 5.764,
+            "end": 6.044,
+            "line": 0
+          },
+          {
+            "text": "TegorafIpud,",
+            "start": 6.044,
+            "end": 6.706,
+            "line": 0
+          },
+          {
+            "text": "kute",
+            "start": 7.104,
+            "end": 7.164,
+            "line": 0
+          },
+          {
+            "text": "v",
+            "start": 7.164,
+            "end": 7.504,
+            "line": 0
+          },
+          {
+            "text": "lavik,",
+            "start": 7.504,
+            "end": 7.779,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "D",
+          "E"
+        ],
+        "cls": "ui",
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "cap_f",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 7.969,
+        "end": 9.219,
+        "text": "zo mezolav pad bumezo,",
+        "lines": [
+          "zo mezolav pad bumezo,"
+        ],
+        "words": [
+          {
+            "text": "zo",
+            "start": 8.18,
+            "end": 8.34,
+            "line": 0
+          },
+          {
+            "text": "mezolav",
+            "start": 8.34,
+            "end": 8.48,
+            "line": 0
+          },
+          {
+            "text": "pad",
+            "start": 8.48,
+            "end": 8.78,
+            "line": 0
+          },
+          {
+            "text": "bumezo,",
+            "start": 8.78,
+            "end": 9.056,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "F"
+        ],
+        "cls": "ui",
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "cap_g",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 9.219,
+        "end": 11.178,
+        "text": "nibu dan pad podanibu fepodanib.",
+        "lines": [
+          "nibu dan pad podanibu fepodanib."
+        ],
+        "words": [
+          {
+            "text": "nibu",
+            "start": 9.373,
+            "end": 9.533,
+            "line": 0
+          },
+          {
+            "text": "dan",
+            "start": 9.533,
+            "end": 9.693,
+            "line": 0
+          },
+          {
+            "text": "pad",
+            "start": 9.693,
+            "end": 9.993,
+            "line": 0
+          },
+          {
+            "text": "podanibu",
+            "start": 9.993,
+            "end": 10.433,
+            "line": 0
+          },
+          {
+            "text": "fepodanib.",
+            "start": 10.433,
+            "end": 10.928,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "G"
+        ],
+        "cls": "ui",
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "cap_h1",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 11.64,
+        "end": 13.002,
+        "text": "Rufep giru tagir kota",
+        "lines": [
+          "Rufep giru tagir kota"
+        ],
+        "words": [
+          {
+            "text": "Rufep",
+            "start": 11.822,
+            "end": 12.062,
+            "line": 0
+          },
+          {
+            "text": "giru",
+            "start": 12.062,
+            "end": 12.282,
+            "line": 0
+          },
+          {
+            "text": "tagir",
+            "start": 12.282,
+            "end": 12.722,
+            "line": 0
+          },
+          {
+            "text": "kota",
+            "start": 12.722,
+            "end": 13.042,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "H"
+        ],
+        "cls": "ui low",
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "cap_h2",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "burn",
+          "srt"
+        ],
+        "start": 13.002,
+        "end": 14.852,
+        "text": "vekotag lu ziluvekot maziluve.",
+        "lines": [
+          "vekotag lu ziluvekot maziluve."
+        ],
+        "words": [
+          {
+            "text": "vekotag",
+            "start": 13.042,
+            "end": 13.382,
+            "line": 0
+          },
+          {
+            "text": "lu",
+            "start": 13.382,
+            "end": 13.802,
+            "line": 0
+          },
+          {
+            "text": "ziluvekot",
+            "start": 13.802,
+            "end": 14.322,
+            "line": 0
+          },
+          {
+            "text": "maziluve.",
+            "start": 14.322,
+            "end": 14.602,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "H"
+        ],
+        "cls": "ui low",
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "o_i",
+        "kind": "voiceover",
+        "source": "voiceover",
+        "deliver": [
+          "srt"
+        ],
+        "start": 15.469,
+        "end": 18.13,
+        "text": "Boma v nebo du TegorafIpud.",
+        "lines": [
+          "Boma v nebo du TegorafIpud."
+        ],
+        "words": [
+          {
+            "text": "Boma",
+            "start": 15.624,
+            "end": 15.744,
+            "line": 0
+          },
+          {
+            "text": "v",
+            "start": 15.744,
+            "end": 15.864,
+            "line": 0
+          },
+          {
+            "text": "nebo",
+            "start": 15.864,
+            "end": 15.944,
+            "line": 0
+          },
+          {
+            "text": "du",
+            "start": 15.944,
+            "end": 16.204,
+            "line": 0
+          },
+          {
+            "text": "TegorafIpud.",
+            "start": 16.204,
+            "end": 16.68,
+            "line": 0
+          }
+        ],
+        "phrases": [
+          "I"
+        ],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "cta",
+        "kind": "cta",
+        "source": "copy_architecture.cta",
+        "deliver": [
+          "burn"
+        ],
+        "start": 15.469,
+        "end": 18.13,
+        "text": "Boma v nebo du TegorafIpud.",
+        "lines": [
+          "Boma v nebo du TegorafIpud."
+        ],
+        "words": [
+          {
+            "text": "Boma",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "v",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "nebo",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "du",
+            "start": null,
+            "end": null,
+            "line": 0
+          },
+          {
+            "text": "TegorafIpud.",
+            "start": null,
+            "end": null,
+            "line": 0
+          }
+        ],
+        "phrases": [],
+        "cls": null,
+        "enter": "none",
+        "enter_dur": null,
+        "exit_fade": null
+      },
+      {
+        "id": "url",
+        "kind": "label",
+        "source": "copy_architecture.display_url",
+        "deliver": [
+          "burn"
+        ],
+        "start": 15.589,
+        "end": 18.13,
+        "text": "tegorafipud.test",
+        "lines": [
+          "tegorafipud.test"
+        ],
+        "words": [
+          {
+            "text": "tegorafipud.test",
+            "start": null,
+            "end": null,
+            "line": 0
+          }
+        ],
+        "phrases": [],
+        "cls": null,
+        "enter": "fade",
+        "enter_dur": 0.2,
+        "exit_fade": null
+      }
+    ]
+  },
+  "audio": {
+    "voice": {
+      "file": "media/voice.wav",
+      "chain": {
+        "IR": "room/ir_a.wav",
+        "HUM_DB": "-60dB",
+        "HISS_DB": "-48dB",
+        "COMP_RATIO": 2,
+        "POLISH": 1
+      }
+    },
+    "sfx": [
+      {
+        "id": "evA",
+        "file": "sfx/impact/impactWood_medium_001.ogg",
+        "at": 1.91,
+        "volume": 0.2,
+        "why": "clip A event"
+      },
+      {
+        "id": "tap1",
+        "file": "sfx/interface/click_002.ogg",
+        "at": 7.324,
+        "volume": 0.45,
+        "why": "first tap"
+      },
+      {
+        "id": "tap2",
+        "file": "sfx/interface/click_003.ogg",
+        "at": 10.918,
+        "volume": 0.45,
+        "why": "second tap"
+      },
+      {
+        "id": "right",
+        "file": "sfx/interface/bong_001.ogg",
+        "at": 10.998,
+        "volume": 0.3,
+        "why": "result"
+      },
+      {
+        "id": "card",
+        "file": "sfx/impact/impactSoft_medium_004.ogg",
+        "at": 15.469,
+        "volume": 0.26,
+        "why": "cut to the end card"
+      }
+    ],
+    "music": {
+      "file": "media/bed.wav",
+      "volume": 0.27,
+      "fade_in": 0.05,
+      "fade_out": 0.8,
+      "licence": "original, compose-bed.mjs",
+      "sections": [
+        {
+          "from": 0,
+          "to": 5.625,
+          "energy": 0,
+          "chord": [
+            57,
+            60,
+            64,
+            67
+          ],
+          "root": 45
+        },
+        {
+          "from": 5.625,
+          "to": 8.125,
+          "energy": 1,
+          "chord": [
+            53,
+            57,
+            60,
+            64
+          ],
+          "root": 41
+        },
+        {
+          "from": 8.125,
+          "to": 11.25,
+          "energy": 2,
+          "chord": [
+            48,
+            55,
+            60,
+            64
+          ],
+          "root": 36
+        },
+        {
+          "from": 11.25,
+          "to": 15.625,
+          "energy": 3,
+          "chord": [
+            55,
+            59,
+            62,
+            67
+          ],
+          "root": 43
+        },
+        {
+          "from": 15.625,
+          "to": 18.13,
+          "energy": 4,
+          "chord": [
+            48,
+            55,
+            60,
+            64,
+            67
+          ],
+          "root": 36
+        }
+      ]
+    }
+  },
+  "tm": {
+    "picC": 3.438,
+    "pushC": 4.219,
+    "picApp": 5.234,
+    "cutHer": 12.109,
+    "endCard": 15.469,
+    "cutD": 5.625,
+    "end": 18.13,
+    "app": {
+      "tap": 7.344,
+      "sel": 7.414,
+      "lesson": 7.969,
+      "expand": 8.349,
+      "qa": 9.219,
+      "tapB": 10.938,
+      "right": 10.998,
+      "ok": 11.057
+    },
+    "iIn": 15.529
+  }
+}

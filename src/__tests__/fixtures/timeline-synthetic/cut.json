@@ -1,0 +1,371 @@
+{
+  "schema": "mce.cutplan/1",
+  "name": "synthetic-desk",
+  "phrasemap": {
+    "path": "phrases.json",
+    "sha256": "0da4bebf5506be75b7eaeaec9b63b15fd065c5d50ebb75ada1f3e03c0aac6748"
+  },
+  "fps": 30,
+  "grid": {
+    "bpm": 120,
+    "div": 4,
+    "origin": 0
+  },
+  "edit": {
+    "pre": 0.04,
+    "post": 0.08,
+    "lead": 0.06,
+    "tail": 1.2,
+    "prefer_full_beat_cost": 0.04,
+    "time_dp": 3,
+    "duration_dp": 2
+  },
+  "rules": {
+    "min_shot": 0.75
+  },
+  "segments": [
+    {
+      "id": "S1",
+      "phrases": [
+        "P1"
+      ],
+      "place": {
+        "mode": "start",
+        "at": 0
+      },
+      "snap": "none"
+    },
+    {
+      "id": "S2",
+      "phrases": [
+        "P2"
+      ],
+      "place": {
+        "mode": "gap"
+      },
+      "snap": "up"
+    },
+    {
+      "id": "S3",
+      "phrases": [
+        "P3"
+      ],
+      "place": {
+        "mode": "gap"
+      },
+      "snap": "full_beat_pref"
+    },
+    {
+      "id": "S4",
+      "phrases": [
+        "P4"
+      ],
+      "place": {
+        "mode": "after",
+        "point": "card"
+      },
+      "snap": "none"
+    }
+  ],
+  "points": [
+    {
+      "id": "toDesk",
+      "kind": "cut",
+      "from": "phrase.P2.start+0.2",
+      "snap": "down"
+    },
+    {
+      "id": "tick",
+      "kind": "event",
+      "from": "phrase.P3.start",
+      "snap": "nearest"
+    },
+    {
+      "id": "card",
+      "kind": "cut",
+      "from": null,
+      "snap": "beat_up"
+    }
+  ],
+  "clips": [
+    {
+      "id": "face",
+      "file": "media/face.mp4",
+      "duration": 9,
+      "fps": 25,
+      "clock": "voice",
+      "voice_base": 0.3,
+      "events": {},
+      "reject": [
+        {
+          "lo": 0,
+          "hi": 0.03,
+          "why": "lead-in before the first word"
+        }
+      ],
+      "residual": []
+    },
+    {
+      "id": "desk",
+      "file": "media/desk.mp4",
+      "duration": 6,
+      "fps": 24,
+      "clock": "own",
+      "voice_base": null,
+      "events": {
+        "tick": 1.8
+      },
+      "reject": [
+        {
+          "lo": 5.5,
+          "hi": 6,
+          "why": "camera bump at the end of the take"
+        }
+      ],
+      "residual": [
+        {
+          "lo": 0.6,
+          "hi": 0.8,
+          "why": "soft focus for a moment, accepted"
+        }
+      ]
+    }
+  ],
+  "shots": [
+    {
+      "id": "face",
+      "source": "face",
+      "label": "presenter to camera",
+      "from": "start",
+      "to": "point.toDesk",
+      "src_in": null
+    },
+    {
+      "id": "desk",
+      "source": "desk",
+      "label": "desk and planner",
+      "from": "point.toDesk",
+      "to": "point.card",
+      "src_in": 0.5
+    },
+    {
+      "id": "card",
+      "source": null,
+      "label": "end card (composition)",
+      "from": "point.card",
+      "to": "end",
+      "src_in": null
+    }
+  ],
+  "scenes": [
+    {
+      "id": "s1",
+      "role": "hook",
+      "from": "start",
+      "to": "point.toDesk",
+      "visual": "Presenter to camera at a tidy desk"
+    },
+    {
+      "id": "s2",
+      "role": "show",
+      "from": "point.toDesk",
+      "to": "point.card",
+      "visual": "The planner open on the desk, one task ticked"
+    },
+    {
+      "id": "s3",
+      "role": "cta",
+      "from": "point.card",
+      "to": "end",
+      "visual": "End card with the call to action"
+    }
+  ],
+  "storyboard": {
+    "brief_id": "SYN-01",
+    "tone": "calm product demo",
+    "poster_at": "start+0.4",
+    "lufs": -14,
+    "ratios": [
+      {
+        "ratio": "9:16",
+        "width": 1080,
+        "height": 1920
+      },
+      {
+        "ratio": "1:1",
+        "width": 1080,
+        "height": 1080
+      }
+    ],
+    "modes": [
+      "cap",
+      "clean"
+    ]
+  },
+  "constraints": [
+    {
+      "id": "gap_P2",
+      "kind": "min_gap",
+      "a": "phrase.P1.end",
+      "b": "phrase.P2.start",
+      "s": 0.35,
+      "why": "breath before the instruction"
+    },
+    {
+      "id": "gap_P3",
+      "kind": "min_gap",
+      "a": "phrase.P2.end",
+      "b": "phrase.P3.start",
+      "s": 0.3,
+      "why": "beat before the payoff"
+    },
+    {
+      "id": "cut_after_line",
+      "kind": "min_gap",
+      "a": "phrase.P1.end",
+      "b": "point.toDesk",
+      "s": 0,
+      "why": "the first line finishes on the presenter"
+    },
+    {
+      "id": "tick_read",
+      "kind": "read_after",
+      "a": "point.tick",
+      "b": "point.card",
+      "s": 1,
+      "why": "the ticked task is readable before the end card"
+    },
+    {
+      "id": "line_held",
+      "kind": "hold_after",
+      "a": "phrase.P3.end",
+      "b": "point.card",
+      "s": 0.5,
+      "why": "the payoff line lands on the desk shot"
+    },
+    {
+      "id": "desk_take",
+      "kind": "max_src",
+      "a": "shot.desk",
+      "b": null,
+      "s": 5.4,
+      "why": "the take is unusable after source 5.40"
+    },
+    {
+      "id": "decay",
+      "kind": "decay_after",
+      "a": "phrase.P4.end",
+      "b": "end",
+      "s": 1,
+      "why": "the last word decays on the card"
+    }
+  ],
+  "captions": {
+    "builder": "auto",
+    "rules": {
+      "energy": "conversational",
+      "max_chars_line": 42,
+      "max_lines": 2,
+      "max_cps": 20,
+      "min_gap_frames": 2,
+      "exit_fade": 0.12,
+      "snap_to_shot": 0.5,
+      "pause_break": 0.15,
+      "min_cue": 0.67
+    },
+    "groups": [
+      {
+        "id": "hook",
+        "kind": "hook",
+        "copy": "One task, done before lunch",
+        "source": "copy_architecture.hook",
+        "deliver": [
+          "burn"
+        ],
+        "phrases": [],
+        "split": null,
+        "from": "start",
+        "to": "point.toDesk",
+        "not_before": null,
+        "not_after": null,
+        "lead_in": null,
+        "cls": null,
+        "enter": "rise",
+        "enter_dur": 0.3
+      },
+      {
+        "id": "cta",
+        "kind": "cta",
+        "copy": "Try the planner",
+        "source": "copy_architecture.cta",
+        "deliver": [
+          "burn"
+        ],
+        "phrases": [],
+        "split": null,
+        "from": "point.card",
+        "to": "end",
+        "not_before": null,
+        "not_after": null,
+        "lead_in": null,
+        "cls": null,
+        "enter": "fade",
+        "enter_dur": 0.2
+      }
+    ]
+  },
+  "audio": {
+    "voice": {
+      "file": "media/voice.wav",
+      "chain": null
+    },
+    "sfx": [
+      {
+        "id": "tick",
+        "file": "sfx/interface/click_002.ogg",
+        "at": "clip.desk@1.8",
+        "volume": 0.4,
+        "why": "the task is ticked"
+      }
+    ],
+    "music": {
+      "file": "media/bed.wav",
+      "volume": 0.25,
+      "fade_in": 0.05,
+      "fade_out": 0.6,
+      "licence": "original, compose-bed.mjs",
+      "sections": [
+        {
+          "at": "start",
+          "snap": "none",
+          "energy": 0
+        },
+        {
+          "at": "point.toDesk",
+          "snap": "beat_up",
+          "energy": 1
+        },
+        {
+          "at": "point.card",
+          "snap": "beat_up",
+          "energy": 2,
+          "chord": [
+            48,
+            55,
+            60,
+            64
+          ],
+          "root": 36
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "tm": {
+      "toDesk": "point.toDesk",
+      "ui.tick": "point.tick",
+      "card": "point.card",
+      "end": "end"
+    }
+  }
+}
