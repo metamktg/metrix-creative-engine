@@ -48,7 +48,11 @@ const flag = (k, d) => {
 const has = (k) => args.includes(k);
 const mode = flag("--mode", "render");
 
+// Set once the watchdog fires, so a later error cannot turn exit 3 into exit 1.
+let aborting = false;
+
 function die(msg, code = 1) {
+  if (aborting) return;
   console.error(`render: ${msg}`);
   process.exit(code);
 }
@@ -133,14 +137,25 @@ function killTree(proc) {
   }
 }
 
+// On POSIX a killed child stays in the process table until its parent reaps it, so wait (at
+// most 3 s) for the browser's exit event before exiting: then the pid is gone, not a zombie.
 function abort(e) {
+  if (aborting) return;
+  aborting = true;
+  const c = live.chrome;
+  const alive = c && c.exitCode === null && c.signalCode === null;
   killTree(live.encoder);
-  killTree(live.chrome);
-  if (live.profile) {
-    try { fs.rmSync(live.profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
-  }
-  console.error(`render: TIMEOUT ${e.message}; browser process tree ${live.chrome ? live.chrome.pid : "-"} killed`);
-  process.exit(3);
+  killTree(c);
+  console.error(`render: TIMEOUT ${e.message}; browser process tree ${c ? c.pid : "-"} killed`);
+  const done = () => {
+    if (live.profile) {
+      try { fs.rmSync(live.profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
+    }
+    process.exit(3);
+  };
+  if (!alive) return done();
+  c.once("exit", done);
+  setTimeout(done, 3000);
 }
 
 // Whole-run budget: load plus perFrame for every seek the mode will make.
