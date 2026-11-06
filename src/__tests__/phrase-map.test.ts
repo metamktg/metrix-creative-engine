@@ -37,7 +37,7 @@ describe("phrase-align helpers", () => {
 
   it("normalizes case, punctuation and apostrophes, and applies heard=meant aliases", () => {
     expect(normalize("Work's done, the KIDS!")).toBe("works done the kids");
-    expect(applyAliases("take a look at license fast", ["License Fast=LicensePass"])).toBe("take a look at licensepass");
+    expect(applyAliases("take a look at north wind", ["North Wind=Northwind"])).toBe("take a look at northwind");
   });
 
   it("reports a substituted word as missing plus extra, and nothing when the take matches", () => {
@@ -68,8 +68,8 @@ describe("phrase-map CLI", () => {
       path.join(dir, "voice.wav")], { encoding: "utf8" });
     if (r.status !== 0) throw new Error(r.stderr);
     fs.writeFileSync(path.join(dir, "words.jsonl"),
-      ['{"start":520,"end":900,"text":"Spend"}', '{"start":900,"end":1500,"text":"time"}', '{"start":2550,"end":3400,"text":"License"}', '{"start":3000,"end":3500,"text":"fast."}'].join("\n"));
-    fs.writeFileSync(path.join(dir, "script.txt"), "Spend time.\nLicensePass.\n");
+      ['{"start":520,"end":900,"text":"Spend"}', '{"start":900,"end":1500,"text":"time"}', '{"start":2550,"end":3400,"text":"North"}', '{"start":3000,"end":3500,"text":"wind."}'].join("\n"));
+    fs.writeFileSync(path.join(dir, "script.txt"), "Spend time.\nNorthwind.\n");
   });
   afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
   const run = (extra: string[]) => spawnSync(process.execPath, [tool, path.join(dir, "voice.wav"), "--words", path.join(dir, "words.jsonl"), ...extra], { encoding: "utf8" });
@@ -77,7 +77,7 @@ describe("phrase-map CLI", () => {
   it("finds the phrases, matches the script through an alias and writes the script text as captions", () => {
     const srt = path.join(dir, "out.srt");
     const out = path.join(dir, "out.json");
-    const r = run(["--script", path.join(dir, "script.txt"), "--alias", "license fast=licensepass", "--srt", srt, "--out", out]);
+    const r = run(["--script", path.join(dir, "script.txt"), "--alias", "north wind=northwind", "--srt", srt, "--out", out]);
     expect(r.status, r.stderr).toBe(0);
     expect(r.stdout).toContain("script check: MATCH");
     const j = JSON.parse(fs.readFileSync(out, "utf8"));
@@ -87,7 +87,7 @@ describe("phrase-map CLI", () => {
 
   it("exits 1 and names the word when the take does not say the script", () => {
     fs.writeFileSync(path.join(dir, "bad.jsonl"), fs.readFileSync(path.join(dir, "words.jsonl"), "utf8").replace("Spend", "Send"));
-    const r = spawnSync(process.execPath, [tool, path.join(dir, "voice.wav"), "--words", path.join(dir, "bad.jsonl"), "--script", path.join(dir, "script.txt"), "--alias", "license fast=licensepass"], { encoding: "utf8" });
+    const r = spawnSync(process.execPath, [tool, path.join(dir, "voice.wav"), "--words", path.join(dir, "bad.jsonl"), "--script", path.join(dir, "script.txt"), "--alias", "north wind=northwind"], { encoding: "utf8" });
     expect(r.status).toBe(1);
     expect(r.stderr).toContain('script missing word "spend"');
     expect(r.stderr).toContain('script extra word "send"');

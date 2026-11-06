@@ -99,11 +99,11 @@ describe("caption cues: text comes from the script", () => {
   });
 
   it("collapses an aliased brand name and fails a word-count mismatch instead of guessing", () => {
-    const heard = lay(["Take", "a", "look", "at", "License", "Fast."]);
-    expect(() => build(heard, "Take a look at LicensePass.")).toThrow(/6 were heard/);
-    const r = build(heard, "Take a look at LicensePass.", { aliases: ["license fast=licensepass"] });
-    expect(r.cues[0].text).toBe("Take a look at LicensePass.");
-    expect(r.cues[0].words[4]).toMatchObject({ text: "LicensePass.", asr: "License Fast.", start: 2.6 });
+    const heard = lay(["Take", "a", "look", "at", "North", "Wind."]);
+    expect(() => build(heard, "Take a look at Northwind.")).toThrow(/6 were heard/);
+    const r = build(heard, "Take a look at Northwind.", { aliases: ["north wind=northwind"] });
+    expect(r.cues[0].text).toBe("Take a look at Northwind.");
+    expect(r.cues[0].words[4]).toMatchObject({ text: "Northwind.", asr: "North Wind.", start: 2.6 });
     expect(r.asr_differs).toEqual([]);
   });
 

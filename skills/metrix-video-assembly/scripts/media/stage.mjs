@@ -7,7 +7,7 @@
  * Generated clips arrive with sparse GOPs (one keyframe every few seconds). A browser seek to a
  * time far from a keyframe has to decode forward from it, and a seek that does not finish in
  * time shows the previous frame: a freeze or a dropped frame in the render. That cause is
- * INFERRED from the LP-AI-01 renders, not yet proven; this helper removes the condition so the
+ * INFERRED from a past run's renders, not yet proven; this helper removes the condition so the
  * render watchdog work can test it. Encode: -c:v libx264 -crf 18 -g <fps> -keyint_min <fps>.
  * x264 may still add a scene-cut keyframe between grid points; that only shortens an interval,
  * so the check below bounds the longest interval rather than demanding an exact grid.

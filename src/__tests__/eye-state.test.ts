@@ -11,7 +11,7 @@ import {
 // @ts-expect-error plain ESM helper without type declarations
 import { attachScores, loadScores } from "../../skills/metrix-video-assembly/scripts/media/eye-sheet.mjs";
 
-// Real MediaPipe output (eye_state.py, face_landmarker float16/1, VIDEO mode) for two LP-AI-01 takes.
+// Real MediaPipe output (eye_state.py, face_landmarker float16/1, VIDEO mode) for two takes from a past AI UGC run.
 // The footage is not committed; the scores are, so CI needs neither MediaPipe nor the clips.
 const fx = (f: string) => fileURLToPath(new URL(`./fixtures/eye-state/${f}`, import.meta.url));
 const S3H = JSON.parse(fs.readFileSync(fx("v19_S3H_phonegrade.scores.json"), "utf8"));
@@ -56,7 +56,7 @@ describe("closures (hysteresis on the weaker eye)", () => {
   });
 });
 
-describe("eyeGate on the real LP-AI-01 scores", () => {
+describe("eyeGate on real scores from a past run", () => {
   it("v19 S3H: the reject window inside the kept range FAILs at its head edge", () => {
     const g: Gate = eyeGate(S3H, { ranges: [{ id: "H", from: 0.4, to: 4.169 }] });
     expect(g.verdict).toBe("FAIL");

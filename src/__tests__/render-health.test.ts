@@ -147,7 +147,7 @@ describe("craft checks (HyperFrames thresholds)", () => {
     expect(C.lineFloorSec(2, false)).toBe(0.4);
     expect(C.lineFloorSec(3, false)).toBeCloseTo(1.05, 10);
     expect(C.lineFloorSec(1, true)).toBe(2);
-    expect(C.readingWords("Take a look at LicensePass.")).toBe(5);
+    expect(C.readingWords("Take a look at Northwind.")).toBe(5);
     expect(C.readingWords("--")).toBe(0);
   });
   it("FAILs when there is nothing to check, never PASSes it", () => {

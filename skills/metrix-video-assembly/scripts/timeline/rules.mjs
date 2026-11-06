@@ -42,7 +42,7 @@ export const ceilTo = (t, step) => {
 // The musical grid point at or after t: beat = 60 / bpm, grid unit = beat / div.
 // When the next full beat costs at most preferFullBeatCost seconds more than the next
 // grid unit, the full beat wins. Default 0: plain ceiling to the grid unit.
-// Reproduces grid_at_or_after in the LP-AI-01 v19 builder (prefer_full 0.04 there).
+// Reproduces grid_at_or_after in a past run's builder (prefer_full 0.04 there).
 export const gridSnap = (t, { bpm, div = 1, preferFullBeatCost = 0 } = {}) => {
   if (!(bpm > 0)) throw new RangeError(`gridSnap: bpm must be > 0, got ${bpm}`);
   if (!(div >= 1) || !Number.isInteger(div)) throw new RangeError(`gridSnap: div must be a positive integer, got ${div}`);

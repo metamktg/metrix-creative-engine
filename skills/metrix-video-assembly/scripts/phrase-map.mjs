@@ -15,7 +15,7 @@
  * With --script (one phrase per line, or free text), every script word must be heard in order.
  * Any missing or extra word is printed with its phrase and time, and the exit code is 1. This
  * is the check that caught "Spend" heard as "Send" after a de-esser was added to a voice chain.
- * --alias maps a known ASR spelling to the script word, e.g. "license fast=licensepass".
+ * --alias maps a known ASR spelling to the script word, e.g. "north wind=northwind".
  * ASR agreement is not a listening pass: a human still has to hear the take.
  *
  * --srt writes one cue per phrase. When the script has one line per detected phrase, the cue

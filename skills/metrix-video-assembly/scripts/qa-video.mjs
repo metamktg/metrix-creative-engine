@@ -19,7 +19,7 @@
  *   colour        tagged limited-range BT.709, what phones and Meta assume
  *   black_frames  ffmpeg blackdetect on a 90x160 grey sample: FAIL any frame where over 30 % of
  *                 pixels sit under luma 10 of 255 (a clip that failed to decode). Same rule as the
- *                 LP-AI-01 check-dropped-video.py it replaces.
+ *                 per-run check-dropped-video.py it replaces.
  *   freeze        media/scdet.mjs freezeCheck (freezedetect n=0.001 d=0.1, plus decoded frame count
  *                 and pts gaps). Deliberate holds come only from --timeline: shots with no source
  *                 clip (a composition: app demo, end card) may hold still. The threshold is never

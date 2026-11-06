@@ -23,7 +23,7 @@
  *                       noFace:'warn' for shots where the face legitimately leaves), WARN mid-range
  * The verdict is the worst finding; PASS when there is none.
  *
- * Thresholds were calibrated on the LP-AI-01 takes (v19 S3H 0.44 to 0.64, v17 S1 1.44 to 1.74,
+ * Thresholds were calibrated on the takes of a past AI UGC run (v19 S3H 0.44 to 0.64, v17 S1 1.44 to 1.74,
  * v16 S3 4.69 to 4.92 source seconds); the calibration and its precision are in the W1-G report
  * and in src/__tests__/fixtures/eye-state/calibration.json.
  *
@@ -47,7 +47,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const SCRIPT = path.join(HERE, "eye_state.py");
 
 /*
- * Calibrated on the LP-AI-01 takes (scores from eye_state.py, MediaPipe 1.1.1, face_landmarker
+ * Calibrated on the takes of a past AI UGC run (scores from eye_state.py, MediaPipe 1.1.1, face_landmarker
  * float16/1, full 1080x1920 frames). Level = the weaker eye's eyeBlink score. Frames two or more
  * frames away from any closure stay at or under 0.19; the lowest closure peak, a closure confirmed
  * on an eye-crop sheet (v16 S3 0.40 to 0.60), is 0.51; the recorded closures peak at 0.67 to 0.81.
