@@ -24,7 +24,8 @@
     "check:production-review": "python scripts/validate_review_gates.py",
     "test:retention": "python -B -m unittest discover -s scripts -p test_retain_drafts.py -q",
     "test:production-review": "python -B -m unittest discover -s scripts -p test_*review*.py -q",
-    "test:client-library": "python -B -m unittest discover -s scripts -p test_client_library.py -q"
+    "test:client-library": "python -B -m unittest discover -s scripts -p test_client_library.py -q",
+    "tools:check": "node ./scripts/tools-check.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.21.1",
