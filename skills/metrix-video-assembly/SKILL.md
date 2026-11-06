@@ -323,7 +323,9 @@ timeout render.mjs kills the browser's whole process tree and the encoder and
 exits 3. Exit 0 is a pass, WARNs included; 1 a FAIL or an error; 2 bad usage or
 a refused backend. `--backend` takes `mce-cdp` only: `hyperframes` is refused
 until the five gates are observed passing on it, and `remotion` because there is
-no licence record.
+no licence record. This flag is about render.mjs driving another renderer; a
+HyperFrames project renders through its own CLI (see HyperFrames layer below) and
+its export still has to pass `qa-video.mjs`.
 
 One ad per ratio the brief's placements need. Render each from the same
 composition with a storyboard per ratio; check each one, since a layout that
