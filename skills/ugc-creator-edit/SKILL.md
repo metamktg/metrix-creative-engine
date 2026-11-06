@@ -89,6 +89,8 @@ Use the finishing standard's explicit checks for coherent narration and phrase l
 
 Assign an acoustic profile to each visible speaking setting. Carry the active profile through offscreen narration, screens and CTA; change it only when the creator is visibly established speaking in another setting. Preserve word tails, compatible level and room decay. A crop or B-roll change is not a new recording event.
 
+For captions, motion graphics, grades and finishing passes, use the HyperFrames layer described in `metrix-video-assembly` ("HyperFrames layer"): word-timed captions come from the accepted voice's checked phrase map, so they follow the speaker's real pauses, and every export passes both `hyperframes check` and `qa-video.mjs`. Its `hyperframes-registry` and `media-use` skills supply the blocks and looks; they do not change the authenticity rules here (natural speech, no retimed lips, one acoustic profile per setting).
+
 Apply restraint: an effect needs a specific viewer benefit and a cost-aware way to achieve it. Prefer existing edit capabilities before paid motion generation. No mandatory effect quota, artificial errors or trend decoration. Interface-animation frequency thresholds and millisecond budgets do not govern ad footage.
 
 For selected effects, specify timecode, purpose, properties/transition, duration in frames or seconds, source and cost. Reject effects that obscure evidence, reduce caption readability, break recording continuity or add spend without a brief-specific benefit. Do not claim an effect is viral or improves conversion without evidence. Keep trend references and commercial-use rights specific to the intended platform.
