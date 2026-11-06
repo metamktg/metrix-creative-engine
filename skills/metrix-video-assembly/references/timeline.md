@@ -2,16 +2,15 @@
 
 One timing truth per ad. Three frozen file formats and one stamp.
 
-Status: frozen contract (wave 0). The planner and emitters (`timeline.mjs`) and the readers'
-checks are built against it in later waves; until they land, nothing writes these files and the
-"Written by" and "Read by" columns below are the contract those builds must meet.
+Status: frozen contract (wave 0). `scripts/timeline.mjs` (plan, check, emit) and the readers'
+checks below are built against it; a change to a format starts here and in the validator.
 
 | Format | File | Clock | Written by | Read by |
 | --- | --- | --- | --- | --- |
 | `mce.phrasemap/1` | `<run>/phrases.json` | voice master | `phrase-map.mjs` (whisperX only after it qualifies against hand labels) | `timeline.mjs plan` |
 | `mce.cutplan/1` | `<run>/cut.json` | references, not times | a person or an agent, by hand | `timeline.mjs plan` |
-| `mce.timeline/1` | `<run>/timeline.json` | ad | `timeline.mjs plan --phrases phrases.json --cut cut.json`, nothing else | every emitter; check-storyboard and qa-video for cut times |
-| `derived_from` | inside each emitted `storyboard_{ratio}_{cap,clean}.json` | – | `timeline.mjs emit` | check-storyboard, render.mjs |
+| `mce.timeline/1` | `<run>/timeline.json` | ad | `timeline.mjs plan --phrases phrases.json --cut cut.json`, nothing else | every emitter; `qa-video.mjs --timeline` for cuts and holds; check-storyboard for its bytes and TM |
+| `derived_from` | inside each emitted `storyboard_{ratio}_{cap,clean}.json` | – | `timeline.mjs emit` | check-storyboard |
 
 Validators live in `scripts/timeline/schema.mjs` (no dependencies): `validatePhraseMap`,
 `validateCutPlan`, `validatePlanInputs` (the pair, cross-checked), `validateTimeline`,
@@ -475,9 +474,16 @@ the next full beat; `full_beat_pref`: the next full beat if it costs no more tha
    first phrase start, and lead_in is the group's `lead_in` or `rules.lead_in`. `out` = t(`to`) when
    set, else min(the next voiceover group's unclamped in, max(raw end + `rules.linger`,
    in + max(`rules.min_cue`, `rules.per_word` x words)), t(`not_after`)) where raw end is the
-   split (side `before`) or the last phrase end. A group's words are its phrases' words that start
-   inside its split window. The `auto` builder (the cue builder) groups words itself under the
-   same `rules`; overlay groups (`hook`, `cta`, `label`, `framing`) always take `from` and `to`.
+   split (side `before`) or the last phrase end. A group's words are its phrases' words whose
+   midpoint, (start + end) / 2, lies on its side of the split, not its start: ASR word starts run
+   tens of ms early or late, and in a past run whisper-cli DTW put a word's start 20 ms before the
+   measured split it follows, so a start rule put that word in the wrong group. Word times come
+   from the measured words and word text from `copy` (the script), never the ASR spelling. Only
+   voiceover groups go through the caption line layout (`max_chars_line`, `max_lines`); an overlay
+   (`hook`, `cta`, `label`, `framing`) is set type that the composition lays out, so its `lines`
+   is its copy on one line. `copy` is words joined by single spaces in every group, and plan
+   refuses a hand line break. The `auto` builder (the cue builder) groups words itself under the
+   same `rules`; overlay groups always take `from` and `to`.
 7. **Music sections** start at snap(t(at)); each ends where the next starts, the last at `end`.
    **sfx** `at` resolves directly.
 8. **TM.** Each `outputs.tm` key is a dotted path into the TM object (`app.tap` nests), valued
@@ -823,12 +829,12 @@ short-shot and stricter-at-cuts checks read. Neither is re-derived anywhere else
         "start": 0,
         "end": 1.25,
         "text": "Clear desk, clear head.",
-        "lines": ["Clear desk,", "clear head."],
+        "lines": ["Clear desk, clear head."],
         "words": [
           { "text": "Clear", "start": null, "end": null, "line": 0 },
           { "text": "desk,", "start": null, "end": null, "line": 0 },
-          { "text": "clear", "start": null, "end": null, "line": 1 },
-          { "text": "head.", "start": null, "end": null, "line": 1 }
+          { "text": "clear", "start": null, "end": null, "line": 0 },
+          { "text": "head.", "start": null, "end": null, "line": 0 }
         ],
         "phrases": [],
         "cls": null,
@@ -1087,11 +1093,18 @@ short-shot and stricter-at-cuts checks read. Neither is re-derived anywhere else
 
 ## derived_from
 
-The stamp every emitted storyboard carries, as a top-level `derived_from` key. Readers must
-enforce it: check-storyboard FAILs a storyboard whose `sha256` no longer matches the timeline
-file, and a storyboard without the stamp when a `timeline.json` sits beside it; render.mjs FAILs
-when the composition's TM hashes differently from `tm_sha256`. The example stamps the timeline example above
-(`sha256` of its `serialize()` bytes, `tm_sha256` of its `tm`).
+The stamp every emitted storyboard carries, as a top-level `derived_from` key. Only storyboards
+carry it; the other emitted files (`captions.srt`, `transcript.txt`, `cues.json`, `edl.json`,
+`voice-graph.txt`, `tm.json`) are not stamped, and the storyboard's
+`audio.voiceover.script_sha256` is the sha256 of `transcript.txt`. check-storyboard FAILs a
+storyboard whose `sha256` no longer matches the timeline file, and a storyboard without the stamp
+when a `timeline.json` sits beside it. check-storyboard.mjs checks only the stamp's shape
+(`validateDerivedFrom`), the timeline's bytes (`sha256`), its `schema` field and
+`tmSha256(tm)`. It does not run `validateTimeline`; `timeline.mjs check` does. render.mjs does
+not read the stamp: nothing yet compares the composition's TM with `tm_sha256`. The example
+stamps the timeline example above (`sha256` of its `serialize()` bytes, `tm_sha256` of its `tm`);
+that timeline is exactly what `timeline.mjs plan` writes from the phrase map and cut plan
+examples.
 
 ### Example
 
@@ -1099,7 +1112,7 @@ when the composition's TM hashes differently from `tm_sha256`. The example stamp
 {
   "derived_from": {
     "path": "timeline.json",
-    "sha256": "da825c7990c82a0c80ed4874035cba3c183b24c0f80c4df9c0e14026ccf94f15",
+    "sha256": "3ba75aa581bdf9f2e392a3f4356d2e3a8fce6766a93c1e34bee8f06c929b5216",
     "schema": "mce.timeline/1",
     "tm_sha256": "a0020850a054a0faf1cd209f44f53b9e5c5ef3c887840137f2595f35cff46191"
   }

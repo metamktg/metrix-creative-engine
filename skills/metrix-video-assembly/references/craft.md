@@ -92,6 +92,30 @@ Two failures to design out:
 Type size: at least 3% of frame width (32px on a 1080 frame) for anything read,
 larger for the hook. A feed thumbnail is small.
 
+**Caption cues.** Spoken captions follow the cue lint that `timeline.mjs check`
+and `captions/cues.mjs` run: at least a 2-frame gap between cues, at most 20
+characters a second, and a minimum cue of `captions.rules.min_cue` (default 20
+frames, 0.67 s at 30 fps; the last AI UGC run adopted 1.2 s). That run's master
+butts its cues end to start with no gap, so it would FAIL the lint; new edits
+leave the gap.
+
+**What `render.mjs --mode check` measures.** Three craft checks, adapted from
+HyperFrames craftAudit (Apache-2.0), run over every frame of the ad:
+
+- `line_unread`: a non-voiced line should be on screen (at half opacity or more)
+  for 0.75 x (0.5 + 0.3 x words) s, 0.4 s for 2 words or fewer, and at least 2 s
+  for the last line of the film. Short of that it WARNs. It FAILs only where a
+  line is settled for less than the check-storyboard reading floor above
+  (`floorFor`, or `voFloorFor` for a voiced caption, about 4 words a second and
+  never under 0.6 s); voiced captions get only that floor.
+- `dead_stretch`: over 3 s with nothing on screen changing WARNs. The last 3 s
+  (the end card) are exempt, and so is any moment where an element marked
+  `data-hold` is showing.
+- `type_floor`: reading text under round(0.026 x short side) px (28 px on a
+  1080 wide frame) for 0.5 s or more WARNs. Elements inside `data-layout-ignore`
+  (texture, not reading) are skipped. The layout check's 3 % of width floor
+  still FAILs separately.
+
 ## 5. Grounding: what may be invented and what may not
 
 The line is between what the ad *asserts* and how it *says* it.
@@ -144,6 +168,23 @@ Humour comes from the product's own truth, never from trying to be funny.
 layouts makes a muddy double exposure; `dip` takes the old scene out before the
 new one arrives. Check every cut in the stills (the renderer captures both
 sides of each one).
+
+**A push-in that reads as a double exposure.** A slow push-in on flat app UI
+can trip `qa-video.mjs`'s transitions scan, which compares each frame with the
+picture 0.4 s either side. The last AI UGC run flagged two such moments on its
+9:16 CLEAN master and one on each 4:5 master. Adjudicate from stills before
+anything else: look at the 15 fps strip from t - 0.4 to t + 0.4 s and at a
+full-resolution crop. If one picture scales and nothing ghosts, record an
+exemption that cites that still by its sha256 (SKILL.md, step 8). If a second
+picture shows through, it is a real blend: fix it with a `dip`.
+
+**Eyes at the edges.** Never start or end a presenter shot, or cut a punch-in,
+within 0.12 s (3 frames at 25 fps, 4 at 30) of closed or closing lids: a blink on the first or last frames
+reads as a glitch, not a blink. In a past AI UGC run one version cut its
+punch-in on a slow blink and entered the CTA shot on a squint; the next
+version fixed both, and the owner-passed master's punch-in lands 5 frames after
+the blink. A natural blink mid-shot is fine, and the eye-state gate only warns
+on it (`scripts/media/eye-state.mjs`, SKILL.md "Media checks").
 
 ## 9. Sound
 

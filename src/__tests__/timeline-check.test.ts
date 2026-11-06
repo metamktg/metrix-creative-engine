@@ -205,14 +205,8 @@ describe("the doc example (references/timeline.md) plans to the doc's timeline",
   const dpm = blocks.find((b) => b.schema === "mce.phrasemap/1");
   const dcp = blocks.find((b) => b.schema === "mce.cutplan/1");
   const dtl = blocks.find((b) => b.schema === "mce.timeline/1");
-  it("every field equal except the hook overlay's hand-set line break", () => {
+  it("plans to the doc's timeline byte for byte", () => {
     const got = plan(dpm, dcp, { cutplanSha256: dtl.inputs.cutplan.sha256 });
-    const hook = (t: J) => t.captions.groups.find((g: J) => g.id === "hook");
-    // The doc breaks the hook into two lines by hand; an overlay's lines are not a rule plan applies.
-    expect(hook(got).lines).toEqual(["Clear desk, clear head."]);
-    expect(hook(dtl).lines).toEqual(["Clear desk,", "clear head."]);
-    hook(got).lines = hook(dtl).lines;
-    hook(got).words = hook(dtl).words;
     expect(serialize(got)).toBe(serialize(dtl));
   });
 });

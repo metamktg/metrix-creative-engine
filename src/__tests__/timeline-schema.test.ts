@@ -248,11 +248,11 @@ describe("mce.timeline/1 rules", () => {
     expect(validateTimeline(a).join("\n")).toMatch(/phrases\[1\]: start\/end must be src_start\/src_end \+ the segment offset/);
   });
   it("caption groups: text is the words, lines are the word lines, at most two", () => {
-    const a = tl(); a.captions.groups[0].lines = ["Clear desk, clear", "head."];
-    expect(validateTimeline(a).join("\n")).toMatch(/lines\[0\]: "Clear desk, clear" must be its words "Clear desk,"/);
+    const a = tl(); a.captions.groups[0].lines = ["Clear desk, clear"];
+    expect(validateTimeline(a).join("\n")).toMatch(/lines\[0\]: "Clear desk, clear" must be its words "Clear desk, clear head\."/);
     const b = tl(); b.captions.groups[2].text = "Pick a plan!";
     expect(validateTimeline(b).join("\n")).toMatch(/text: must be the words joined/);
-    const c = tl(); c.captions.groups[0].lines.push("more");
+    const c = tl(); c.captions.groups[0].lines.push("more", "again");
     expect(validateTimeline(c).join("\n")).toMatch(/lines: allows at most 2/);
     const d = tl(); d.captions.groups[0].words[1].line = 1; d.captions.groups[0].words[2].line = 0;
     expect(validateTimeline(d).join("\n")).toMatch(/words\[\].line: must start at 0 and never go back/);

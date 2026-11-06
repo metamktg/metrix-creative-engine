@@ -274,7 +274,9 @@ that listening pass accepts them, and never sit before an automatic gain stage:
 gain that lifts the pauses raises the noise between phrases, which was heard as a
 breath in a recorded run. Nothing but the voice starts in the 0.25 s before a
 phrase onset (`check-storyboard.mjs <run>/storyboard.json --brief <run>/brief.json
---phrases <phrases.json>`). A phone-in-a-kitchen chain
+--phrases <phrase-map output>`; grounding is strict, so the brief goes with it, and
+the locked script goes in with `--script` when the storyboard sets
+`audio.voiceover.script_sha256`). A phone-in-a-kitchen chain
 built and delivered without a listening pass is exactly what the standard
 forbids, and an unheard mix is never reported as reviewed.
 
