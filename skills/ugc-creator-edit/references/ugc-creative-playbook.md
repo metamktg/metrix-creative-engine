@@ -79,6 +79,12 @@ These are production constraints, not one giant payload to paste into every mode
 | CTA | A vague or wrong action, competing offers, unsupported conditions, distorted/slurred final words, a chopped tail or an unnecessarily long empty end slate. | Accurate offer/destination/conditions, complete speech and a readable hold. Keep creator presence where it serves the invitation; a brief final card is an option. |
 | Labels/watermarks | Unrequested tool/status/"presenter" badges, generated logos/text, or damaging framing to conceal a watermark without a permitted clean-output path. | Compose branding in post, choose rights-compliant outputs and preserve any actually required disclosure. Cosmetic preferences do not waive required disclosure. |
 
+### Editorial rejection block
+
+Keep these in the editor/reviewer brief, not as an unsupported provider negative field: stale excluded copy surviving in audio or UI after a picture swap; an audition/static wrapper mislabeled as a finished motion ad; the same recognizable motion cycle restarted through different crops or lip files; generic task footage used to fill an unrelated sector story; effects at every cut or music masking voice; a source/overlay change reusing a frame-count-only cache; and a review credited with modalities it did not receive. Pair each applicable rejection with the current positive shot purpose, source window, native clock, readable hold and actual evidence. Beat duration, music energy and creator recurrence follow the brief; do not generalize one client's exact recipe.
+
+Before source search and at handoff, use bundled `client-library.md` (repository: `skills/ugc-creator-edit/references/client-library.md`) for current client decisions, source-window history, feedback routing and authorized repository synchronization.
+
 ### Ready-to-use performance direction
 
 Place this in a supported directing field or the production brief, **not automatically in spoken text**:

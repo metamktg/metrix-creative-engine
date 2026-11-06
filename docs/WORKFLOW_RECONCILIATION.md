@@ -8,6 +8,7 @@ The reusable production contract is the versioned source in this checkout. The U
 | Composed standard, served as `kie://production-review-standard` | `docs/UGC_PRODUCTION_STANDARD.md`, generated, never hand-edited |
 | Preproduction packet and guarded lip sync | `skills/metrix-ad-creative/references/preproduction-director.md`, served as `kie://ugc-preproduction` |
 | Creative direction | `docs/UGC_CREATIVE_PLAYBOOK.md`, with the short module in `prompts/07-ugc-creative-direction.md` |
+| Private client source/feedback/repository continuity | `skills/ugc-creator-edit/references/client-library.md` and its `scripts/client_library.py`; client data stays outside git |
 | Every byte copy of the above | `scripts/skill-copies.json`, checked by `npm run check:copies` |
 
 Regenerate the composed standard, then refresh the copies:

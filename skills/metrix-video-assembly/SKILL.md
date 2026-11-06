@@ -62,6 +62,11 @@ skill directory and off a full system drive.
 
 ## Process
 
+At media selection and delivery, consult the current private client library and
+[library workflow](references/client-library.md). Respect source windows and
+current decisions, then synchronize authorized source/recipe/review records and
+approved exports to their separately configured destinations.
+
 ### 1. Read the brief and the kit
 
 From the brief: `asset_type`, `creative_specifications` (dimensions, duration,
