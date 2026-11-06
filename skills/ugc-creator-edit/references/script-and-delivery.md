@@ -192,9 +192,28 @@ plus `gesture`, and `intent` and `emotion` carry over unchanged.
 - **Let energy follow the argument.** A neutral or calm explanation can remain
   steady. Change intensity only for a real turn in thought; do not decorate
   every line with enthusiasm or a forced dry aside.
-- **Gaze follows the thought.** Look at the product or the work while explaining,
-  meet the lens on the promise and the action. Do not write blink instructions
-  into short clips; they render as darting eyes.
+- **Lip-synced lines meet the lens.** A speaking line that will be lip-synced looks
+  at the camera with the head level; looking down at a laptop, phone or product
+  while talking was rejected after lip-sync spend in a recorded run, and a work
+  prop in a speaking still can render a brand logo. Gaze at the product or the
+  work belongs to non-speaking B-roll.
+- **State the eye state; do not choreograph blinks.** Name the steady state in
+  positive words: "her eyes stay open and on the camera the whole time with only
+  quick normal blinks; her head stays level with small natural movement". That
+  wording was the repair that worked after a take with no eye direction closed its
+  eyes five times; "natural blinks" alone did not. Never script blink timing,
+  winks or eye movements: a requested wink rendered as a both-eye blink. Even an
+  accepted take closes its eyes mid-line, so inspect a 0.04 s eye sheet of every
+  speaking span before paying for lip sync and plan cuts around closures.
+- **Mood reads rested.** Direct "bright alert eyes, rested and energetic". Never
+  "tired", "late night", "exhausted" or a yawn anywhere in the direction, even as
+  the situation the line describes: a presenter generated from that wording read
+  as tired and was dropped before use.
+- **Expression matches the line.** A neutral explanation is "calm, sincere,
+  matter-of-fact; her mouth moves only as much as speaking needs and closes
+  between phrases; no smiling while she talks". "Warm, relaxed, friendly, small
+  smile between phrases" produced a grin that shipped and was replaced. A knowing
+  look after a line works as "closes her lips into a slow, knowing half-smile".
 - **No friction beat is required.** Preserve genuine behavior when useful;
   do not script a stumble, hair touch or fake recording error as proof of humanity.
 - **One grip or weight cue** when a product is in hand: "turns it in her hand,
@@ -234,6 +253,10 @@ when selection is unresolved, listen, choose by actual presenter/scene fit, then
 keep that voice and those settings for retakes. Never substitute an old audition
 for the accepted dry read. Filters, de-essing, denoising and level automation are
 for a diagnosed defect only, compared with the dry audio at matched loudness.
+After any change to the voice chain, run speech recognition against the locked
+script (`metrix-video-assembly/scripts/phrase-map.mjs <voice> --script <script>`):
+a de-esser added for polish turned "Spend" into "Send" in a recorded run, and only
+the script check caught it. Recognition agreement is not a listening pass.
 
 ## 7. The recording perspective is declared once
 
@@ -245,7 +268,12 @@ agree with it. Off-camera narration keeps the same perspective; a picture change
 is not a new recording event.
 
 Any acoustic placement applied in post (room impulse, band limiting, room tone)
-is a repair that someone listens to before it ships. A phone-in-a-kitchen chain
+is a repair that someone listens to before it ships. Added noise sources (hiss,
+hum, generated room tone) are the manufactured realism section 5 rejects unless
+that listening pass accepts them, and never sit before an automatic gain stage:
+gain that lifts the pauses raises the noise between phrases, which was heard as a
+breath in a recorded run. Nothing but the voice starts in the 0.25 s before a
+phrase onset (`check-storyboard.mjs --phrases`). A phone-in-a-kitchen chain
 built and delivered without a listening pass is exactly what the standard
 forbids, and an unheard mix is never reported as reviewed.
 

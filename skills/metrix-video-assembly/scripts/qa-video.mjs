@@ -10,7 +10,8 @@
  *
  * Checks, each PASS or FAIL:
  *   format      width x height matches --ratio; duration within 0.1s of --duration
- *   audio       an audio stream exists (some upload paths reject files without one)
+ *   audio       an audio stream exists (some upload paths reject files without one), and it runs
+ *               within 0.06 s of the video stream (a mix that stops early fails)
  *   loudness    within 1 LU of --lufs; --silent: below -60 LUFS; --effects-only (no music bed):
  *               at or under -16 LUFS with peaks at or under -1 dBFS
  *   poster      --poster matches frame 0 (SSIM >= 0.98): the thumbnail is the first frame
@@ -33,7 +34,7 @@ const v = argv[0];
 const results = [];
 const add = (check, ok, detail) => results.push({ check, verdict: ok ? "PASS" : "FAIL", detail });
 
-const pj = JSON.parse(spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration:stream=codec_type,width,height,pix_fmt,color_range,color_space", "-of", "json", v], { encoding: "utf8" }).stdout);
+const pj = JSON.parse(spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration:stream=codec_type,duration,width,height,pix_fmt,color_range,color_space", "-of", "json", v], { encoding: "utf8" }).stdout);
 const vs = pj.streams.find((s) => s.codec_type === "video");
 const dur = +pj.format.duration;
 
@@ -55,6 +56,13 @@ if (ratio) {
 const want = opts.duration;
 if (want) add("format.duration", Math.abs(dur - +want) <= 0.1, `${dur.toFixed(3)}s, wanted ${want}s`);
 add("audio", pj.streams.some((s) => s.codec_type === "audio"), "audio stream present");
+// The audio must run as long as the picture. A mix that stops early (the pre-2026-11-06 sidechain
+// graph cut it at the voice's last sample) passes the container check above, so measure streams.
+const as = pj.streams.find((s) => s.codec_type === "audio");
+if (vs && as && Number.isFinite(+vs.duration) && Number.isFinite(+as.duration)) {
+  const gap = +vs.duration - +as.duration;
+  add("audio.length", Math.abs(gap) <= 0.06, `audio ${(+as.duration).toFixed(3)}s, video ${(+vs.duration).toFixed(3)}s`);
+}
 
 const er = spawnSync("ffmpeg", ["-v", "info", "-nostats", "-i", v, "-vn", "-af", "ebur128=peak=true", "-f", "null", "-"], { encoding: "utf8" }).stderr;
 const I = parseFloat(([...er.matchAll(/I:\s+(-?[\d.]+) LUFS/g)].at(-1) || [])[1]);

@@ -54,6 +54,7 @@ node scripts/beats.mjs <track> --window 30 --out <run>/work/cues.json
 node scripts/qa-video.mjs <run>/<name>.mp4 --storyboard <run>/storyboard.json --poster <run>/<name>.jpg
 node scripts/make-row.mjs --base <base-run> --brief brief.json --out <row-dir>     (MST rows only)
 node scripts/make-srt.mjs <run>/storyboard.json --out <run>/captions.srt
+node scripts/phrase-map.mjs <voice.wav> --script script.txt --out <run>/work/phrases.json [--srt captions.srt]
 ```
 
 `scripts/` is relative to this skill's directory. Keep run folders out of the
@@ -209,7 +210,8 @@ clears 4:5 can still sit under the Reels overlay at 9:16.
 node scripts/qa-video.mjs <name>.mp4 --storyboard <run>/storyboard.json --poster <name>.jpg [--lufs <approved>]
 ```
 
-It checks the file itself: ratio, duration, an audio stream, loudness within
+It checks the file itself: ratio, duration, an audio stream that runs as long as the
+picture, loudness within
 1 LU of the target, silence when the storyboard has no audio, and `--effects-only`
 for a mix with no music or voice. `--storyboard` supplies the ratio, duration,
 loudness target (`audio.lufs`, default -14) and silent or effects-only mode the
@@ -282,6 +284,23 @@ text or a time past the storyboard's duration. It reads times from the storyboar
 only: it does not hear the take, so caption timing against the actual voice is
 still a listening check. `--source` names another source value and `--all` exports
 every text item for review.
+
+## Phrase map and script check
+
+```
+node scripts/phrase-map.mjs <voice.wav> --script script.txt [--alias "heard=meant"] --out <run>/work/phrases.json [--srt captions.srt]
+```
+
+Run it on the accepted dry voice (a room-processed voice merges phrases, because
+its tails sit above the silence threshold). Phrase edges come from ffmpeg
+silencedetect (-40dB, gaps of 0.15 s or more) and are the cut points; Whisper
+words (ffmpeg's whisper filter, model from `--model` or `METRIX_WHISPER_MODEL`,
+needs ffmpeg 8.1 or later for `max_len`) only say which words fall in which
+phrase. With `--script` every script word must be heard in order or it exits 1,
+naming the word. Run it again after every change to the voice chain. `--alias`
+maps a brand name the recogniser always mishears. Pass the output to
+`check-storyboard.mjs --phrases` so no effect lands just before a phrase. A
+recogniser match is not a listening pass.
 
 ## What this skill will not do
 

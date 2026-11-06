@@ -165,7 +165,10 @@ For creator-led work, apply the UGC finishing and review standard.
 a tap, a soft impact for a reveal. Fire at the start of the motion (0 to 0.1s
 before the first visible frame); a success sound fires when the thing is fully
 visible. In a staggered sequence, accent the first and last, not every item.
-Fewer cues, better timed.
+Fewer cues, better timed. Over a voiced ad the voice wins: no effect starts in
+the 0.25 s before a phrase onset, where a slide or whoosh reads as a breath or a
+clipped word (`check-storyboard.mjs --phrases <phrase-map output>` fails it).
+Move the effect, or drop it.
 
 | Moment | File in `assets/sfx/` |
 | --- | --- |
@@ -175,7 +178,7 @@ Fewer cues, better timed.
 | Soft accent, label pop | `interface/bong_001.ogg`, `interface/drop_001.ogg`, `interface/drop_002.ogg` |
 | Simulated tap | `interface/click_002.ogg`, `interface/click_003.ogg`, `ui/click2.ogg` |
 | Hover, very soft | `ui/rollover2.ogg` |
-| Card or item sliding in | `casino/card-slide-1.ogg` |
+| Card or item sliding in (silent ads, or clear of speech) | `casino/card-slide-1.ogg` |
 | Counter or stack | `casino/chips-stack-1.ogg` |
 | Typed text | `keyboard/keypress-001..006.wav`, a different file per keystroke |
 
