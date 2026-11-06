@@ -235,6 +235,10 @@
   //   + then presenting the same frame once more:   0 of 270 on v19, 0 of 240 on the fixture
   // So: hidden clips are not seeked (their frame cannot be seen; their reported currentTime is
   // stale), and a clip that turns visible gets its layer first, its frame, then that frame again.
+  //
+  // A clip that stays visible can lag the same way: on Linux CI, stepping a 30 fps WebM frame by
+  // frame captured the previous source frame in 2 of 4 runs although requestVideoFrameCallback
+  // had reported the new one. So every visible clip presents its frame a second time.
   async function seek(t) {
     apply(t);
     const clips = [...document.querySelectorAll("video[data-clip]")];
@@ -245,7 +249,6 @@
     await Promise.all(clips.map(async (v, i) => {
       if (!on[i]) return;
       await seekClip(v, t);
-      if (!turnedOn[i]) return;
       // a quarter frame later is the same frame (known rate), or 1 ms later (unknown rate)
       const fps = (CFG.clipFps || {})[v.getAttribute("src")];
       const again = Math.min(clipLocal(v, t) + (fps > 0 ? 0.25 / fps : 0.001), Math.max(0, (v.duration || 0) - 0.001));
