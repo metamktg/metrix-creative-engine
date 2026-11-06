@@ -356,7 +356,9 @@ describe.runIf(browser && ffmpeg)("render.mjs in a real browser", { concurrent: 
   }, BROWSER_TIMEOUT);
 
   it("a clip hidden by a wrapper and shown again shows the frame its seek asked for, every time", async () => {
-    // The stale picture is intermittent (about 1 in 8 here when hidden clips were seeked), so 30 alternations.
+    // The stale picture is intermittent (about 1 in 8 here with every clip seeked and no turn-on
+    // handling), so 30 alternations. This guards the turn-on handling as a whole: on this fixture
+    // the re-present alone also covers a hidden clip being seeked again.
     const c = makeCase("turn-on", [
       ['<video class="clip" data-clip src="clip.webm" data-start="0.5" data-offset="0.3" muted preload="auto"></video>',
         '<div id="wrap"><video class="clip" data-clip src="clip.webm" data-start="1" data-offset="0" muted preload="auto"></video></div>'],
