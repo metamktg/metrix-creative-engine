@@ -63,7 +63,7 @@ function die(msg, code = 1) {
 // passing the five gates, and its CLI has not been run here. Remotion: its licence flag is off.
 function backendRefusal(name) {
   if (name === "mce-cdp") return null;
-  if (name === "hyperframes") return "backend hyperframes is not qualified: the five gates have not been observed passing on it";
+  if (name === "hyperframes") return "render.mjs does not drive hyperframes: render a HyperFrames project with its own CLI (SKILL.md, HyperFrames layer) and gate the export with qa-video.mjs";
   if (name === "remotion") return "backend remotion is refused: no licence record (the licence flag is off)";
   return `unknown --backend ${name} (known: mce-cdp, hyperframes, remotion)`;
 }

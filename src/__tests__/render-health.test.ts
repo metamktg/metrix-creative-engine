@@ -229,10 +229,10 @@ function run(args: string[], timeoutMs = 90000): Promise<Run> {
 }
 
 describe("backends and arguments (no browser needed)", () => {
-  it("refuses hyperframes and remotion with their reasons, exit 2", async () => {
+  it("points hyperframes to its own CLI route and refuses remotion, exit 2", async () => {
     const hf = await run(["--backend", "hyperframes"]);
     expect(hf.status).toBe(2);
-    expect(hf.stderr).toMatch(/backend hyperframes is not qualified: the five gates have not been observed passing on it/);
+    expect(hf.stderr).toMatch(/render\.mjs does not drive hyperframes: render a HyperFrames project with its own CLI/);
     const rm = await run(["--backend", "remotion"]);
     expect(rm.status).toBe(2);
     expect(rm.stderr).toMatch(/backend remotion is refused: no licence record/);
