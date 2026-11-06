@@ -79,7 +79,7 @@
    [
     2.88,
     3.2,
-    "slow eye-close on 'exam'"
+    "slow eye-close on a stressed word"
    ],
    [
     3.2,
@@ -91,7 +91,7 @@
    [
     2.75,
     3.01,
-    "eyes closed 7 frames on 'something specific'"
+    "eyes closed 7 frames on the closing phrase"
    ],
    [
     3.9,
@@ -101,7 +101,7 @@
    [
     4.69,
     4.92,
-    "eyes close on 'LicensePass'"
+    "eyes close on the product name"
    ]
   ]
  },
@@ -110,7 +110,7 @@
    [
     2.8,
     3,
-    "requested wink on 'specific': both eyes closed 2.84 to 2.92 on the sheet"
+    "requested one-eye gesture on the last word: both eyes closed 2.84 to 2.92 on the sheet"
    ]
   ],
   "S3": [
@@ -148,7 +148,7 @@
   "frame_precision_vs_record_plus_visual": "72/77"
  },
  "edits_checked": {
-  "v17 S1 pC 0.175-3.222 cut 1.6595 (owner/v18 fixed the punch-in on closed lids and cut to the app before 'exam')": {
+  "v17 S1 pC 0.175-3.222 cut 1.6595 (owner/v18 fixed the punch-in on closed lids and cut to the app before the stressed word)": {
    "verdict": "FAIL",
    "findings": [
     "WARN mid_closure 0.56-0.72",
