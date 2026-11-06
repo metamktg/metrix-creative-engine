@@ -12,13 +12,14 @@
  * source's own rate. frames[] is read back from ffmpeg showinfo in the same pass that draws
  * the sheet, and must equal the frames planned from ffprobe, or the call throws.
  *
- * This is the human review record. It does not detect eye state.
+ * This is the human review record. It does not detect eye state; eye-state.mjs does.
  *
  * Scores hook (for the later automated pass, MediaPipe Face Landmarker blendshapes such as
  * eyeBlinkLeft/eyeBlinkRight in VIDEO mode): pass `scores` as an array of objects with a
  * `t_src` field, or a path to a JSON file holding that array (or {frames:[...]}). Each sheet
  * frame gets `score` = the fields of the score whose t_src is within half a frame, or null.
- * Nothing here judges the scores; the gate that reads them lands with that wave.
+ * An mce.eyestate/1 record (media/eye_state.py) is accepted directly. Nothing here judges the
+ * scores: the gate is media/eye-state.mjs eyeGate.
  *
  * ffmpeg's filter parser splits on ':', so a Windows drive path cannot go in drawtext's
  * fontfile. The filter runs with cwd at the font's folder and the font given as a bare name;
@@ -61,10 +62,17 @@ export function parseShowinfo(stderr) {
   return out;
 }
 
-/** Load the optional scores input: an array, a {frames:[...]} object, or a path to either as JSON. */
+/**
+ * Load the optional scores input: an array, a {frames:[...]} object, or a path to either as JSON.
+ * An mce.eyestate/1 record from eye_state.py (frames keyed by t) is read as-is: its t becomes t_src
+ * and its n, eyeBlinkLeft, eyeBlinkRight and face_found become the frame's score fields.
+ */
 export function loadScores(scores) {
   if (scores == null) return null;
   const v = typeof scores === "string" ? JSON.parse(fs.readFileSync(scores, "utf8")) : scores;
+  if (v?.schema === "mce.eyestate/1" && Array.isArray(v.frames)) {
+    return v.frames.map(({ t, ...rest }) => ({ t_src: t, ...rest }));
+  }
   const arr = Array.isArray(v) ? v : Array.isArray(v?.frames) ? v.frames : null;
   if (!arr || arr.some((s) => !Number.isFinite(s?.t_src))) throw new MediaError("BADARG", "scores must be an array of objects with a numeric t_src (or {frames:[...]})");
   return arr;
