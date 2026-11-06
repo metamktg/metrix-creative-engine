@@ -75,6 +75,8 @@ describe("timeline rules: grid", () => {
     // After 0.50: eighth 0.546875, beat 0.625 costs 0.078125: over 0.04 the eighth wins, at 0.08 the beat.
     expect(rules.gridSnap(0.5, { bpm: 96, div: 8, preferFullBeatCost: 0.04 })).toBe(0.546875);
     expect(rules.gridSnap(0.5, { bpm: 96, div: 8, preferFullBeatCost: 0.08 })).toBe(0.625);
+    // The bound is inclusive, as in the v19 builder (f - h <= prefer_full): a cost of exactly 0.078125 takes the beat.
+    expect(rules.gridSnap(0.5, { bpm: 96, div: 8, preferFullBeatCost: 0.078125 })).toBe(0.625);
     // Default cost 0 is a plain eighth-beat ceiling.
     expect(rules.gridSnap(0.5, { bpm: 96, div: 8 })).toBe(0.546875);
   });
@@ -112,7 +114,7 @@ describe("timeline rules: onset guard", () => {
 // Parity: the storyboard check and the renderer read one settled() and one norm(). Changing the
 // default in rules.mjs moves the check-storyboard verdict, which proves the CLI uses the import.
 describe("timeline rules: check-storyboard reads the shared definitions", () => {
-  it("fails a 3-word label held 1.0 s with no dur (needs 0.8 s settled after the 0.35 s default enter)", () => {
+  it("fails a 3-word label on screen 1.1 s with no dur (needs 0.8 s settled after the 0.35 s default enter)", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "timeline-rules-"));
     try {
       const sb = {
