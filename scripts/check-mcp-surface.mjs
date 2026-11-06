@@ -179,6 +179,12 @@ try {
   check("UGC offline preflight returns typed blocked evidence for missing packet", ugcMissing.result?.structuredContent?.ok === false && ugcMissing.result?.structuredContent?.errors?.length > 0);
   const ugcBlocked = await rpc("tools/call", { name: "kie_create_ugc_lipsync", arguments: { packetPath: path.join(downloadDir, "missing-packet.json") } });
   check("UGC guarded submit refuses missing dependencies", ugcBlocked.result?.isError === true);
+  // Content, not presence: a stale description would send agents back to the v1 contract.
+  const describedAs = (name) => tools.find((tool) => tool.name === name)?.description ?? "";
+  const ugcValidateMissing = ["version-2", "allowlisted", "presenter acceptance", "prepared_by", "motion"].filter((word) => !describedAs("kie_validate_ugc_preproduction").includes(word));
+  check("UGC preflight description states packet v2, the v1 allowlist and presenter acceptance", ugcValidateMissing.length === 0, ugcValidateMissing.length ? `missing: ${ugcValidateMissing.join(", ")}` : "");
+  const ugcSubmitMissing = ["version-2", "motion", "presenter acceptance"].filter((word) => !describedAs("kie_create_ugc_lipsync").includes(word));
+  check("UGC guarded submit description states the v2 motion route", ugcSubmitMissing.length === 0, ugcSubmitMissing.length ? `missing: ${ugcSubmitMissing.join(", ")}` : "");
 
   console.log("\n== Resources ==");
   const resources = (await rpc("resources/list", {})).result?.resources ?? [];
@@ -193,6 +199,8 @@ try {
   const preproduction = await rpc("resources/read", { uri: "kie://ugc-preproduction" });
   const preproductionText = preproduction.result?.contents?.[0]?.text ?? "";
   check("preproduction contract and incomplete template are readable without repository access", preproductionText.includes("kie_create_ugc_lipsync") && preproductionText.includes('"accepted_bindings"') && preproductionText.includes("INCOMPLETE TEMPLATE"));
+  const templateMissing = ['"schema_version": 2', '"prepared_by"', '"acceptance"', '"presenter_acceptance_review"', '"eyes_open_on_lens"', '"look_sha256"', '"still_sha256s"', "V1_ALLOWED_RUN_IDS"].filter((token) => !preproductionText.includes(token));
+  check("preproduction template is packet v2 with presenter acceptance", templateMissing.length === 0 && !preproductionText.includes('"schema_version": 1'), templateMissing.length ? `missing: ${templateMissing.join(", ")}` : "");
   const catalogText = catalog.result?.contents?.[0]?.text ?? "";
   check(
     "the catalog reads back inlined, not empty",

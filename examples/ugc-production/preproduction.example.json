@@ -1,7 +1,8 @@
 {
   "_status": "INCOMPLETE TEMPLATE. Not an audition, quote, approval or ready packet. Replace nulls with actual private evidence; never submit this example.",
-  "schema_version": 1,
+  "schema_version": 2,
   "run_id": "REPLACE_WITH_PRIVATE_RUN_ID",
+  "prepared_by": null,
   "brief_id": "REPLACE_WITH_BRIEF_ID",
   "brief": { "path": "brief.json", "sha256": null },
   "script": { "path": "script.json", "sha256": null },
@@ -12,13 +13,20 @@
     "voice_settings": { "path": "voice-settings.json", "sha256": null },
     "scene": { "path": "scene.json", "sha256": null },
     "fit_rationale": null,
-    "review": { "status": "pending", "reviewer_id": null, "method": "visual_identity_review", "reviewed_at": null, "identity_sha256": null, "voice_settings_sha256": null, "scene_sha256": null, "evidence": { "path": null, "sha256": null } }
+    "review": { "status": "pending", "reviewer_id": null, "method": "visual_identity_review", "reviewed_at": null, "identity_sha256": null, "voice_settings_sha256": null, "scene_sha256": null, "evidence": { "path": null, "sha256": null } },
+    "acceptance": {
+      "stills": [{ "path": null, "sha256": null }],
+      "look": { "path": "look.json", "sha256": null },
+      "eye_sheet": { "path": null, "sha256": null },
+      "criteria": { "mood": null, "look": null, "eyes_open_on_lens": null, "expression": null },
+      "review": { "status": "pending", "reviewer_id": null, "method": "presenter_acceptance_review", "reviewed_at": null, "identity_sha256": null, "scene_sha256": null, "look_sha256": null, "eye_sheet_sha256": null, "still_sha256s": [], "evidence": { "path": null, "sha256": null } }
+    }
   },
   "voice": {
     "master": { "path": null, "sha256": null },
     "duration_seconds": null,
     "review": { "status": "pending", "reviewer_id": null, "method": "human_full_listen", "reviewed_at": null, "evidence": { "path": null, "sha256": null } },
-    "accepted_bindings": { "script_sha256": null, "identity_sha256": null, "voice_settings_sha256": null, "scene_sha256": null, "audio_sha256": null },
+    "accepted_bindings": { "script_sha256": null, "identity_sha256": null, "voice_settings_sha256": null, "scene_sha256": null, "audio_sha256": null, "look_sha256": null },
     "phrases": [{ "line_id": "L1", "start": null, "end": null }]
   },
   "proofs": [{ "line_id": "L1", "requirement": "illustration", "kind": "screenshot", "source": { "path": null, "sha256": null }, "demonstrates": null, "limits": null, "rights": null }],
