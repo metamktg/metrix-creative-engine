@@ -3,7 +3,9 @@
  * Render an HTML composition to an ad video, frame by frame.
  *
  *   node render.mjs <composition-dir> --storyboard <storyboard.json> [--mode render|stills|check]
- *        [--out ad.mp4] [--draft] [--chrome <path>]
+ *        [--out ad.mp4] [--draft] [--chrome <path>] [--backend mce-cdp] [--timeouts <json|file>]
+ *        [--times 1.2,0.4,...]                                            (stills only)
+ *   node render.mjs --mode browser        print the browser this machine would use, or fail
  *
  * Needs only Node 22+, ffmpeg on PATH, and an installed Chrome or Edge. It
  * drives the browser over the DevTools protocol with Node's built-in
@@ -11,18 +13,32 @@
  *
  * Modes
  *   render  frames -> H.264 MP4 with the storyboard's audio mix, poster baked as frame 0,
- *           poster also written as <out>.jpg
+ *           poster also written as <out>.jpg. Refuses to start on a health or parity FAIL;
+ *           exits 1 after encoding if any clip seek fell back.
  *   stills  one PNG per scene at its settled midpoint and one per transition midpoint,
- *           plus contact.png (all stills tiled) to look at before a full render
+ *           plus contact.png (all stills tiled) to look at before a full render.
+ *           --times takes exact ad-clock times instead, kept in the order given.
  *   check   layout check of every data-text element at its settled midpoint:
- *           safe zone, overflow, minimum type size. Exit 1 on any FAIL.
+ *           safe zone, overflow, minimum type size; page health; authored-DOM parity with the
+ *           storyboard; craft checks (line_unread, dead_stretch, type floor). Exit 1 on any FAIL.
+ *
+ * Backends: mce-cdp (this file, the default) renders. hyperframes and remotion are refused
+ * until they qualify; see backendRefusal() below.
+ *
+ * Watchdog: every browser call has a budget (render-checks.mjs TIMEOUT_DEFAULTS, override any
+ * with --timeouts '{"evaluate":5000}'). On a timeout the browser's whole process tree and the
+ * encoder are killed and the run exits 3.
+ *
+ * Exit codes: 0 pass, 1 FAIL or error, 2 usage or refused backend, 3 watchdog timeout.
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { audioGraph } from "./audio-graph.mjs";
-import { norm, settled } from "./timeline/rules.mjs";
+import { norm, settled, SETTLE_DEFAULT } from "./timeline/rules.mjs";
+import { craft, healthVerdict, parity, parseTimeouts, sampleTimes, typeFloorPx } from "./render-checks.mjs";
+import { probe } from "./media/probe.mjs";
 
 const args = process.argv.slice(2);
 const flag = (k, d) => {
@@ -30,9 +46,62 @@ const flag = (k, d) => {
   return i === -1 ? d : args[i + 1];
 };
 const has = (k) => args.includes(k);
+const mode = flag("--mode", "render");
+
+function die(msg, code = 1) {
+  console.error(`render: ${msg}`);
+  process.exit(code);
+}
+
+// ---------------------------------------------------------------- backend ---
+// One real renderer. The others answer with the reason they are not used, never a render.
+// HyperFrames: the owner consented to installing it (2026-11-06), but it has not been observed
+// passing the five gates, and its CLI has not been run here. Remotion: its licence flag is off.
+function backendRefusal(name) {
+  if (name === "mce-cdp") return null;
+  if (name === "hyperframes") return "backend hyperframes is not qualified: the five gates have not been observed passing on it";
+  if (name === "remotion") return "backend remotion is refused: no licence record (the licence flag is off)";
+  return `unknown --backend ${name} (known: mce-cdp, hyperframes, remotion)`;
+}
+const backend = flag("--backend", "mce-cdp");
+{
+  const refused = backendRefusal(backend);
+  if (refused) die(refused, 2);
+}
+
+let T;
+try {
+  const raw = flag("--timeouts", null);
+  T = parseTimeouts(raw && fs.existsSync(raw) ? fs.readFileSync(raw, "utf8") : raw);
+} catch (e) {
+  die(e.message, 2);
+}
+
+// ---------------------------------------------------------------- browser ---
+const BROWSERS = [
+  "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+  "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+  "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/usr/bin/google-chrome",
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
+];
+function findChrome() {
+  const explicit = flag("--chrome", process.env.CHROME_PATH);
+  const hit = [explicit, ...BROWSERS].filter(Boolean).find((c) => fs.existsSync(c));
+  if (!hit) die("no Chrome or Edge found. Install Chrome or Edge, or pass --chrome <path> or set CHROME_PATH.");
+  return hit;
+}
+
+if (mode === "browser") {
+  console.log(JSON.stringify({ browser: findChrome() }));
+  process.exit(0);
+}
+
 const compDir = path.resolve(args[0] || ".");
 const sbPath = path.resolve(flag("--storyboard", path.join(compDir, "..", "storyboard.json")));
-const mode = flag("--mode", "render");
 const draft = has("--draft");
 const sb = JSON.parse(fs.readFileSync(sbPath, "utf8"));
 const sbDir = path.dirname(sbPath);
@@ -40,35 +109,51 @@ const { width: W, height: H } = sb.format;
 const fps = draft ? Math.min(15, sb.format.fps || 30) : sb.format.fps || 30;
 const duration = sb.duration;
 const outPath = path.resolve(flag("--out", path.join(sbDir, `${sb.name || "ad"}.mp4`)));
+const RUNTIME = fileURLToPath(new URL("./runtime.js", import.meta.url));
 
-function die(msg) {
-  console.error(`render: ${msg}`);
-  process.exit(1);
+// ---------------------------------------------------------------- watchdog ---
+class Timeout extends Error {}
+const live = { chrome: null, encoder: null, profile: null };
+
+function within(promise, ms, what) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, rej) => { timer = setTimeout(() => rej(new Timeout(`${what} took over ${ms} ms`)), ms); }),
+  ]).finally(() => clearTimeout(timer));
 }
 
-// ---------------------------------------------------------------- browser ---
-function findChrome() {
-  const explicit = flag("--chrome", process.env.CHROME_PATH);
-  const candidates = [
-    explicit,
-    "C:/Program Files/Google/Chrome/Application/chrome.exe",
-    "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
-    "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/usr/bin/google-chrome",
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-  ].filter(Boolean);
-  const hit = candidates.find((c) => fs.existsSync(c));
-  if (!hit) die("no Chrome or Edge found. Pass --chrome <path> or set CHROME_PATH.");
-  return hit;
+// The browser's renderer and GPU children outlive a plain kill (Windows especially), so end
+// the tree: taskkill /T on win32, the process group on POSIX (Chrome is spawned detached).
+function killTree(proc) {
+  if (!proc || proc.exitCode !== null || proc.signalCode !== null) return;
+  if (process.platform === "win32") spawnSync("taskkill", ["/PID", String(proc.pid), "/T", "/F"], { stdio: "ignore" });
+  else {
+    try { process.kill(-proc.pid, "SIGKILL"); } catch { try { proc.kill("SIGKILL"); } catch {} }
+  }
+}
+
+function abort(e) {
+  killTree(live.encoder);
+  killTree(live.chrome);
+  if (live.profile) {
+    try { fs.rmSync(live.profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch {}
+  }
+  console.error(`render: TIMEOUT ${e.message}; browser process tree ${live.chrome ? live.chrome.pid : "-"} killed`);
+  process.exit(3);
+}
+
+// Whole-run budget: load plus perFrame for every seek the mode will make.
+function armBudget(seeks, what) {
+  const ms = T.load + seeks * T.perFrame;
+  setTimeout(() => abort(new Timeout(`${what} total budget ${ms} ms (${seeks} seeks)`)), ms);
 }
 
 async function launch() {
   // Profile and caches live beside the output, not on the system drive.
   const profile = path.join(sbDir, "work", `.chrome-${process.pid}`);
   fs.mkdirSync(profile, { recursive: true });
+  live.profile = profile;
   const proc = spawn(
     findChrome(),
     [
@@ -88,8 +173,11 @@ async function launch() {
       "--no-default-browser-check",
       "about:blank",
     ],
-    { stdio: "ignore" }
+    // POSIX: its own process group, so the watchdog can kill every child with it.
+    { stdio: "ignore", detached: process.platform !== "win32" }
   );
+  live.chrome = proc;
+  console.error(`render: browser pid ${proc.pid}`);
   const portFile = path.join(profile, "DevToolsActivePort");
   // Chrome writes this file while we poll for it; on Windows a read can land
   // mid-write (EBUSY) or see it empty. Retry until it holds a port number.
@@ -103,7 +191,10 @@ async function launch() {
     }
     if (!port) await new Promise((r) => setTimeout(r, 50));
   }
-  if (!port) die("Chrome did not start (no readable DevToolsActivePort after 15s).");
+  if (!port) {
+    killTree(proc);
+    die("Chrome did not start (no readable DevToolsActivePort after 15s).");
+  }
   const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
   const page = targets.find((t) => t.type === "page");
   const ws = new WebSocket(page.webSocketDebuggerUrl);
@@ -136,7 +227,7 @@ async function launch() {
     try { await Promise.race([send("Browser.close"), new Promise((r) => setTimeout(r, 2000))]); } catch {}
     try { ws.close(); } catch {}
     await Promise.race([exited, new Promise((r) => setTimeout(r, 3000))]);
-    if (proc.exitCode === null) proc.kill();
+    if (proc.exitCode === null) killTree(proc);
     await Promise.race([exited, new Promise((r) => setTimeout(r, 5000))]);
     try {
       fs.rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
@@ -153,38 +244,110 @@ async function launch() {
 }
 
 async function evaluate(cdp, expr) {
-  const r = await cdp.send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true });
+  const r = await within(cdp.send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true }), T.evaluate, `evaluate ${expr.slice(0, 48)}`);
   if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
   return r.result.value;
 }
 
+// Which runtime.js the page actually ran. A <base href> (v19's CLEAN composition points at
+// ../composition/) loads a copy this script did not just write, which may be stale.
+async function runtimeCheck(cdp) {
+  const urls = await evaluate(cdp, "[...document.scripts].map((s) => s.src).filter((s) => /(^|\\/)runtime\\.js(\\?|#|$)/.test(s))");
+  if (!urls.length) return { current: false, url: null, reason: "no runtime.js script tag in the page" };
+  const want = fs.readFileSync(RUNTIME);
+  for (const u of urls) {
+    if (!u.startsWith("file:")) return { current: false, url: u, reason: `runtime.js loads from ${u}, which cannot be compared with the skill's copy` };
+    const file = fileURLToPath(u.replace(/[?#].*$/, ""));
+    let got = null;
+    try { got = fs.readFileSync(file); } catch {}
+    if (!got || !got.equals(want)) {
+      return { current: false, url: u, reason: `the page runs ${file}, which differs from the skill's runtime.js (stale copy; render.mjs refreshed ${path.join(compDir, "runtime.js")})` };
+    }
+  }
+  return { current: true, url: urls[0] };
+}
+
+// Each clip's constant frame rate, probed and handed to the page so a seek lands mid-frame
+// (runtime.js clipLocal). A clip whose rate is unknown or variable keeps the boundary nudge; the
+// report says which mapping each clip got.
+async function clipRates(cdp) {
+  const list = await evaluate(cdp, "[...document.querySelectorAll('video[data-clip]')].map((v) => ({ src: v.getAttribute('src'), url: v.currentSrc || v.src }))");
+  const map = {};
+  const out = list.map(({ src, url }) => {
+    if (!url || !url.startsWith("file:")) return { src, fps: null, mapping: "nudge", reason: "not a local file" };
+    try {
+      const v = probe(fileURLToPath(url.replace(/[?#].*$/, ""))).video;
+      if (!v || !(v.fps > 0)) return { src, fps: null, mapping: "nudge", reason: "no video frame rate" };
+      if (v.avg_fps && Math.abs(v.avg_fps - v.fps) > 1e-3) return { src, fps: v.fps, avg_fps: v.avg_fps, mapping: "nudge", reason: "variable frame rate" };
+      map[src] = v.fps;
+      return { src, fps: v.fps, mapping: "frame-centre" };
+    } catch (e) {
+      return { src, fps: null, mapping: "nudge", reason: e.message };
+    }
+  });
+  await evaluate(cdp, `window.__clipFps(${JSON.stringify(map)})`);
+  return out;
+}
+
 async function openComposition() {
+  const started = Date.now();
   // The composition always runs the skill's current runtime. A stale copy
   // left in the folder from an earlier run would silently change motion.
-  fs.copyFileSync(new URL("./runtime.js", import.meta.url), path.join(compDir, "runtime.js"));
-  const cdp = await launch();
-  await cdp.send("Page.enable");
-  await cdp.send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: 1, mobile: false });
-  const loaded = cdp.once("Page.loadEventFired");
-  await cdp.send("Page.navigate", { url: pathToFileURL(path.join(compDir, "index.html")).href });
-  await loaded;
+  fs.copyFileSync(RUNTIME, path.join(compDir, "runtime.js"));
+  const cdp = await within(launch(), T.load, "browser launch");
+  const opened = (async () => {
+    await cdp.send("Page.enable");
+    await cdp.send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: 1, mobile: false });
+    // The timing rules reach the page before any of its scripts run.
+    await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `window.__MCE = ${JSON.stringify({ settleDefault: SETTLE_DEFAULT, seekFallbackMs: T.seekFallback, readyVideoMs: T.readyVideo })};`,
+    });
+    const loaded = cdp.once("Page.loadEventFired");
+    await cdp.send("Page.navigate", { url: pathToFileURL(path.join(compDir, "index.html")).href });
+    await loaded;
+  })();
+  await within(opened, T.load, "page load");
   const hasRuntime = await evaluate(cdp, "typeof window.__seek === 'function'");
   if (!hasRuntime) die("composition does not load runtime.js (window.__seek missing).");
-  const health = await evaluate(cdp, "window.__ready()");
-  if (health.broken_images.length) console.error(`render: WARN broken images: ${health.broken_images.join(", ")}`);
-  if (health.unloaded_fonts.length) console.error(`render: WARN fonts not loaded: ${health.unloaded_fonts.join(", ")}`);
-  return { cdp, health };
+  const runtime = await runtimeCheck(cdp);
+  // A runtime without these is an older copy (the health check names it). Parity cannot run on
+  // it, and says so, rather than reporting every line as missing.
+  const current = await evaluate(cdp, "typeof window.__config === 'function' && typeof window.__authored === 'function'");
+  // Parity reads the authored DOM before the first seek (and before any bind).
+  const authored = current ? await evaluate(cdp, "window.__authored()") : null;
+  const ready = await within(evaluate(cdp, "window.__ready()"), T.load, "page readiness");
+  const clips = current ? await clipRates(cdp) : [];
+  const config = current ? await evaluate(cdp, "window.__config()") : { settleDefault: null };
+  const health = { videos: [], ...ready, seek_fallbacks: 0, frame_mismatches: 0, runtime, config, clips };
+  Object.assign(health, healthVerdict(health));
+  const par = authored
+    ? parity(authored, sb, { settleDefault: SETTLE_DEFAULT })
+    : { verdict: "FAIL", checked: { texts: 0, scenes: 0 }, findings: [{ id: "-", field: "runtime", verdict: "FAIL", message: "parity not run: the page's runtime.js has no __authored (an older copy)" }] };
+  return { cdp, health, parity: par, load_ms: Date.now() - started };
+}
+
+// Seek fallbacks accumulate during the run; fold them into health before reporting.
+async function finalHealth(cdp, health) {
+  const h = await evaluate(cdp, "typeof window.__health === 'function' ? window.__health() : { seek_fallbacks: 0, seek_fallback_at: [] }");
+  const out = { ...health, ...h };
+  return { ...out, ...healthVerdict(out) };
 }
 
 async function frameAt(cdp, t, format = "jpeg") {
-  await evaluate(cdp, `window.__seek(${t.toFixed(5)})`);
-  const shot = await cdp.send("Page.captureScreenshot", {
+  // Full precision: a 5 dp time (0.03333 for 1/30) lands a hair before a 30 fps source frame.
+  const clips = await evaluate(cdp, `window.__seek(${JSON.stringify(t)})`);
+  const shot = await within(cdp.send("Page.captureScreenshot", {
     format,
     quality: format === "jpeg" ? 95 : undefined,
     clip: { x: 0, y: 0, width: W, height: H, scale: 1 },
-  });
-  return Buffer.from(shot.data, "base64");
+  }), T.capture, `capture at ${t.toFixed(3)}s`);
+  return { buf: Buffer.from(shot.data, "base64"), clips };
 }
+
+const reportFails = (health, par) => {
+  for (const r of health.reasons) console.error(`render: FAIL health: ${r}`);
+  for (const f of par.findings.filter((x) => x.verdict === "FAIL")) console.error(`render: FAIL parity ${f.id}.${f.field}: ${f.message}`);
+};
 
 // ------------------------------------------------------------ timing data ---
 // settled(): the window a text item is fully entered and not yet leaving (timeline/rules.mjs).
@@ -228,8 +391,14 @@ function normalizeLoudness(file, target) {
 
 // ----------------------------------------------------------------- modes ---
 async function render() {
-  const { cdp } = await openComposition();
   const total = Math.round(duration * fps);
+  armBudget(total, "render");
+  const { cdp, health, parity: par } = await openComposition();
+  if (health.verdict === "FAIL" || par.verdict === "FAIL") {
+    reportFails(health, par);
+    await cdp.close();
+    die("refusing to render: fix the health and parity FAILs above (render.mjs --mode check reports them in full)");
+  }
   const posterAt = sb.poster_at ?? null;
   const { inputs, filter } = audioGraph(sb, sbDir, duration);
   const ff = spawn(
@@ -252,18 +421,20 @@ async function render() {
     ],
     { stdio: ["pipe", "inherit", "inherit"] }
   );
+  live.encoder = ff;
   const write = (buf) => new Promise((r) => (ff.stdin.write(buf) ? r() : ff.stdin.once("drain", r)));
   const started = Date.now();
   for (let i = 0; i < total; i++) {
     // Frame 0 is the poster: it is the thumbnail every feed and player shows.
     const t = i === 0 && posterAt !== null ? posterAt : i / fps;
-    const buf = await frameAt(cdp, t);
+    const { buf } = await frameAt(cdp, t);
     if (i === 0) fs.writeFileSync(outPath.replace(/\.mp4$/, ".jpg"), buf);
     await write(buf);
     if (i % fps === 0) process.stderr.write(`\rrender: ${i}/${total} frames`);
   }
   ff.stdin.end();
   const code = await new Promise((r) => ff.on("close", r));
+  const after = await finalHealth(cdp, health);
   await cdp.close();
   if (code !== 0) die(`ffmpeg exited ${code}`);
   // A mix with no music bed and no voice is a few short effects. Raising that to
@@ -280,30 +451,54 @@ async function render() {
   spawnSync("ffmpeg", ["-y", "-v", "error", "-i", outPath, "-frames:v", "1", "-q:v", "1", outPath.replace(/\.mp4$/, ".jpg")]);
   const probe = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration:stream=codec_type,width,height", "-of", "json", outPath], { encoding: "utf8" });
   console.error(`\rrender: ${total}/${total} frames in ${((Date.now() - started) / 1000).toFixed(1)}s`);
-  console.log(JSON.stringify({ out: outPath, poster: outPath.replace(/\.mp4$/, ".jpg"), fps, frames: total, loudness, probe: JSON.parse(probe.stdout) }, null, 2));
+  console.log(JSON.stringify({ out: outPath, poster: outPath.replace(/\.mp4$/, ".jpg"), fps, frames: total, loudness, health: after, parity: par, probe: JSON.parse(probe.stdout) }, null, 2));
+  if (after.verdict === "FAIL") {
+    reportFails(after, { findings: [] });
+    process.exit(1);
+  }
+  process.exit(0);
+}
+
+function parseTimes(v) {
+  const list = String(v).split(",").map((x) => x.trim()).filter(Boolean).map(Number);
+  if (!list.length || list.some((x) => !Number.isFinite(x) || x < 0)) die(`--times needs comma-separated non-negative seconds, got "${v}"`, 2);
+  return list;
 }
 
 async function stills() {
-  const { cdp } = await openComposition();
   const dir = path.join(sbDir, "work", "stills");
+  const shots = [];
+  const times = flag("--times", null);
+  if (times !== null) {
+    parseTimes(times).forEach((t, i) => shots.push({ name: `${String(i + 1).padStart(2, "0")}-t${t.toFixed(3).replace(".", "_")}`, t }));
+  } else {
+    sb.scenes.forEach((s, i) => {
+      const items = (s.text || []).map(settled).filter((w) => w.to > w.from);
+      // Latest "everything is in" moment that is still before the first exit.
+      const allIn = items.length ? Math.max(...items.map((w) => w.from)) : (s.start + s.end) / 2;
+      const firstOut = items.length ? Math.min(...items.map((w) => w.to)) : s.end;
+      const t = allIn < firstOut ? (allIn + firstOut) / 2 : (s.start + s.end) / 2;
+      shots.push({ name: `${String(shots.length + 1).padStart(2, "0")}-scene-${s.id}`, t });
+      if (i < sb.scenes.length - 1) {
+        shots.push({ name: `${String(shots.length + 1).padStart(2, "0")}-cut-${s.id}-${sb.scenes[i + 1].id}`, t: Math.max(0, s.end - 0.06) });
+        shots.push({ name: `${String(shots.length + 1).padStart(2, "0")}-cut-${s.id}-${sb.scenes[i + 1].id}b`, t: s.end + 0.06 });
+      }
+    });
+    if (sb.poster_at != null) shots.unshift({ name: "00-poster", t: sb.poster_at });
+  }
+  armBudget(shots.length, "stills");
+  const { cdp, health, parity: par, load_ms } = await openComposition();
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true });
-  const shots = [];
-  sb.scenes.forEach((s, i) => {
-    const items = (s.text || []).map(settled).filter((w) => w.to > w.from);
-    // Latest "everything is in" moment that is still before the first exit.
-    const allIn = items.length ? Math.max(...items.map((w) => w.from)) : (s.start + s.end) / 2;
-    const firstOut = items.length ? Math.min(...items.map((w) => w.to)) : s.end;
-    const t = allIn < firstOut ? (allIn + firstOut) / 2 : (s.start + s.end) / 2;
-    shots.push({ name: `${String(shots.length + 1).padStart(2, "0")}-scene-${s.id}`, t });
-    if (i < sb.scenes.length - 1) {
-      shots.push({ name: `${String(shots.length + 1).padStart(2, "0")}-cut-${s.id}-${sb.scenes[i + 1].id}`, t: Math.max(0, s.end - 0.06) });
-      shots.push({ name: `${String(shots.length + 1).padStart(2, "0")}-cut-${s.id}-${sb.scenes[i + 1].id}b`, t: s.end + 0.06 });
-    }
-  });
-  if (sb.poster_at != null) shots.unshift({ name: "00-poster", t: sb.poster_at });
-  for (const s of shots) fs.writeFileSync(path.join(dir, `${s.name}.png`), await frameAt(cdp, s.t, "png"));
+  const started = Date.now();
+  for (const s of shots) {
+    const { buf, clips } = await frameAt(cdp, s.t, "png");
+    fs.writeFileSync(path.join(dir, `${s.name}.png`), buf);
+    s.clips = clips;
+  }
+  const after = await finalHealth(cdp, health);
   await cdp.close();
+  const shots_ms = Date.now() - started;
   const files = fs.readdirSync(dir).filter((f) => f.endsWith(".png")).sort();
   const cols = Math.min(4, files.length);
   const tw = 360, th = Math.round((360 * H) / W);
@@ -312,17 +507,29 @@ async function stills() {
   spawnSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", list,
     "-vf", `scale=${tw}:${th},tile=${cols}x${Math.ceil(files.length / cols)}:padding=6:color=0x808080`,
     "-frames:v", "1", path.join(dir, "contact.png")]);
-  console.log(JSON.stringify({ dir, stills: shots.map((s) => ({ file: `${s.name}.png`, t: +s.t.toFixed(3) })), contact: path.join(dir, "contact.png") }, null, 2));
+  const verdict = after.verdict === "FAIL" || par.verdict === "FAIL" ? "FAIL" : "PASS";
+  console.log(JSON.stringify({
+    dir, stills: shots.map((s) => ({ file: `${s.name}.png`, t: +s.t.toFixed(3), clips: s.clips })), contact: path.join(dir, "contact.png"),
+    health: after, parity: par, timing: { load_ms, shots_ms }, verdict,
+  }, null, 2));
+  if (verdict === "FAIL") reportFails(after, par);
+  process.exit(verdict === "FAIL" ? 1 : 0);
 }
 
 async function check() {
-  const { cdp, health } = await openComposition();
+  const items = textItems();
+  const step = 1 / (sb.format.fps || 30);
+  const times = sampleTimes(duration, step);
+  const CHUNK = 30;
+  armBudget(items.length + Math.ceil(times.length / CHUNK), "check");
+  const { cdp, health, parity: par, load_ms } = await openComposition();
   const ratio = `${sb.format.ratio}`;
   // Meta overlays profile, caption and CTA rows on Stories and Reels.
   const zone = ratio === "9:16" ? { top: 0.14, bottom: 0.2, side: 0.06 } : { top: 0.05, bottom: 0.05, side: 0.05 };
   const minPx = Math.round(W * 0.03);
   const results = [];
-  for (const item of textItems()) {
+  const started = Date.now();
+  for (const item of items) {
     const w = settled(item);
     if (!(w.to > w.from)) {
       results.push({ id: item.id, verdict: "FAIL", reason: "never settles (enter outlasts its window)" });
@@ -347,20 +554,37 @@ async function check() {
     if (found.font_px < minPx) reasons.push(`type ${found.font_px}px is under the ${minPx}px feed-legibility floor`);
     results.push({ id: item.id, t: +t.toFixed(3), verdict: reasons.length ? "FAIL" : "PASS", reasons, on_screen: found.text, storyboard: item.copy, box: b, font_px: found.font_px });
   }
+  const layout_ms = Date.now() - started;
+  // Craft: every frame of the ad, clips not seeked, in chunks so no single call nears its budget.
+  const craftStarted = Date.now();
+  const floorPx = typeFloorPx(W, H);
+  const samples = [];
+  if (await evaluate(cdp, "typeof window.__probe === 'function'")) {
+    for (let i = 0; i < times.length; i += CHUNK) samples.push(...(await evaluate(cdp, `window.__probe(${JSON.stringify(times.slice(i, i + CHUNK))}, ${floorPx})`)));
+  }
+  const craftReport = craft(samples, { sb, step, width: W, height: H });
+  const craft_ms = Date.now() - craftStarted;
+  const after = await finalHealth(cdp, health);
   await cdp.close();
   const fails = results.filter((r) => r.verdict === "FAIL").length;
-  console.log(JSON.stringify({ safe_zone: zone, min_font_px: minPx, health, results, verdict: fails ? "FAIL" : "PASS" }, null, 2));
-  process.exit(fails ? 1 : 0);
+  const verdict = fails || after.verdict === "FAIL" || par.verdict === "FAIL" || craftReport.verdict === "FAIL" ? "FAIL" : "PASS";
+  console.log(JSON.stringify({
+    backend, safe_zone: zone, min_font_px: minPx, health: after, parity: par, results, craft: craftReport,
+    timing: { load_ms, layout_ms, craft_ms }, verdict,
+  }, null, 2));
+  process.exit(verdict === "FAIL" ? 1 : 0);
 }
 
 // Debug: seek to --t and evaluate --expr in the page, print the value.
 async function evalMode() {
+  armBudget(1, "eval");
   const { cdp } = await openComposition();
   await evaluate(cdp, `window.__seek(${parseFloat(flag("--t", "0"))})`);
   console.log(JSON.stringify(await evaluate(cdp, flag("--expr", "window.__layout(0)")), null, 2));
   await cdp.close();
+  process.exit(0);
 }
 
 const run = { render, stills, check, eval: evalMode }[mode];
-if (!run) die(`unknown --mode ${mode}`);
-run().catch((e) => die(e.stack || e.message));
+if (!run) die(`unknown --mode ${mode}`, 2);
+run().catch((e) => (e instanceof Timeout ? abort(e) : die(e.stack || e.message)));

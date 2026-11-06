@@ -24,8 +24,18 @@
  *
  * data-text marks copy a viewer must read. The renderer's layout check and the
  * storyboard check both key on its id, so give every readable line one.
+ *
+ *   data-hold           stillness here is deliberate (the craft check's dead_stretch skips it)
+ *   data-layout-ignore  text that is texture, not reading (the type-floor check skips it)
+ *
+ * render.mjs injects window.__MCE before the page runs: settleDefault (timeline/rules.mjs
+ * SETTLE_DEFAULT, so the data-dur default cannot drift from the storyboard check), and the
+ * seek-fallback and video-ready waits. The literals below serve only a page opened without
+ * render.mjs; src/__tests__/render-health.test.ts holds the settle default equal to rules.mjs.
  */
 (function () {
+  const CFG = Object.assign({ settleDefault: 0.35, seekFallbackMs: 3000, readyVideoMs: 15000 }, window.__MCE || {});
+  const stats = { seekFallbacks: [], frameMismatches: [] };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const lerp = (a, b, p) => a + (b - a) * p;
   const ease = {
@@ -82,7 +92,7 @@
     const sc = sceneOf(el);
     const tin = num(el, "data-in", sc ? num(sc, "data-start", 0) : 0);
     const tout = num(el, "data-out", sc ? num(sc, "data-end", Infinity) : Infinity);
-    const d = num(el, "data-dur", 0.35);
+    const d = num(el, "data-dur", CFG.settleDefault);
     const enter = el.getAttribute("data-enter") || "fade";
     const exit = el.getAttribute("data-exit") || "none";
     if (el.__full === undefined) el.__full = el.textContent;
@@ -130,19 +140,79 @@
       f === "1dp" ? v.toFixed(1) : f === "comma" ? Math.round(v).toLocaleString("en-US") : String(Math.round(v));
   }
 
-  function seekClip(v, t) {
+  // The clip's own time at ad time t: data-start places it, data-offset trims its head.
+  // The frame shown must be floor((t - start + offset) * srcFps). Seeking to that exact time is
+  // not enough: on a source frame boundary (25 fps under 30 fps meets every 0.2 s; a 30 fps clip
+  // at offset 0 meets every ad frame) float noise, the 5 dp time render.mjs sends, or a WebM's
+  // whole-millisecond timestamps (30 fps frame 2 sits at 67 ms) show the previous frame. With the
+  // clip's rate known (render.mjs probes it into CFG.clipFps) the seek goes to the middle of the
+  // wanted frame. Without it, FRAME_NUDGE (0.1 ms) still moves an exact boundary onto the later
+  // frame, which covers exact-timebase files such as staged MP4s, but not WebM rounding.
+  const FRAME_NUDGE = 1e-4;
+  function clipLocal(v, t) {
     const s = num(v, "data-start", 0), off = num(v, "data-offset", 0);
-    const local = clamp(t - s + off, 0, Math.max(0, (v.duration || 0) - 0.001));
-    if (Math.abs(v.currentTime - local) < 0.0005) return Promise.resolve();
+    const hi = Math.max(0, (v.duration || 0) - 0.001);
+    const fps = (CFG.clipFps || {})[v.getAttribute("src")];
+    if (fps > 0) {
+      const k = Math.max(0, Math.floor((t - s + off) * fps + 1e-3)); // 1e-3 of a frame absorbs float and 5 dp noise
+      return clamp((k + 0.5) / fps, 0, hi);
+    }
+    return clamp(t - s + off + FRAME_NUDGE, 0, hi);
+  }
+
+  // Seek one visible clip to a local time. A seek that never reports "seeked" resolves after
+  // the fallback wait so a render cannot hang, but it is counted, and render.mjs FAILs it.
+  //
+  // "seeked" alone does not prove which frame was presented. A clip whose rate is known also
+  // waits until requestVideoFrameCallback reports the wanted frame (mediaTime); a callback for
+  // another frame (a presentation still pending from an earlier seek) is not taken as done, and
+  // if the wanted frame never arrives within the fallback wait the last frame seen is counted as
+  // a mismatch. A clip of unknown rate cannot be checked this way and waits for seeked only.
+  const hasFrameCallback = (v) => typeof v.requestVideoFrameCallback === "function";
+  function seekTo(v, local, t, { frame = true } = {}) {
+    const src = v.getAttribute("src");
+    const fps = (CFG.clipFps || {})[src];
+    const want = fps > 0 ? Math.floor(local * fps + 1e-3) : null;
+    const waitFrame = frame && want !== null && hasFrameCallback(v);
     return new Promise((res) => {
-      const done = () => { v.removeEventListener("seeked", done); res(); };
-      v.addEventListener("seeked", done);
+      let timer = null, seeked = false, framed = !waitFrame, handle = null, seen = null;
+      const done = (fallback) => {
+        v.removeEventListener("seeked", onSeeked);
+        if (handle !== null && v.cancelVideoFrameCallback) v.cancelVideoFrameCallback(handle);
+        clearTimeout(timer);
+        if (fallback && seeked && seen !== null && seen !== want) stats.frameMismatches.push({ src, t, local, want, got: seen });
+        else if (fallback) stats.seekFallbacks.push({ src, t, local, waited_for: seeked ? "frame" : "seeked" });
+        res();
+      };
+      const ask = () => {
+        handle = v.requestVideoFrameCallback((now, meta) => {
+          handle = null;
+          // a presented frame sits at its own timestamp, which a container may round (WebM: whole ms)
+          seen = Math.round(meta.mediaTime * fps);
+          if (seen !== want) return ask();
+          framed = true;
+          if (seeked) done(false);
+        });
+      };
+      const onSeeked = () => { seeked = true; if (framed) done(false); };
+      if (waitFrame) ask();
+      v.addEventListener("seeked", onSeeked);
       v.currentTime = local;
-      setTimeout(done, 3000);
+      timer = setTimeout(() => done(true), CFG.seekFallbackMs);
     });
   }
 
-  async function seek(t) {
+  // A seek is skipped only when the clip already sits within 10 us of the target (currentTime
+  // reads back rounded to the microsecond); the old 0.5 ms window could keep a frame across a
+  // boundary.
+  function seekClip(v, t) {
+    const local = clipLocal(v, t);
+    if (Math.abs(v.currentTime - local) < 1e-5) return Promise.resolve();
+    return seekTo(v, local, t);
+  }
+
+  // Everything but the clips: scenes, text, Ken Burns, counters and per-frame hooks.
+  function apply(t) {
     document.querySelectorAll("[data-scene]").forEach((sc) => applyScene(sc, t));
     document.querySelectorAll("[data-text],[data-in]").forEach((el) => {
       if (!el.hasAttribute("data-count")) applyText(el, t);
@@ -150,24 +220,158 @@
     document.querySelectorAll("[data-ken]").forEach((el) => applyKen(el, t));
     document.querySelectorAll("[data-count]").forEach((el) => applyCount(el, t));
     for (const h of hooks) h(t);
-    await Promise.all([...document.querySelectorAll("video[data-clip]")].map((v) => seekClip(v, t)));
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }
+
+  const twoFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  // Returns each clip's src and currentTime after the seek, so a caller can check the frame map.
+  //
+  // A clip that turns visible (v19 shows and hides its shots with visibility:hidden on a
+  // wrapper) can keep an older picture on screen although "seeked" and requestVideoFrameCallback
+  // both report the new frame. Measured on scratch copies, 4x5 CAP, alternating capture times:
+  //   seeking every clip, hidden or not:            v19 S3H frame 0 at 15.409 s in 5 of 30
+  //   seeking visible clips only:                   v19 wrong picture at 13.0 s in 15 of 45
+  //   + two animation frames before seeking a clip that just turned visible: 1 of 30
+  //   + then presenting the same frame once more:   0 of 270 on v19, 0 of 240 on the fixture
+  // So: hidden clips are not seeked (their frame cannot be seen; their reported currentTime is
+  // stale), and a clip that turns visible gets its layer first, its frame, then that frame again.
+  async function seek(t) {
+    apply(t);
+    const clips = [...document.querySelectorAll("video[data-clip]")];
+    const on = clips.map((v) => shown(v) > 0);
+    const turnedOn = clips.map((v, i) => on[i] && v.__wasShown !== true);
+    clips.forEach((v, i) => (v.__wasShown = on[i]));
+    if (turnedOn.some(Boolean)) await twoFrames();
+    await Promise.all(clips.map(async (v, i) => {
+      if (!on[i]) return;
+      await seekClip(v, t);
+      if (!turnedOn[i]) return;
+      // a quarter frame later is the same frame (known rate), or 1 ms later (unknown rate)
+      const fps = (CFG.clipFps || {})[v.getAttribute("src")];
+      const again = Math.min(clipLocal(v, t) + (fps > 0 ? 0.25 / fps : 0.001), Math.max(0, (v.duration || 0) - 0.001));
+      await seekTo(v, again, t, { frame: false });
+    }));
+    await twoFrames();
+    return clips.map((v) => ({ src: v.getAttribute("src"), currentTime: v.currentTime, local: clipLocal(v, t) }));
   }
 
   async function ready() {
-    if (document.fonts) await document.fonts.ready;
+    // Load every declared face, not only the ones already used: a face that fails shows as
+    // "error", while an unused face would otherwise stay "unloaded" and read as broken.
+    if (document.fonts) {
+      await Promise.all([...document.fonts].map((f) => (f.status === "loaded" ? null : f.load().catch(() => {}))));
+      await document.fonts.ready;
+    }
     await Promise.all(
       [...document.images].map((im) => (im.complete ? im.decode().catch(() => {}) : new Promise((r) => { im.onload = im.onerror = r; })))
     );
     await Promise.all(
       [...document.querySelectorAll("video")].map((v) => {
         v.muted = true; v.pause();
-        return v.readyState >= 2 ? null : new Promise((r) => { v.addEventListener("loadeddata", r, { once: true }); setTimeout(r, 15000); });
+        if (v.readyState >= 2 || v.error) return null;
+        return new Promise((r) => {
+          v.addEventListener("loadeddata", r, { once: true });
+          v.addEventListener("error", r, { once: true });
+          setTimeout(r, CFG.readyVideoMs);
+        });
       })
     );
     const broken = [...document.images].filter((im) => !im.naturalWidth).map((im) => im.getAttribute("src"));
-    const fonts = document.fonts ? [...document.fonts].filter((f) => f.status !== "loaded").map((f) => f.family) : [];
-    return { broken_images: broken, unloaded_fonts: fonts };
+    const fonts = document.fonts ? [...document.fonts].filter((f) => f.status !== "loaded").map((f) => `${f.family} ${f.weight} (${f.status})`) : [];
+    const videos = [...document.querySelectorAll("video")].map((v) => ({
+      src: v.getAttribute("src"),
+      readyState: v.readyState,
+      duration: Number.isFinite(v.duration) ? v.duration : String(v.duration),
+      error: v.error ? v.error.code : null,
+    }));
+    return { broken_images: broken, unloaded_fonts: fonts, videos };
+  }
+
+  function health() {
+    return {
+      seek_fallbacks: stats.seekFallbacks.length, seek_fallback_at: stats.seekFallbacks.slice(0, 10),
+      frame_mismatches: stats.frameMismatches.length, frame_mismatch_at: stats.frameMismatches.slice(0, 10),
+    };
+  }
+
+  // The DOM as authored: raw attributes and copy, read before any seek or bind changes it.
+  function authored() {
+    const attr = (el, k) => (el.hasAttribute(k) ? el.getAttribute(k) : null);
+    const scene = (sc) => (sc ? { id: sc.getAttribute("data-scene"), start: attr(sc, "data-start"), end: attr(sc, "data-end") } : null);
+    return {
+      texts: [...document.querySelectorAll("[data-text]")].map((el) => ({
+        id: el.getAttribute("data-text"),
+        text: el.__full !== undefined ? el.__full : el.textContent,
+        in: attr(el, "data-in"), out: attr(el, "data-out"), dur: attr(el, "data-dur"),
+        enter: attr(el, "data-enter"), exit: attr(el, "data-exit"),
+        scene: scene(sceneOf(el)),
+      })),
+      scenes: [...document.querySelectorAll("[data-scene]")].map(scene),
+    };
+  }
+
+  // Effective opacity up the ancestor chain; 0 when the element does not render at all.
+  function shown(el) {
+    if (!el.isConnected || el.getClientRects().length === 0) return 0;
+    if (getComputedStyle(el).visibility !== "visible") return 0;
+    let o = 1;
+    for (let a = el; a && a.nodeType === 1; a = a.parentElement) {
+      o *= parseFloat(getComputedStyle(a).opacity);
+      if (!(o > 0)) return 0;
+    }
+    return o;
+  }
+
+  // Elements that carry reading text directly (a text node child), found once.
+  let textEls = null;
+  function readingElements() {
+    if (textEls) return textEls;
+    let k = 0;
+    textEls = [...document.body.querySelectorAll("*")]
+      .filter((el) => !/^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(el.tagName))
+      .filter((el) => [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
+      .map((el) => {
+        const cls = typeof el.className === "string" && el.className.trim() ? "." + el.className.trim().split(/\s+/).join(".") : "";
+        return { el, key: k++, label: el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + cls };
+      });
+    return textEls;
+  }
+
+  // FNV-1a: the page signature without shipping the whole string over CDP.
+  function fnv(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return (h >>> 0).toString(16);
+  }
+
+  // Craft samples at each t. Clips are not seeked; their local time enters the signature.
+  // floorPx: report only reading text under it.
+  function probe(times, floorPx) {
+    const items = [...document.querySelectorAll("[data-text]")];
+    const els = readingElements();
+    const all = [...document.body.querySelectorAll("*")];
+    return times.map((t) => {
+      apply(t);
+      const out = { t, items: {}, small: [], held: false, sig: "" };
+      for (const el of items) {
+        const sc = sceneOf(el);
+        const eff = !sc || getComputedStyle(sc).visibility === "visible" ? shown(el) : 0;
+        out.items[el.getAttribute("data-text")] = { vis: eff > 0, own: parseFloat(getComputedStyle(el).opacity), eff: Math.round(eff * 1000) / 1000 };
+      }
+      for (const { el, key, label } of els) {
+        if (el.closest("[data-layout-ignore]")) continue;
+        const fp = parseFloat(getComputedStyle(el).fontSize);
+        if (!(fp < floorPx - 0.5)) continue;
+        if (shown(el) >= 0.5) out.small.push({ key, label, text: el.textContent, font_px: fp });
+      }
+      out.held = [...document.querySelectorAll("[data-hold]")].some((el) => shown(el) > 0);
+      let s = "";
+      for (const el of all) s += (el.getAttribute("style") || "") + "|" + (typeof el.className === "string" ? el.className : "") + ";";
+      for (const el of document.querySelectorAll("[data-text],[data-count]")) s += el.textContent + ";";
+      for (const v of document.querySelectorAll("video[data-clip]")) if (shown(v) > 0) s += "v" + clipLocal(v, t).toFixed(3) + ";";
+      out.sig = fnv(s);
+      return out;
+    });
   }
 
   function clippedByAncestor(el, r) {
@@ -211,4 +415,10 @@
   window.__seek = seek;
   window.__ready = ready;
   window.__layout = layout;
+  window.__health = health;
+  window.__authored = authored;
+  window.__probe = probe;
+  window.__config = () => ({ ...CFG });
+  // render.mjs hands over each clip's probed constant frame rate, keyed by its src attribute.
+  window.__clipFps = (map) => ((CFG.clipFps = { ...(CFG.clipFps || {}), ...map }), CFG.clipFps);
 })();
