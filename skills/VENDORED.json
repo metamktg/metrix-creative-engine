@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "note": "Third-party skills copied byte for byte from their official repository. Do not edit them here; bump the pin and re-copy. Each skill folder carries the upstream licence as LICENSE.hyperframes.",
+  "sources": [
+    {
+      "repository": "https://github.com/heygen-com/hyperframes",
+      "tag": "v0.9.19",
+      "commit": "b4cc674f7f312e77ded32e0b53006cc0bad6723b",
+      "license": "Apache-2.0",
+      "npm": "hyperframes@0.9.19",
+      "copied": "2026-11-06",
+      "skills": {
+        "figma": "ce769362c969a9f6",
+        "hyperframes": "fcbd52e834332599",
+        "hyperframes-cli": "2c977e879386734b",
+        "hyperframes-registry": "a032ccc5c7948ac2",
+        "media-use": "f3e4cc75041371b3",
+        "remotion-to-hyperframes": "73b82d19db2ed8c9",
+        "reverse-any-video": "e4c3ac45f5deb337",
+        "slideshow": "1ab359d60230a336",
+        "style-sampling": "5d26c6211fdfc062"
+      },
+      "skillHashSource": "skills-manifest.json at the pinned commit"
+    }
+  ]
+}
