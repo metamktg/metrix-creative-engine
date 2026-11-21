@@ -9,10 +9,10 @@ from code, not executed), **unknown** (named slot, not yet checked).
 
 ## TLDR
 
-1. The cloud environment is now buildable in 78 s with every tool the engine
+1. The cloud environment is now buildable in about 2.5 min with every tool the engine
    calls: Node/pnpm build, Chrome, ffmpeg, whisper.cpp v1.9.5, the four pinned
    models (sha256 equal to `tools/manifest.json`), a MediaPipe venv and the
-   five brand fonts. Proven by running the script below in this container.
+   full Google Fonts library. Proven by running the script below in this container.
 2. `npm run verify` is red, here and on `main` CI for the last two merges
    (#17, #18): the real-browser render test captures the previous source
    frame. The fix in #18 did not hold. This blocks every video format.
@@ -24,17 +24,25 @@ from code, not executed), **unknown** (named slot, not yet checked).
 
 ## 1. Cloud environment
 
-### Setup script (tested here, 78 s, exit 0)
+### Setup script (tested here, exit 0; about 2.5 min on a fresh container)
 
 The script is the one proposed in this session. It is idempotent, runs from
 the directory that holds the checkout, and skips the repo steps when the
 checkout is absent. It installs:
 
 - pnpm deps and the MCP bundle (`dist/index.js`), so `.mcp.json` connects.
-- Fonts from the Google Fonts repository (OFL): M PLUS U, Outfit, Roboto,
-  Lexend, Lora, into `/usr/local/share/fonts/metrix`. Chrome only renders
-  fonts installed on the machine; without them statics and captions fall back
-  to DejaVu and `render.mjs` health fails on unloaded fonts.
+- The full Google Fonts library (OFL, Apache and UFL folders, 2,884
+  families after install) plus Noto Color Emoji, into
+  `/usr/local/share/fonts/google`. Every category is present: grotesk and
+  geometric sans, condensed display, editorial serif, fat face, script,
+  handwriting and marker, mono. Chrome only renders fonts installed on the
+  machine; without them statics and captions fall back to DejaVu and
+  `render.mjs` health fails on unloaded fonts. Proven: 20 current ad trend
+  faces (Anton, Bebas Neue, Archivo Black, Playfair Display, Instrument
+  Serif, Space Grotesk, Unbounded, Bricolage Grotesque, Permanent Marker and
+  others) resolve by name and render in headless Chrome. Licensed commercial
+  faces (Helvetica Now, Proxima Nova, a client's brand font) are not in it;
+  those come from the client's brand kit files.
 - whisper.cpp v1.9.5 built from source (`whisper-cli`), the pin in
   `tools/manifest.json`. This is the engine's preferred ASR path in
   `asr-check.mjs` (DTW word times). Ubuntu's ffmpeg 6.1 has no `whisper`
@@ -76,7 +84,7 @@ record), yt-dlp (no capture code exists).
 Limited, package registries on, plus: `api.kie.ai`, `kieai.redpandaai.co`,
 `static.aiquickdraw.com`, `tempfile.aiquickdraw.com`, `file.aiquickdraw.com`,
 `generativelanguage.googleapis.com`, `api.elevenlabs.io`, `huggingface.co`,
-`us.aws.cdn.hf.co`, `raw.githubusercontent.com`, `github.com`,
+`us.aws.cdn.hf.co`, `github.com`,
 `codeload.github.com`, `storage.googleapis.com`, `cdn.jsdelivr.net`,
 `fonts.googleapis.com`, `fonts.gstatic.com`.
 
