@@ -10,10 +10,12 @@
  * 2. Tell the model, in one line, where runs are written and where inputs live.
  *    SessionStart stdout becomes session context, so it never carries the key.
  */
-import { appendFileSync, readFileSync } from "node:fs";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-const MARKER = "# metrix-creative-engine session settings";
+const BEGIN = "# metrix-creative-engine session settings";
+const END = "# end metrix-creative-engine session settings";
+const OURS = /^export (KIE_AI_DOWNLOAD_DIR|METRIX_ASSETS_DIR|KIE_AI_API_KEY)=/;
 
 /** Unset, blank, or a reference the host never expanded. */
 function real(value) {
@@ -44,16 +46,17 @@ function main() {
   if (optionAssets) exports.push(exportLine("METRIX_ASSETS_DIR", optionAssets));
   if (optionKey) exports.push(exportLine("KIE_AI_API_KEY", optionKey));
 
+  // A failed write costs the script its options, not the session its context
+  // line, so it is reported and the hook carries on.
   const envFile = process.env.CLAUDE_ENV_FILE;
-  if (envFile && exports.length) {
-    let existing = "";
+  let shellMissed = !envFile && exports.length > 0;
+  if (envFile) {
     try {
-      existing = readFileSync(envFile, "utf8");
-    } catch {
-      // No file yet: this hook is the first writer.
+      writeBlock(envFile, exports);
+    } catch (error) {
+      shellMissed = exports.length > 0;
+      process.stderr.write(`metrix-creative-engine session hook: ${error instanceof Error ? error.message : String(error)}\n`);
     }
-    // SessionStart fires again on resume, clear and compact. Write once per file.
-    if (!existing.includes(MARKER)) appendFileSync(envFile, `${existing && !existing.endsWith("\n") ? "\n" : ""}${MARKER}\n${exports.join("\n")}\n`);
   }
 
   const runs = optionRuns ?? real(process.env.KIE_AI_DOWNLOAD_DIR);
@@ -66,10 +69,42 @@ function main() {
   if (keySource === "missing") {
     lines.push("Generation will fail until a key is set: the plugin's Kie.ai API key option, or KIE_AI_API_KEY in the environment (https://kie.ai/api-key).");
   }
-  if (!envFile && (optionKey || optionRuns || optionAssets)) {
-    lines.push("This Claude Code has no CLAUDE_ENV_FILE, so the bundled kie.mjs script does not see the plugin's options; the MCP tools do.");
+  if (shellMissed) {
+    lines.push(`The session's shell did not get the plugin's options (${envFile ? "its env file could not be written" : "this Claude Code has no CLAUDE_ENV_FILE"}), so the bundled kie.mjs script does not see them; the MCP tools do.`);
   }
   process.stdout.write(`${lines.join("\n")}\n`);
+}
+
+/**
+ * Put this hook's exports in the session's env file as one marked block.
+ * SessionStart fires again on resume, clear and compact, and the options may
+ * have changed in between: a rotated key, a moved folder, an option cleared.
+ * So a block an earlier start wrote is replaced, or removed when nothing is
+ * set, rather than kept. With no block yet, the hook only appends, so a line
+ * another hook adds to the same file at the same moment survives.
+ */
+function writeBlock(envFile, exports) {
+  let existing = null;
+  try {
+    existing = readFileSync(envFile, "utf8");
+  } catch {
+    // No file yet: this hook is the first writer.
+  }
+  const block = exports.length ? [BEGIN, ...exports, END] : [];
+  const lines = existing === null ? [] : existing.split("\n");
+  const start = lines.indexOf(BEGIN);
+  if (start < 0) {
+    if (block.length) appendFileSync(envFile, `${existing && !existing.endsWith("\n") ? "\n" : ""}${block.join("\n")}\n`);
+    return;
+  }
+  // The block runs to its END line. Without one (a write cut short), it is
+  // the BEGIN line and the export lines this hook writes, and nothing after.
+  const endAt = lines.indexOf(END, start + 1);
+  let stop = start + 1;
+  if (endAt > start) stop = endAt + 1;
+  else while (stop < lines.length && OURS.test(lines[stop])) stop += 1;
+  const next = [...lines.slice(0, start), ...block, ...lines.slice(stop)].join("\n");
+  if (next !== existing) writeFileSync(envFile, next);
 }
 
 try {

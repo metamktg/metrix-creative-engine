@@ -82,17 +82,40 @@ describe("plugin session hook", () => {
     expect(r.stdout).not.toContain("env-key");
   });
 
-  it("writes its block once however often the session restarts", () => {
+  // SessionStart fires again on resume, clear and compact, and the options can
+  // change in between. A block that kept the first values would leave the
+  // script on a rotated key while the MCP tools use the new one.
+  it("keeps one block, holding the latest options, however often the session starts", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "mce-hook-"));
     const envFile = path.join(dir, "env.sh");
     writeFileSync(envFile, "export OTHER_PLUGIN=1");
-    const env = { CLAUDE_ENV_FILE: envFile, CLAUDE_PLUGIN_OPTION_RUNS_DIR: tricky };
-    expect(run(env).status).toBe(0);
-    expect(run(env).status).toBe(0);
-    const text = readFileSync(envFile, "utf8");
+    const first = { CLAUDE_ENV_FILE: envFile, CLAUDE_PLUGIN_OPTION_RUNS_DIR: tricky };
+    expect(run(first).status).toBe(0);
+    expect(run(first).status).toBe(0);
+    let text = readFileSync(envFile, "utf8");
     expect(text.startsWith("export OTHER_PLUGIN=1\n")).toBe(true);
-    expect(text.match(/metrix-creative-engine session settings/g)).toHaveLength(1);
+    expect(text.match(/^# metrix-creative-engine session settings$/gm)).toHaveLength(1);
     expect(text.match(/^export KIE_AI_DOWNLOAD_DIR=/gm)).toHaveLength(1);
+
+    // Another hook appends after this one's block; then the options change.
+    writeFileSync(envFile, `${text}export LATER_PLUGIN=1\n`);
+    const moved = path.join(dir, "moved runs");
+    expect(run({ CLAUDE_ENV_FILE: envFile, CLAUDE_PLUGIN_OPTION_RUNS_DIR: moved, CLAUDE_PLUGIN_OPTION_KIE_API_KEY: KEY }).status).toBe(0);
+    text = readFileSync(envFile, "utf8");
+    expect(text.match(/^# metrix-creative-engine session settings$/gm)).toHaveLength(1);
+    expect(exportsIn(envFile)).toEqual({ KIE_AI_DOWNLOAD_DIR: moved, KIE_AI_API_KEY: KEY });
+    expect(text.startsWith("export OTHER_PLUGIN=1\n")).toBe(true);
+    expect(text).toContain("\nexport LATER_PLUGIN=1\n");
+  });
+
+  it("removes its block when every option is cleared, and leaves the rest of the file", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "mce-hook-"));
+    const envFile = path.join(dir, "env.sh");
+    writeFileSync(envFile, "export OTHER_PLUGIN=1\n");
+    expect(run({ CLAUDE_ENV_FILE: envFile, CLAUDE_PLUGIN_OPTION_KIE_API_KEY: KEY }).status).toBe(0);
+    expect(exportsIn(envFile).KIE_AI_API_KEY).toBe(KEY);
+    expect(run({ CLAUDE_ENV_FILE: envFile }).status).toBe(0);
+    expect(readFileSync(envFile, "utf8")).toBe("export OTHER_PLUGIN=1\n");
   });
 
   it("says the key is missing, and writes nothing, when nothing is configured", () => {
@@ -125,6 +148,9 @@ describe("plugin session hook", () => {
     const r = run({ CLAUDE_ENV_FILE: dir, CLAUDE_PLUGIN_OPTION_RUNS_DIR: tricky });
     expect(r.status).toBe(0);
     expect(r.stderr).toContain("metrix-creative-engine session hook:");
+    // The session still learns its folders, and that the script missed them.
+    expect(r.stdout).toContain(`Runs folder: ${path.resolve(tricky)}.`);
+    expect(r.stdout).toContain("its env file could not be written");
   });
 
   // The decode above is this test's reading of the quoting. Bash is the reader

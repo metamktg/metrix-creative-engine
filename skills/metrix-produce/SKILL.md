@@ -92,7 +92,7 @@ Work through every brief in the file. The count is whatever the file holds.
    | `claymation` | as `static`; with `duration_seconds` set, as `video` |
    | `video`, `motion_graphic` | `metrix-ad-creative` generates the layers (approved stills, one-action clips, beds), then `metrix-video-assembly` assembles, typesets, mixes and renders the finished ad and runs its QA |
    | `ugc` | `ugc-creator-edit` leads: it binds the job, plans reuse before generation and authorizes spend. Gaps are generated through `metrix-ad-creative`. Captions and finishing go through `metrix-video-assembly`. The five presentation gates run last, in `ugc-creator-edit` |
-   | `ai_ugc` | as `ugc`, and before any lip sync: the script check, casting, then `kie_validate_ugc_preproduction` and the guarded `kie_create_ugc_lipsync` (or the client's `ugc-check` and `ugc-start`) |
+   | `ai_ugc` | as `ugc`, and before any lip sync: the script check, casting, then `kie_validate_ugc_preproduction` and the guarded `kie_create_ugc_lipsync` (without the MCP server: `kie.mjs ugc-check`, then `ugc-start`) |
 
    More than a handful of generations at once goes through `kie-tasks`, which
    paces the batch and resumes timed-out waits. Download every result to the

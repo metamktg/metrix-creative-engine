@@ -49,7 +49,7 @@ if (check) {
     if (!actual || !actual.equals(expected)) stale.push(path.relative(root, file).replaceAll("\\", "/"));
   }
   if (stale.length) {
-    console.error(`server/ is stale: ${stale.join(", ")} differ from a fresh build of src/.`);
+    console.error(`server/ is stale: ${stale.join(", ")} ${stale.length === 1 ? "differs" : "differ"} from a fresh build of src/.`);
     console.error("Run `pnpm run build` and commit server/. Install with pnpm (the packageManager), since another package manager lays node_modules out differently and changes the bundle's path comments.");
     process.exit(1);
   }

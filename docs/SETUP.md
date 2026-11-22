@@ -40,6 +40,10 @@ opens with one line that names the runs folder, the assets folder and where the
 key came from, or says it is missing. The MCP server states both folders in its
 handshake too.
 
+The session hook also hands the options to the session's shell, so the bundled
+script sees the same key and folders as the MCP tools. Commands Claude runs in
+that shell can read the key, as they can any key in your environment.
+
 Client material belongs in the runs and assets folders. Never put a brief, a
 brand kit, a product photo or a receipt in this repository: it is public, and a
 plugin install copies it to every user.

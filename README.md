@@ -82,12 +82,22 @@ session on this repository.
 | `metrix-video-assembly` | Finished video from approved clips: storyboard, exact type, captions, sound mix, poster frame, placement ratio and the finished-file QA. |
 | `brand-kit-builder` | A brand kit from public sources when no client assets were supplied, before the first brief lands. |
 
+The plugin also carries nine HyperFrames skills, which `metrix-video-assembly`
+uses for captions, motion and finishing: `hyperframes`, `hyperframes-cli`,
+`hyperframes-registry`, `media-use`, `figma`, `remotion-to-hyperframes`,
+`reverse-any-video`, `slideshow` and `style-sampling`. They are copied byte for
+byte from [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) at
+the tag pinned in [`skills/VENDORED.json`](skills/VENDORED.json), under that
+project's Apache-2.0 licence, which each folder carries. Do not edit them here.
+If you already have HyperFrames skills installed, they are listed twice.
+
 Each skill carries its own references, so installing one skill on its own still
 works. Three also point at the repository's `prompts/` files for the fuller
 rules, which a standalone install does not have: `metrix-ad-creative`,
 `metrix-video-assembly` and `ugc-creator-edit`. `metrix-produce` depends on the
-others by design: it calls them, and stops a brief when one it needs is missing. Files that appear in more than one
-skill are byte copies of one canonical file, listed in
+others by design: it calls them, and stops a brief when one it needs is
+missing. Files that appear in more than one skill are byte copies of one
+canonical file, listed in
 [`scripts/skill-copies.json`](scripts/skill-copies.json) and checked by
 `npm run check:copies`.
 
