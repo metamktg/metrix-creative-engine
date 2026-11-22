@@ -33,8 +33,4 @@ describe("open gaps between stages (each closes with a real test)", () => {
   it.fails("one Kie client: the skill kie.mjs is built from src/, not hand-maintained beside it", () => {
     expect(read("skills/metrix-ad-creative/scripts/kie.mjs")).toMatch(/generated from src\//i);
   });
-
-  it.fails("every spend-path skill carries evals (metrix-ad-creative, ugc-creator-edit)", () => {
-    expect(exists("skills/metrix-ad-creative/evals") && exists("skills/ugc-creator-edit/evals")).toBe(true);
-  });
 });
