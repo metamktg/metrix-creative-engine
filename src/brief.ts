@@ -60,6 +60,24 @@ const brandAsset = z.object({
   path: nonEmpty.optional().describe("A local file, to be uploaded before the render."),
 });
 
+/** One cell of a matrix row: its naming codes plus the varied field, kept as given. */
+const matrixCell = z
+  .object({
+    unique_id: nonEmpty.optional(),
+    matrix_position: nonEmpty.optional(),
+    concept_codes: nonEmpty.optional(),
+    angle_codes: nonEmpty.optional(),
+  })
+  .passthrough();
+
+/** Convention placeholders and the cell keys they read (the same map make-row.mjs uses). */
+const NAMING_KEYS: Record<string, string> = {
+  MatrixPosition: "matrix_position",
+  ConceptCodes: "concept_codes",
+  AngleCodes: "angle_codes",
+  UniqueID: "unique_id",
+};
+
 export const briefSchema = z.object({
   brief_metadata: z.object({
     brief_id: nonEmpty.describe("The creative concept id. The finished asset is named after it."),
@@ -86,6 +104,10 @@ export const briefSchema = z.object({
     .object({
       isolated_variable: nonEmpty.optional(),
       matrix_position: nonEmpty.optional(),
+      // The row a Matrix Sprint Test builds (make-row.mjs reads both). A cell carries its
+      // naming codes and the one field it varies, under whatever name the brief tests.
+      matrix_naming_convention: nonEmpty.optional(),
+      cells: z.array(matrixCell).min(1).optional(),
     })
     .optional(),
   qa_requirements: z.array(nonEmpty).optional(),
@@ -134,6 +156,43 @@ function crossFieldChecks(brief: Brief): { errors: string[]; warnings: string[] 
     warnings.push(
       "testing_framework.matrix_position is set on a brief whose mode is not \"matrix\". A coordinate is an index, never a name: the asset is named for its concept, not its cell.",
     );
+  }
+
+  const tf = brief.testing_framework;
+  if (tf?.cells) {
+    if (mode !== "matrix") {
+      errors.push("testing_framework.cells is set on a brief whose mode is not \"matrix\". A row of cells is a matrix test; set mode to \"matrix\" or drop the cells.");
+    }
+    if (!tf.matrix_naming_convention) {
+      errors.push("testing_framework.cells is set but testing_framework.matrix_naming_convention is absent. Every cell needs a name the scan can read back, built by one convention.");
+    } else {
+      const conv = tf.matrix_naming_convention;
+      const names = tf.cells.map((cell, i) =>
+        conv.replace(/\{(\w+)\}/g, (_, k: string) => {
+          const key = NAMING_KEYS[k] ?? k;
+          const value = (cell as Record<string, unknown>)[key];
+          if (value == null || value === "") {
+            errors.push(`testing_framework.cells.${i} has no ${key} for {${k}} in matrix_naming_convention.`);
+            return "";
+          }
+          return String(value);
+        }),
+      );
+      const seen = new Set<string>();
+      for (const name of names) {
+        if (seen.has(name)) errors.push(`matrix_naming_convention gives two cells the name "${name}". Each cell needs its own name or one overwrites the other.`);
+        seen.add(name);
+      }
+    }
+    const varied = tf.isolated_variable;
+    if (varied && tf.cells.some((cell) => (cell as Record<string, unknown>)[varied] !== undefined)) {
+      const values = tf.cells.map((cell) => (cell as Record<string, unknown>)[varied]);
+      if (values.some((v) => v === undefined || v === "")) {
+        errors.push(`isolated_variable is "${varied}" but at least one cell carries no "${varied}". Every cell must state its value of the variable under test.`);
+      } else if (new Set(values.map((v) => JSON.stringify(v))).size !== values.length) {
+        errors.push(`two cells carry the same "${varied}". Cells that do not differ in the isolated variable measure nothing between them.`);
+      }
+    }
   }
 
   const assets = brief.brand_assets ?? [];
