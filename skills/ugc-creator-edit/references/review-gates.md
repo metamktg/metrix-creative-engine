@@ -68,9 +68,10 @@ Reusable procedures, templates, fixtures, shared learning and public summaries c
 
 ## Evidence contract
 
-`production-review.json` has `schema_version: 1`, a neutral asset ID, `artifacts`, `contributors`, `iap`, `production` and exactly five `gates`.
+`production-review.json` has `schema_version: 2`, a neutral asset ID, `artifacts`, `contributors`, `iap`, `production` and exactly five `gates`.
 
-- Required artifact roles: `master`, `brief`, `script`, `voice`, `captions`, `edl`, `sources`, `profile`, `registry`, `blind_packet`, `blind_copy`. Each has a contained relative path and SHA256.
+- Required artifact roles: `master`, `brief`, `script`, `voice`, `captions`, `edl`, `sources`, `profile`, `registry`, `blind_packet`, `blind_copy`, `qa_report`. Each has a contained relative path and SHA256.
+- `qa_report` is the `mce.qa/1` file `qa-video.mjs <master> --out qa.json` writes. Its `sha256` must equal the master's and its verdict must be PASS or EXEMPT; otherwise review FAILs, and a missing report is NOT_CHECKED. Schema 1 records bound no QA report and are refused: prepare the candidate again.
 - `contributors` declares actual producer/editor IDs. `iap` declares standard or matrix mode, exact registry codes, applicability decision/reason/reviewer and matrix-lock evidence where applicable. A standard brief with no IAP codes needs an explicit non-applicability decision; the technical and other gates still apply.
 - `production` records music selection or a specifically justified editorial dry exception, selected B-roll acceptance and a source/output speed map. Read [production-standard.md](production-standard.md). A normal-speed export is not permission to hide misleading source retiming.
 - The blind packet/copy are bound artifact roles before any review. The final gate must reference these exact hashes; swapping a newly hashed derivative cannot preserve an earlier verdict.

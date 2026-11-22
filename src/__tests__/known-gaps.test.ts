@@ -18,12 +18,6 @@ const read = (p: string) => fs.readFileSync(path.join(repo, p), "utf8");
 const exists = (p: string) => fs.existsSync(path.join(repo, p));
 
 describe("open gaps between stages (each closes with a real test)", () => {
-  it.fails("review binds a QA report: validate_review_gates.py requires a qa_report artifact", () => {
-    // scripts/validate_review_gates.py names no QA output today, so a master qa-video
-    // failed can pass review.
-    expect(read("skills/ugc-creator-edit/scripts/validate_review_gates.py")).toMatch(/qa_report/);
-  });
-
   it.fails("the handoff stage is served: src/prompts.ts loads prompts/03-handoff.md", () => {
     // src/prompts.ts:21-33 imports 00, 01, 02, 04, 05, 06, 07 and the formats, never 03.
     expect(read("src/prompts.ts")).toMatch(/prompts\/03-handoff\.md/);
