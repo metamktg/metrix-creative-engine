@@ -21,6 +21,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import core from "../prompts/00-core.md";
 import brandIntake from "../prompts/01-brand-intake.md";
 import renderBridge from "../prompts/02-render-bridge.md";
+import handoff from "../prompts/03-handoff.md";
 import selfValidation from "../prompts/04-self-validation.md";
 import productionReview from "../prompts/06-production-review.md";
 import ugcCreativeDirection from "../prompts/07-ugc-creative-direction.md";
@@ -101,6 +102,27 @@ export function registerKiePrompts(server: McpServer): void {
       argsSchema: briefArg,
     },
     ({ brief }) => userMessage(withBrief(joined(core, brandIntake), brief)),
+  );
+
+  server.registerPrompt(
+    "kie_handoff",
+    {
+      title: "Hand off reviewed creative",
+      description:
+        "The last stage: write the handoff for a candidate whose review record is READY. Run write_receipt.py on the review record first; it re-validates the record and writes the mce.receipt/1 receipt naming the master, its QA report and every bound file by sha256. Hand off only what a receipt covers.",
+      argsSchema: {
+        ...briefArg,
+        audience: z.enum(["strategist", "media_buyer", "client"]).optional().describe("Who reads the handoff. Default: strategist, with a top section a client can read."),
+        receipt: z.string().optional().describe("The mce.receipt/1 JSON for the handoff, as text."),
+      },
+    },
+    ({ brief, audience, receipt }) => {
+      const inputs = [
+        `## Handoff inputs\n\naudience: ${audience ?? "strategist (not stated)"}`,
+        receipt ? `## The receipt\n\n\`\`\`json\n${receipt}\n\`\`\`` : "## The receipt\n\nNo receipt supplied: run write_receipt.py on the READY review record before handing anything off.",
+      ].join("\n\n");
+      return userMessage(withBrief(joined(core, handoff, inputs), brief));
+    },
   );
 
   server.registerPrompt(

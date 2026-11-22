@@ -227,7 +227,7 @@ try {
 
   console.log("\n== Prompts ==");
   const prompts = (await rpc("prompts/list", {})).result?.prompts ?? [];
-  check("seven format prompts plus brand intake and MST", prompts.length === 9, `${prompts.length} listed`);
+  check("seven format prompts plus brand intake, handoff and MST", prompts.length === 10, `${prompts.length} listed`);
   const rendered = await rpc("prompts/get", {
     name: "kie_render_static",
     arguments: { brief: '{"asset_type":"static"}' },
@@ -281,12 +281,17 @@ try {
     );
   }
 
-  for (const name of ["kie_brand_intake", "kie_mst_sprint"]) {
+  for (const name of ["kie_brand_intake", "kie_handoff", "kie_mst_sprint"]) {
     const result = await rpc("prompts/get", { name, arguments: {} });
     const text = result.result?.messages?.[0]?.content?.text ?? "";
     check(`${name} does not load UGC-specific creative direction`, !text.includes(creativeDirection));
     check(`${name} does not inject the complete playbook`, !text.includes(expectedPlaybook));
   }
+
+  const handoffPrompt = await rpc("prompts/get", { name: "kie_handoff", arguments: { audience: "media_buyer" } });
+  const handoffText = handoffPrompt.result?.messages?.[0]?.content?.text ?? "";
+  check("the handoff prompt serves Stage 3", handoffText.includes("# Stage 3: The Handoff"));
+  check("the handoff prompt carries its audience and asks for a receipt", handoffText.includes("audience: media_buyer") && handoffText.includes("write_receipt.py"));
 
   console.log("\n== Brief gate ==");
   // The gate that protects spend. Exercised through the JSON-string path,

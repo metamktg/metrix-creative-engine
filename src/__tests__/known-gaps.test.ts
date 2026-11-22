@@ -18,19 +18,6 @@ const read = (p: string) => fs.readFileSync(path.join(repo, p), "utf8");
 const exists = (p: string) => fs.existsSync(path.join(repo, p));
 
 describe("open gaps between stages (each closes with a real test)", () => {
-  it.fails("the handoff stage is served: src/prompts.ts loads prompts/03-handoff.md", () => {
-    // src/prompts.ts:21-33 imports 00, 01, 02, 04, 05, 06, 07 and the formats, never 03.
-    expect(read("src/prompts.ts")).toMatch(/prompts\/03-handoff\.md/);
-  });
-
-  it.fails("a run writes a handoff receipt: an mce.receipt/1 writer exists", () => {
-    const scripts = ["scripts", "skills/metrix-video-assembly/scripts", "skills/metrix-ad-creative/scripts"];
-    const hit = scripts.some((d) =>
-      fs.readdirSync(path.join(repo, d)).some((f) => /\.(mjs|py|ts)$/.test(f) && /mce\.receipt\/1/.test(read(path.join(d, f)))),
-    );
-    expect(hit).toBe(true);
-  });
-
   it.fails("format lists agree: claymation is motion wherever a duration is required", () => {
     // formats/claymation.md describes a motion style; brief.ts:36 MOTION_TYPES omits it,
     // so a motion claymation brief is never asked for a duration.
