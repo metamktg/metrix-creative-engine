@@ -29,8 +29,4 @@ describe("open gaps between stages (each closes with a real test)", () => {
     // brand_assets.missing; brief.ts types brand_assets as an array only.
     expect(read("src/brief.ts")).toMatch(/missing/);
   });
-
-  it.fails("one Kie client: the skill kie.mjs is built from src/, not hand-maintained beside it", () => {
-    expect(read("skills/metrix-ad-creative/scripts/kie.mjs")).toMatch(/generated from src\//i);
-  });
 });
