@@ -147,13 +147,18 @@ try {
 // that hold a user's files on macOS, Linux and FreeBSD: home (/Users, /home,
 // /usr/home, /root), volume (/Volumes, /media, /run/media) and the macOS temp
 // roots (/private, /var/folders). The slashes of a mount or a root may be
-// raw, JSON-escaped or URL-encoded, also inside a file URL. A path may follow
+// raw, JSON-escaped or URL-encoded, also inside a file URL. So do a share
+// behind a long-path prefix (a drive behind one is read as a drive), and a
+// home or a volume on a WSL share written with forward slashes or in an
+// editor's remote URI, raw or as a file URL; the generic forms below are
+// tested on the path such a prefix holds. A path may follow
 // an escape (\n, \r or \t in a string, %XX in a URL). A match runs on through
 // the space in "Program Files" and "Program Files (x86)", and otherwise ends
-// at whitespace or a delimiter. A UNC host has two characters at least, so a
-// one-letter escape such as \\d\\ is not taken for one; escaped regex text
-// with a longer word between its backslashes is, and is listed like any
-// other path.
+// at whitespace or a delimiter; its last segment also ends at its first
+// letter of a script written without spaces (proseAfter, below). A UNC host
+// has two characters at least, so a one-letter escape such as \\d\\ is not
+// taken for one; escaped regex text with a longer word between its
+// backslashes is, and is listed like any other path.
 const body = String.raw`(?:Program Files(?: \(x86\))?|[^\s"'` + "`" + String.raw`()<>|,;])*`;
 // A match is a path of its own unless it goes on from a word or a path
 // written right before it. An escape there counts as the character it stands
@@ -162,7 +167,8 @@ const body = String.raw`(?:Program Files(?: \(x86\))?|[^\s"'` + "`" + String.raw
 // variation selector) as the character it is on. A drive letter or a UNC
 // share goes on from a word: a letter or digit of a script written with
 // spaces between words (Latin, Greek, Cyrillic, Arabic, Hangul and the
-// rest), or an underscore. A root slash goes on from that and from . ~ / \ -,
+// rest), or an underscore that is not emphasis (one or two after no word, as
+// Markdown writes italics). A root slash goes on from that and from . ~ / \ -,
 // so a segment of a URL or of a relative path (example.com/cafe/p/123,
 // assets/menu/media/x) is no path. Han, Kana, Thai and the other scripts
 // written without spaces run straight into what follows: a letter of one
@@ -179,21 +185,36 @@ const afterEscape = String.raw`(?<=\\[nrt])|(?<=\\u[0-9A-Fa-f]{4})|(?<=\\u\{[0-9
 const slash = String.raw`(?:\\?\/|%2[Ff])`;
 const colon = "(?::|%3[Aa])";
 const fileUrl = String.raw`(?<=${ci("file")}${colon}${slash}{2}(?:${ci("localhost")})?)|(?<=${colon}${slash}{2}${ci("file")})`;
-const notAfterWord = String.raw`(?:(?<![A-Za-z0-9_])|${afterEscape})`;
-const notAfterPath = String.raw`(?:(?<![A-Za-z0-9_.~/\\-])|${afterEscape}|${fileUrl})`;
+const emphasis = String.raw`(?<=(?:^|[^A-Za-z0-9_])_{1,2})`;
+const notAfterWord = String.raw`(?:(?<![A-Za-z0-9_])|${afterEscape}|${emphasis})`;
+const notAfterPath = String.raw`(?:(?<![A-Za-z0-9_.~/\\-])|${afterEscape}|${fileUrl}|${emphasis})`;
 const userRoots = ["Users", "home", "usr/home", "root", "Volumes", "media", "run/media", "private", "var/folders", "mnt/[A-Za-z]"]
   .map((root) => root.split("/").join(slash)).join("|");
+// The name of a WSL distribution or of an editor's remote (wsl+ubuntu), raw
+// or URL-encoded, which a path on that system follows.
+const remoteName = String.raw`(?:[^\s"'<>\\/%]|%(?!2[Ff])[0-9A-Fa-f]{2})+`;
+const wslShare = String.raw`(?:${ci("file")}${colon})?${slash}{2}(?:${ci("wsl")}[.]${ci("localhost")}|${ci("wsl")}\$)${slash}${remoteName}`;
+const editorRemote = String.raw`${ci("vscode")}-${ci("remote")}${colon}${slash}{2}${remoteName}`;
 // One group per form, so a match says which it is: the two drive forms, the
-// UNC share, then the two root forms. A form matches as far as its first
-// folder, and the rest of a path is read only for a match that is a path of
-// its own, so a long line costs time in step with its length.
+// UNC share, the two root forms, a share behind a long-path prefix
+// (\\?\UNC\host\), and a WSL share (//wsl.localhost/Ubuntu, also in a file
+// URL) or an editor's remote URI (vscode-remote://wsl+ubuntu) with a home or
+// a volume after it. A form matches as far as its first folder, and the rest
+// of a path is read only for a match that is a path of its own, so a long
+// line costs time in step with its length.
 const pathStart = new RegExp([
   String.raw`${notAfterWord}[A-Za-z]:[\\/]`,
   String.raw`${notAfterWord}[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff]|[\\/])`,
   String.raw`(?<![A-Za-z0-9_])\\\\[A-Za-z0-9_.$-]{2,}\\`,
   String.raw`${notAfterPath}${slash}(?:${userRoots})${slash}`,
   String.raw`${notAfterPath}${slash}(?:cygdrive${slash})?[A-Za-z]${slash}(?=[A-Za-z0-9_.~-])`,
+  String.raw`(?<![A-Za-z0-9_])\\\\[?.]\\${ci("UNC")}\\[A-Za-z0-9_.$-]{2,}\\`,
+  String.raw`(?<![A-Za-z0-9_/])${wslShare}(?=${slash}(?:${userRoots})${slash})`,
+  String.raw`${editorRemote}(?=${slash}(?:${userRoots})${slash})`,
 ].map((form) => `(${form})`).join("|"), "gu");
+const rootForms = new Set([3, 4]);
+// The generic forms are tested on the path that such a prefix holds.
+const pathPrefix = new RegExp(String.raw`^(?:\\\\[?.]\\${ci("UNC")}\\|${wslShare}|${editorRemote})`, "u");
 const pathRest = new RegExp(body, "uy");
 const unspaced = new RegExp(`[${["Han", "Hiragana", "Katakana", "Bopomofo", "Thai", "Lao", "Khmer", "Myanmar", "Tibetan", "Yi", "Javanese", "Balinese"]
   .map((script) => String.raw`\p{scx=${script}}`).join("")}]`, "u");
@@ -254,7 +275,14 @@ const goesOn = (line, i, form) => {
   let p = charBefore(line, i);
   while (p && markChar.test(p.c)) p = charBefore(line, p.at);
   if (!p) return false;
-  const root = form >= 3;
+  const root = rootForms.has(form);
+  // One or two underscores of emphasis after no word (a path in italics) are
+  // no word.
+  if (p.c === "_") {
+    let q = charBefore(line, p.at);
+    if (q && q.c === "_") q = charBefore(line, q.at);
+    if (!q || !(letterOrDigit.test(q.c) || q.c === "_" || (root && pathChar.test(q.c)))) return false;
+  }
   let on = wordChar.test(p.c) || (root && pathChar.test(p.c)) || (letterOrDigit.test(p.c) && !unspaced.test(p.c));
   if (!on && root && letterOrDigit.test(p.c)) {
     // A letter of a script without spaces goes on only inside a segment.
@@ -264,6 +292,20 @@ const goesOn = (line, i, form) => {
     }
   }
   return on && !(root && fileUrlBefore(line, i));
+};
+// The last segment of a path ends at its first letter of a script written
+// without spaces: such text right after a path is prose (a drive root and then
+// a sentence in Japanese), while a folder named in one goes on to the
+// separator after it.
+const proseAfter = (rest) => {
+  let from = 0;
+  for (const s of rest.matchAll(/[\\/]|%2[Ff]|%5[Cc]/g)) from = s.index + s[0].length;
+  for (let k = from; k < rest.length; ) {
+    const c = String.fromCodePoint(rest.codePointAt(k));
+    if (unspaced.test(c)) return rest.slice(0, k);
+    k += c.length;
+  }
+  return rest;
 };
 // A home folder in a binary file's strings: the one form worth the cost
 // there, in any case (a .pdb may record the path in capitals) and with
@@ -331,42 +373,54 @@ const asText = (buf) => {
 // A kit names its brand in identity.canonical_name. Every file is read for
 // it, at any depth and however the key is written: quoted, after a dot
 // (identity.canonical_name), in Markdown code or bold, after \n in a JSON
-// string. A value counts when it is quoted in "", '' or backticks (unless it
-// holds a ${...} interpolation), when it is a typed field's quoted default
-// (str = '...'), in an XML element, and in parsed JSON at any depth. An
-// unquoted value counts as YAML reads it, in a file that is not code (YAML,
-// JSON that does not parse, plain text, a .env): a block value with its
-// commas and the more indented lines that go on with it, a flow mapping's
-// values and a flow list's items, and when the key's line ends at the colon
-// or at a block scalar's | or >, the lines below that are indented past the
-// key or are list items at its indent. A line that sets canonical_name= counts
-// in such a file too. Markdown reads the same way in its front matter and in
+// string, escaped twice in a string inside a string. A value counts when it
+// is quoted in "", '' or backticks (unless it holds a ${...} interpolation),
+// also after a YAML anchor or tag, when it is a typed field's quoted default
+// (str = '...'), in an XML element (with a namespace prefix or none), and in
+// parsed JSON at any depth, where a schema of the field gives its examples,
+// default, const and enum. An unquoted value counts as YAML reads it, in a
+// file that is not code (YAML, JSON that does not parse, plain text, a .env, a
+// style sheet): a block value with its commas and the more indented lines
+// that go on with it, a flow mapping's values and a flow list's items, and
+// when the key's line ends at the colon or at a block scalar's | or >, the
+// lines below that are indented past the key or are list items at its
+// indent. A line that sets canonical_name= counts in such a file too, after
+// dotted keys or none. Markdown reads the same way in its front matter and in
 // a fence with no language or a data language (yaml, json, toml, text);
 // outside a fence it is prose, and so is an HTML page outside its script,
 // style and PHP. In prose a value also ends at a comma, a semicolon, a full
 // stop, a bracket or a table's bar, and an HTML tag, a comment's marks or
-// Markdown emphasis around it is not part of it. Code, and a fence labelled
-// with a programming language, holds expressions: an unquoted value there is
-// not read, but a comment is read as prose, and the text of a string, a
-// heredoc or a here-string as YAML (a kit written to a file). A type (str,
-// string, Optional[str] = None, z.string()) is no brand, nor is a placeholder
-// ({{name}}, {name}, ${NAME}, $NAME, %NAME%, <name>), nor a mapping under the
-// key that has a $ref key or a JSON Schema type: that is a schema describing
-// the field (JSON Schema, OpenAPI). Punctuation and closing brackets that end
+// Markdown emphasis around it is not part of it, nor is an inline tag between
+// the key and its colon. Code, and a fence labelled with a programming
+// language, holds expressions: an unquoted value there is not read, but a
+// comment is read as prose, and the text of a string, a heredoc, a
+// here-string or a SQL dollar-quoted body as YAML (a kit written to a file).
+// A batch file's rem lines are prose, and what each echo writes is YAML. A
+// type (str, string, Optional[str] = None, z.string()) is no brand, nor is a
+// placeholder ({{name}}, {name}, ${NAME}, $NAME, $1, $(command), %NAME%, a
+// printf conversion such as %s, <name>, an expression in braces), nor an
+// empty value, nor a mapping under the key that has a $ref key or a JSON
+// Schema type: that is a schema describing the field (JSON Schema, OpenAPI).
+// In prose, a comment or a string, a value that describes the field is no
+// brand either (describes, below). Punctuation and closing brackets that end
 // a value are not part of it. Only file paths are reported, never a brand.
-const quotedBrand = /canonical_name(?:\\?["']|[`*_]){0,3}\s*[:=]\s*\\?["']([^"'\\\r\n]*)/g;
+const quotedBrand = /canonical_name(?:\\*["']|[`*_]){0,3}\s*[:=]\s*(?:[&!][^\s"'\\]*\s+)*(\\*)(["'])([^"'\\\r\n]*)/g;
 const backtickBrand = /canonical_name(?:\\?["']|[`*_]){0,3}[ \t]*[:=][ \t]*(`+)([^`\r\n]*)\1/g;
 const typeName = "(?:str|string|String|None|null|Null|NULL|undefined)";
 const typeExpr = String.raw`(?:(?:Optional|Union)\[)?${typeName}(?:[\s\[\]|!?,]*${typeName})*[\s\[\]|!?]*`;
 const typeWord = new RegExp(String.raw`^(?:~|${typeExpr}(?:=.*)?|z\.string\(\)\S*)\s*[;,]?$`);
 const typedDefault = new RegExp(String.raw`canonical_name(?:\\?["']|[\x60*_]){0,3}[ \t]*:[ \t]*${typeExpr}=[ \t]*(["'\x60])([^"'\x60\\\r\n]*)\1`, "g");
-const xmlBrand = /<canonical_name(?:\s[^>]*)?>([^<]*)</g;
-const placeholder = /^(?:\{\{.*|\{[A-Za-z_][\w.]*\}?|\$\{[^{}]*\}?|\$\(?[A-Za-z_][\w:]*\)?|%[A-Za-z_]\w*%|<[^<>]*>?)$/;
+const xmlBrand = /<(?:[A-Za-z_][\w.-]*:)?canonical_name(?:\s[^<>]*)?>([^<]*)</g;
+const placeholder = /^(?:\{\{.*|\{[A-Za-z_][\w.]*\}?|\$\{[^{}]*\}?|\$\(?[A-Za-z_][\w:]*\)?|\$(?:\d+|[@*#?])|\$\((?:[^()]|\([^()]*\))*\)|%(?:\([A-Za-z_]\w*\))?[-+ #0]*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh?|ll?|[Lqjzt])?[A-Za-z]|%[A-Za-z_]\w*%|<[^<>]*>?)$/;
+// In prose, a comment or a code string, a value can describe the field rather
+// than give it: an article and a lower-case word ("the brand name, exactly as
+// printed"), or a word for a value that is not there.
+const describes = (name) => /^(?:[Tt]he|[Aa]n?)\s+\p{Ll}/u.test(name) || /^(?:missing|required|optional|empty|unset|not set|none|n\/a|tbd|todo|unknown|invalid)$/i.test(name);
 const plainKey = /(?:(?<![A-Za-z0-9_])|(?<=\\[nrt])|(?<=(?:^|[^A-Za-z0-9_])_{1,2}))(["']?)canonical_name\1[`*_]{0,3}[ \t]*:/g;
-const envKey = /^[ \t]*(?:export[ \t]+)?canonical_name[ \t]*=(.*)$/;
+const envKey = /^[ \t]*(?:export[ \t]+)?(?:[A-Za-z_][\w-]*\.)*canonical_name[ \t]*=(.*)$/;
 const itemStart = /^[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+)*/;
 // A schema's own keys, which a brand map does not have.
-const schemaKey = /(?:^|[{,\s])(["']?)(?:type\1[ \t]*:[ \t]*\[?[ \t]*["']?(?:string|number|integer|boolean|object|array|null)(?![\w-])|\$ref\1[ \t]*:)/;
+const schemaKey = /(?:^|[{,\s])(["']?)(?:type\1[ \t]*:[ \t]*(?:\[[ \t]*)?["']?(?:string|number|integer|boolean|object|array|null)(?![\w-])|\$ref\1[ \t]*:)/;
 const htmlLang = /^(?:html?|xhtml|vue|svelte|astro|php)$/i;
 const codeLang = /^(?:[cm]?[jt]sx?|javascript|typescript|py|python|pyi|ps1|psm1|powershell|pwsh|sh|bash|zsh|shell|cmd|bat|batch|rb|ruby|go|rs|rust|java|kts?|kotlin|swift|c|cc|cpp|h|hpp|cs|csharp|lua|graphql|gql|sql|css|scss)$/i;
 const fenceLine = /^\s*(`{3,}|~{3,})[ \t]*([^\s`]*)/;
@@ -378,6 +432,9 @@ const pushAll = (into, items) => {
 };
 // Every canonical_name string in a parsed JSON value, walked with a list of
 // its own rather than by recursion, so a deeply nested file cannot overflow.
+// A schema of the field gives values of it too: its examples, default, const
+// and enum.
+const schemaValues = ["examples", "default", "const", "enum"];
 const jsonBrands = (root) => {
   const out = [];
   for (const stack = [root]; stack.length; ) {
@@ -386,6 +443,11 @@ const jsonBrands = (root) => {
     else if (value && typeof value === "object") {
       for (const [key, item] of Object.entries(value)) {
         if (key === "canonical_name" && typeof item === "string") out.push(item);
+        else if (key === "canonical_name" && item && typeof item === "object" && !Array.isArray(item)) {
+          for (const k of schemaValues) {
+            for (const x of Array.isArray(item[k]) ? item[k] : [item[k]]) if (typeof x === "string") out.push(x);
+          }
+        }
         stack.push(item);
       }
     }
@@ -399,15 +461,21 @@ const lexerFor = (lang) => {
   const sh = /^(?:sh|bash|zsh|shell)$/.test(l);
   const hash = ps || sh || /^(?:py|python|pyi|rb|ruby|graphql|gql)$/.test(l);
   const js = /^(?:[cm]?[jt]sx?|javascript|typescript)$/.test(l);
+  const sql = l === "sql";
   return {
-    line: hash ? ["#"] : l === "css" ? [] : l === "sql" || l === "lua" ? ["--"] : l === "php" ? ["//", "#"] : ["//"],
+    line: hash ? ["#"] : sql || l === "lua" ? ["--"] : l === "php" ? ["//", "#"] : ["//"],
     blocks: ps ? [["<#", "#>"]] : /^(?:rb|ruby)$/.test(l) ? [["=begin", "=end"]] : hash ? [] : l === "lua" ? [["--[[", "]]"]] : [["/*", "*/"]],
     quotes: js || l === "go" ? "\"'`" : "\"'",
     triple: /^(?:py|python|pyi|graphql|gql|kts?|kotlin|swift|java|cs|csharp)$/.test(l),
-    heredoc: sh ? /^<<-?[ \t]*(["']?)([A-Za-z_]\w*)\1/ : /^(?:rb|ruby)$/.test(l) ? /^<<[-~]?(["']?)([A-Za-z_]\w*)\1/ : l === "php" ? /^<<<[ \t]*(["']?)([A-Za-z_]\w*)\1/ : null,
+    heredoc: sh ? /^<<-?[ \t]*\\?(["']?)([A-Za-z_]\w*)\1/ : /^(?:rb|ruby)$/.test(l) ? /^<<[-~]?(["']?)([A-Za-z_]\w*)\1/ : l === "php" ? /^<<<[ \t]*(["']?)([A-Za-z_]\w*)\1/ : null,
     hereString: ps,
     spans: sh || ps,
-    rawSingle: sh,
+    // PowerShell escapes with a backtick, and neither it nor a shell escapes
+    // in single quotes.
+    escape: ps ? "`" : "\\",
+    rawSingle: sh || ps,
+    // A SQL body between $$ or $tag$ marks.
+    dollar: sql,
     regex: js,
   };
 };
@@ -421,25 +489,31 @@ const lineEnd = (text, k) => {
 // batch file those are a rem or :: line and what an echo writes.
 const codePieces = (text, lang) => {
   const pieces = [];
+  // A style sheet's declarations are keys and values: it reads as YAML does.
+  if (/^(?:css|scss)$/i.test(lang)) return [{ prose: false, lines: text.split(/\r?\n/) }];
   if (/^(?:cmd|bat|batch)$/i.test(lang)) {
     const notes = [];
     const echoes = [];
     for (const line of text.split(/\r?\n/)) {
       notes.push(line.match(/^\s*@?(?:rem(?=\s|$)|::)(.*)$/i)?.[1] ?? "\0");
-      for (const e of line.matchAll(/(?:^|[\s&|(])@?echo[ \t.:]([^\r\n]*)/gi)) echoes.push(e[1].split(/(?<!\^)[<>|&]/)[0]);
+      // An echo writes up to an unescaped & or |, which starts another command.
+      for (const e of line.matchAll(/(?:^|[\s&|(])@?echo[ \t.:]((?:\^[^\r\n]|[^\r\n&|^])*)/gi)) echoes.push(e[1].split(/(?<!\^)[<>]/)[0]);
     }
     return [{ prose: true, lines: notes }, { prose: false, lines: echoes }];
   }
   const o = lexerFor(lang);
   const n = text.length;
-  const say = (s) => pieces.push({ prose: false, lines: unescapeText(s).split(/\r?\n/) });
+  // A string's text is said: a passage of it can describe a field.
+  const say = (s) => pieces.push({ prose: false, said: true, lines: unescapeText(s).split(/\r?\n/) });
   // A quote that closes nothing up to an index does not close later either.
   const noClose = new Map();
   let notes = null;
   let notesEnd = -1;
   let heredocs = [];
   let last = "";
+  let before = "";
   let word = "";
+  let regexMiss = -1;
   for (let i = 0; i < n; ) {
     const c = text[i];
     if (c === "\n" && heredocs.length) {
@@ -515,12 +589,23 @@ const codePieces = (text, lang) => {
       last = '"';
       continue;
     }
+    if (c === "$" && o.dollar) {
+      const t = text.slice(i, i + 66).match(/^\$(?:[A-Za-z_]\w{0,63})?\$/);
+      if (t) {
+        let e = text.indexOf(t[0], i + t[0].length);
+        if (e < 0) e = n;
+        say(text.slice(i + t[0].length, e));
+        i = Math.min(n, e + t[0].length);
+        last = "'";
+        continue;
+      }
+    }
     if (o.quotes.includes(c) && !(i < (noClose.get(c) ?? -1))) {
       let j = i + 1;
       let closed = false;
       for (; j < n; j++) {
         const d = text[j];
-        if (d === "\\" && !(o.rawSingle && c === "'")) { j++; continue; }
+        if (d === o.escape && !(o.rawSingle && c === "'")) { j++; continue; }
         if (d === c) { closed = true; break; }
         if (d === "\n" && !o.spans && c !== "`") break;
       }
@@ -535,7 +620,9 @@ const codePieces = (text, lang) => {
       last = c;
       continue;
     }
-    if (c === "/" && o.regex && (/^[(,=:[!&|?{};+\-*%<>~^]?$/.test(last) || /^(?:return|typeof|case|do|else|in|of|void|yield|await|delete|instanceof|new|throw)$/.test(word))) {
+    // A slash after i++ or i-- divides. A scan that found no closing slash
+    // ends where this line does, and no later slash on the line starts one.
+    if (c === "/" && o.regex && i >= regexMiss && !(/^[+-]$/.test(last) && before === last) && (/^[(,=:[!&|?{};+\-*%<>~^]?$/.test(last) || /^(?:return|typeof|case|do|else|in|of|void|yield|await|delete|instanceof|new|throw)$/.test(word))) {
       // A regular expression literal, to its closing slash on this line.
       let j = i + 1;
       let inClass = false;
@@ -551,15 +638,23 @@ const codePieces = (text, lang) => {
         word = "";
         continue;
       }
+      regexMiss = j;
     }
     if (/[A-Za-z0-9_$]/.test(c)) word = /[A-Za-z0-9_$]/.test(text[i - 1] ?? "") ? word + c : c;
     else if (!/\s/.test(c)) word = "";
-    if (!/\s/.test(c)) last = c;
+    if (!/\s/.test(c)) {
+      before = last;
+      last = c;
+    }
     i += 1;
   }
   return pieces;
 };
 const blankOut = (s) => s.replace(/[^\r\n]/g, " ");
+// A line of prose without a comment's marks or the inline tags that can sit
+// between a key and its colon (code, span, emphasis, a link).
+const inlineTag = /<\/?(?:code|span|b|strong|em|i|kbd|samp|var|tt|mark|a|u|small|q|cite|abbr)\b[^<>]*>/gi;
+const proseLine = (line) => line.replace(/<!--|-->/g, (marks) => " ".repeat(marks.length)).replace(inlineTag, "");
 // An HTML page, a Vue, Svelte or Astro component, or a PHP page: its script,
 // style and PHP are code, the rest is prose.
 const htmlPieces = (text, lang) => {
@@ -571,11 +666,11 @@ const htmlPieces = (text, lang) => {
       return blankOut(front);
     });
   }
-  page = page.replace(/<script\b[^>]*>([\s\S]*?)(?:<\/script\s*>|$)|<style\b[^>]*>([\s\S]*?)(?:<\/style\s*>|$)|<\?(?:php\b|=)?([\s\S]*?)(?:\?>|$)/gi, (all, script, style, php) => {
+  page = page.replace(/<script\b[^<>]*>([\s\S]*?)(?:<\/script\s*>|$)|<style\b[^<>]*>([\s\S]*?)(?:<\/style\s*>|$)|<\?(?:php\b|=)?([\s\S]*?)(?:\?>|$)/gi, (all, script, style, php) => {
     pushAll(pieces, codePieces(script ?? style ?? php ?? "", script !== undefined ? "js" : style !== undefined ? "css" : "php"));
     return blankOut(all);
   });
-  pieces.push({ prose: true, lines: page.replace(/<!--|-->/g, (marks) => " ".repeat(marks.length)).split(/\r?\n/) });
+  pieces.push({ prose: true, lines: page.split(/\r?\n/).map(proseLine) });
   return pieces;
 };
 // Markdown: front matter is YAML, prose outside a fence, and a fence as the
@@ -595,7 +690,7 @@ const markdownPieces = (text) => {
   for (; i < lines.length; i++) {
     const f = lines[i].match(fenceLine);
     if (!f) {
-      prose.push(lines[i].replace(/<!--|-->/g, (marks) => " ".repeat(marks.length)));
+      prose.push(proseLine(lines[i]));
       continue;
     }
     const body = [];
@@ -654,8 +749,22 @@ const flowBody = (lines, i, v, flow) => {
   return { body, cut: j < lines.length };
 };
 // A line's or a flow item's value, without its list dashes or its key. A
-// quoted key's colon needs no space after it ({"en":"Metrix"}).
-const valueOf = (piece) => piece.replace(/^\s*(?:-(?:\s+|$))*/, "").replace(/^(?:"[^"]*"|'[^']*')\s*:\s*|^[^:"'\s][^:"']*?\s*:(?:\s+|$)/, "");
+// quoted key's colon needs no space after it ({"en":"Metrix"}); a plain key
+// runs to the first colon, with no quote before it and a space or the end
+// after it. Read in one pass, so a long line costs time in step with it.
+const space = /\s/;
+const valueOf = (piece) => {
+  const s = piece.replace(/^\s*(?:-(?:\s+|$))*/, "");
+  const quoted = s.match(/^(?:"[^"]*"|'[^']*')\s*:\s*/);
+  if (quoted) return s.slice(quoted[0].length);
+  const k = s.search(/[:"']/);
+  if (k > 0 && s[k] === ":" && (k + 1 === s.length || space.test(s[k + 1]))) {
+    let e = k + 1;
+    while (e < s.length && space.test(s[e])) e += 1;
+    return s.slice(e);
+  }
+  return s;
+};
 // The values in a flow mapping or list: a list's items and a mapping's
 // values. A mapping's item without a key is a key with no value, as a
 // placeholder ({brand}, {{ name }}) reads.
@@ -688,16 +797,37 @@ const upTo = (text, cut, more) => {
 const proseValue = (s, more = false) => upTo(s.replace(/<[^<>]*>/g, " "), proseCut, more);
 // A value without a comment, the quotes and emphasis around it, or the
 // punctuation after it; a closing bracket goes too when nothing opened it.
+// Trimmed a character at a time, so a long run of spaces costs time in step
+// with it. No type or placeholder runs past 256 characters, so a longer value
+// is a name without being tested as one.
+const leadMark = /[\s"'`*_]/;
+const tailMark = /[\s"'`*_.,;:!?}\]]/;
+const tailMarkParen = /[\s"'`*_.,;:!?})\]]/;
+const trimWith = (s, lead, tail) => {
+  let a = 0;
+  let b = s.length;
+  while (lead && a < b && lead.test(s[a])) a += 1;
+  while (b > a && tail.test(s[b - 1])) b -= 1;
+  return s.slice(a, b);
+};
 const brandName = (piece) => {
-  let name = piece.replace(/(?:^|[ \t])#.*$/, "").replace(/^[\s"'`*_]+|[\s"'`*_.,;:!?}\]]+$/g, "");
-  if (!name.includes("(")) name = name.replace(/[\s"'`*_.,;:!?})\]]+$/, "");
+  let name = trimWith(piece.replace(/(?:^|[ \t])#.*$/, ""), leadMark, tailMark);
+  if (!name.includes("(")) name = trimWith(name, null, tailMarkParen);
+  if (name.length > 256) return name;
   return name && !typeWord.test(name) && !placeholder.test(name) ? name : "";
+};
+// A quoted or parsed value names a brand unless it is empty, the engine's
+// own, a type or a placeholder.
+const named = (raw) => {
+  const s = raw.trim();
+  if (!s || s === "Metrix") return false;
+  return s.length > 256 || (!typeWord.test(s) && !placeholder.test(s));
 };
 // A line that starts a block of its own (a list item, a heading, a fence, a
 // quote, a rule, a YAML document marker), and a line that is a YAML key.
 const blockStart = /^[ \t]*(?:(?:[-*+]|\d+[.)])(?:[ \t]|$)|#|```|~~~|>|(?:[-*_=][ \t]*){3,}$|\.\.\.[ \t]*$)/;
-const yamlKey = /^[ \t]*(?:\?(?:[ \t]|$)|(?:"[^"]*"|'[^']*'|[^\s"'#][^:#]*?)[ \t]*:(?:[ \t]|$))/;
-const plainBrands = (raw, prose, flow) => {
+const yamlKey = /^[ \t]*(?:\?(?:[ \t]|$)|(?:(?:"[^"]*"|'[^']*')[ \t]*|[^\s"'#][^:#]*):(?:[ \t]|$))/;
+const plainBrands = (raw, prose, flow, lenient) => {
   const names = [];
   const lines = raw.flatMap((line) => (line.includes("canonical_name") && /\\[nr]/.test(line) ? line.split(/\\r\\n|\\[nr]/) : [line]));
   if (!lines.some((line) => line.includes("canonical_name"))) return names;
@@ -720,14 +850,24 @@ const plainBrands = (raw, prose, flow) => {
   // Where the last flow value read as values ends. A key whose flow value
   // opens before there sits inside it, and its values are among those read.
   let flowEnd = { line: -1, col: 0 };
+  // In prose, a comment or a string, a value that describes the field is no
+  // name (describes, above).
+  const nameOf = (piece) => {
+    const name = brandName(piece);
+    return name && !(lenient && describes(name)) ? name : "";
+  };
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (!line.includes("canonical_name")) continue;
     const env = prose ? null : line.match(envKey);
-    if (env) names.push(brandName(env[1].split(/[ \t]#/)[0]));
+    if (env) names.push(nameOf(env[1].split(/[ \t]#/)[0]));
     // Brackets still open before a key say it sits in a flow mapping or list.
     let at = 0;
     let open = 0;
+    // Every key on a line has the same column (its line's indent and list
+    // marks), so the lines below are walked once for the line, not per key.
+    let walkedBelow = false;
+    let walkedOn = false;
     for (const m of line.matchAll(plainKey)) {
       for (; at < m.index; at++) {
         if (line[at] === "{" || line[at] === "[") open += 1;
@@ -740,6 +880,10 @@ const plainBrands = (raw, prose, flow) => {
       for (let t; (t = line.slice(v, v + 200).match(/^[&!]\S*(?:[ \t]+|$)/)); ) v += t[0].length;
       const value = line.slice(v, v + 4096);
       if (/^["'`]/.test(value)) continue;
+      // A value in braces that holds an expression, with no colon, comma or
+      // brace in it (an f-string's {kit['identity']['canonical_name']}), is a
+      // placeholder.
+      if (/^\{[A-Za-z_][^{}:,\r\n]*\}/.test(value)) continue;
       const more = line.length > v + 4096;
       const col = Math.min(m.index, line.match(itemStart)[0].length);
       const pieces = [];
@@ -752,6 +896,8 @@ const plainBrands = (raw, prose, flow) => {
           flowEnd = { line: read.line, col: read.col };
         }
       } else if (/^(?:[|>][-+0-9]*)?[ \t]*(?:#.*)?$/.test(value)) {
+        if (walkedBelow) continue;
+        walkedBelow = true;
         const below = [];
         for (let j = nextFilled[i + 1]; j < lines.length; j = nextFilled[j + 1]) {
           const { indent, item } = fact(j);
@@ -786,13 +932,14 @@ const plainBrands = (raw, prose, flow) => {
         if (piece === null) return [tooLong];
         pieces.push(piece);
         // A plain value goes on in the lines below that are indented past it.
-        for (let j = i + 1; j < lines.length && !blank[j] && fact(j).indent > col; j++) {
+        for (let j = i + 1; !walkedOn && j < lines.length && !blank[j] && fact(j).indent > col; j++) {
           if (readOn.has(j)) continue;
           readOn.add(j);
           pieces.push(lines[j]);
         }
+        walkedOn = true;
       }
-      for (const piece of pieces) names.push(brandName(piece));
+      for (const piece of pieces) names.push(nameOf(piece));
     }
   }
   return names.filter(Boolean);
@@ -822,18 +969,23 @@ const extraBrands = (text) => {
 const otherBrand = (text, rel) => {
   const other = (name) => name !== "Metrix";
   if (text.includes("canonical_name")) {
-    for (const m of text.matchAll(quotedBrand)) if (other(m[1])) return true;
+    // A quoted value read to its closing quote is tested as a whole (named);
+    // one cut short by an escape is a name unless it is the engine's.
+    for (const m of text.matchAll(quotedBrand)) {
+      const whole = text.startsWith(m[1] + m[2], m.index + m[0].length);
+      if (whole ? named(m[3]) : other(m[3])) return true;
+    }
     if (extraBrands(text).some(other)) return true;
     // The flow values read in a file come to four times its length and a
     // million characters at most; past that it fails, so no shape of nested
     // values costs more than that.
     const flow = { left: 1000000 + 4 * text.length };
-    for (const { prose, lines } of piecesOf(text, rel)) if (plainBrands(lines, prose, flow).some(other)) return true;
+    for (const { prose, said, lines } of piecesOf(text, rel)) if (plainBrands(lines, prose, flow, prose || said === true).some(other)) return true;
   }
   if (!/\.json$/i.test(rel)) return false;
   let parsed;
   try { parsed = JSON.parse(text); } catch { return false; }
-  return jsonBrands(parsed).some(other);
+  return jsonBrands(parsed).some(named);
 };
 const found = {};
 const branded = new Set();
@@ -863,9 +1015,10 @@ for (const rel of tracked) {
         continue;
       }
       pathRest.lastIndex = m.index + m[0].length;
-      const hit = m[0] + (pathRest.exec(line)?.[0] ?? "");
+      const hit = m[0] + proseAfter(pathRest.exec(line)?.[0] ?? "");
       pathStart.lastIndex = m.index + hit.length;
-      if (generic.some((g) => g.test(hit))) continue;
+      const held = hit.replace(pathPrefix, (p) => (/^\\{2}[?.]\\[Uu][Nn][Cc]\\$/.test(p) ? "\\\\" : ""));
+      if (generic.some((g) => g.test(hit) || (held !== hit && g.test(held)))) continue;
       (found[rel] ??= []).push({ line: i + 1, text: hit, hash: hash(hit) });
     }
   });
