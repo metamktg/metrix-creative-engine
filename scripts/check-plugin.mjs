@@ -63,6 +63,12 @@ for (const [name, server] of Object.entries(servers)) {
 // have a plugin.json twin, or a plugin install would carry a broken copy.
 const orphans = Object.keys(rootMcp.mcpServers ?? {}).filter((name) => !(name in servers));
 check("every .mcp.json server is replaced by a plugin.json server of the same name", orphans.length === 0, orphans.join(", "));
+// GO.cmd starts the sprint session inside this checkout, where Claude Code
+// also finds .mcp.json. The session settings stop those servers so the
+// plugin's copies are the only ones; a renamed server would slip through.
+const hidden = json("sprint/session-settings.json").disabledMcpjsonServers ?? [];
+const shown = Object.keys(rootMcp.mcpServers ?? {}).filter((name) => !hidden.includes(name));
+check("sprint/session-settings.json stops every .mcp.json server, since the plugin brings its own", shown.length === 0, shown.join(", "));
 const bundle = read("server/index.js");
 check("server/index.js is the bundle and starts with its shebang", bundle.startsWith("#!/usr/bin/env node\n"));
 

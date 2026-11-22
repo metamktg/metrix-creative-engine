@@ -1,8 +1,9 @@
 DOUBLE-CLICK  GO.cmd  IN THE FOLDER ABOVE THIS ONE.
 ===================================================
 
-That is the whole thing. It updates itself, installs what is missing, finds
-your briefs and reference images, and starts Claude Code.
+That is the whole thing. It updates itself, installs what is missing (Claude
+Code, then the engine as a Claude Code plugin), finds your briefs and reference
+images, and starts Claude Code.
 
 Then paste this one line into Claude Code:
 
@@ -53,7 +54,8 @@ Every failure on 2026-09-16 was a shell or a folder, never the work:
   "npm.ps1 cannot be loaded because running scripts is disabled"
   "claude.ps1 cannot be loaded because running scripts is disabled"
         PowerShell's execution policy blocks .ps1 wrappers.
-        GO.cmd calls npm.cmd and claude.cmd, which it does not block.
+        GO.cmd calls npm.cmd, and claude.exe or claude.cmd, which it does
+        not block.
 
   "The term 'it' is not recognized"
         A paste dropped its first character: "git" arrived as "it".

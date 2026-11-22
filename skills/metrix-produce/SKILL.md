@@ -37,8 +37,10 @@ product photo or receipt into the engine's own folder or any repository.
 
 **Know which tools you have.** If `/mcp` lists the engine's `kie-ai` server,
 use its tools (`kie_validate_brief`, `kie_get_credits`, `kie_run_task` and the
-rest). Otherwise the generating skills carry `scripts/kie.mjs`, which needs only
-Node and the key. Each skill below says how to use either path.
+rest). Otherwise use the script that `kie-generate`, `kie-tasks` and
+`metrix-ad-creative` each carry in their own `scripts/kie.mjs`; this skill has
+none. It needs only Node and the key. Each skill below says how to use either
+path.
 
 **Skills this one calls.** `brand-kit-builder`, `metrix-ad-creative`,
 `metrix-video-assembly`, `ugc-creator-edit` and, for batches, `kie-tasks`. In a
@@ -75,8 +77,8 @@ Work through every brief in the file. The count is whatever the file holds.
    `brand_assets.missing`, stop that brief and ask for them. A generated stand-in
    product presented as the client's is the one failure no later step catches.
 
-5. **Check credits and state the spend.** `kie_get_credits`, or
-   `node scripts/kie.mjs credits` from a generating skill. Give the balance and
+5. **Check credits and state the spend.** `kie_get_credits`, or the script's
+   `credits` command run from a generating skill's directory. Give the balance and
    the estimated spend in one line. Stop if it will not cover the run. A batch
    (more than one brief, or any matrix) renders one representative asset per
    format first and waits for a yes, unless the user already authorized the

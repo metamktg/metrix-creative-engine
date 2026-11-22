@@ -259,8 +259,9 @@ is where that becomes visible after the fact.
 
 ### Where the file lives
 
-`<KIE_AI_DOWNLOAD_DIR or ./out>/kie-ledger.jsonl`, overridable with
-`KIE_AI_LEDGER_PATH`, or `off` to disable. JSONL rather than JSON so a process
+`kie-ledger.jsonl` in the runs folder (`METRIX_RUNS_DIR`, else
+`KIE_AI_DOWNLOAD_DIR`, else `./out`), overridable with `KIE_AI_LEDGER_PATH`,
+or `off` to disable. JSONL rather than JSON so a process
 killed mid-append leaves every earlier line readable; append-only so a batch that
 dies does not take the record of its own successes with it.
 

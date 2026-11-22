@@ -13,10 +13,16 @@ INPUTS
   sprint/out/       everything you produce goes here.
   the brand kit     the account's brand-kit.json, and its
                     MASTER_EXECUTION_PROMPT.md when it has one. Kits are kept
-                    outside this repository; ask me where it is if it is not
-                    in sprint/ or named in the briefs.
+                    outside this repository, in the assets folder's
+                    brand-kits/ (the session start names the assets folder).
+                    Ask me where it is if it is not there, in sprint/, or
+                    named in the briefs.
 
 DO THIS, IN ORDER, WITHOUT ASKING
+  0. Load the metrix-produce skill (metrix-creative-engine:metrix-produce).
+     It routes each brief by its declared format and names the skill for
+     each step. The steps below are this sprint's order and its one stop;
+     where the two differ, this file wins.
   1. Read the brand kit. Its client_account_rules and conflicts_to_resolve
      override the briefs, and its rules override this file.
   2. If the kit has a MASTER_EXECUTION_PROMPT.md, read it and follow it.

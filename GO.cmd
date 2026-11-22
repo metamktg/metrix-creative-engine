@@ -35,17 +35,12 @@ where node >nul 2>&1 || (
   pause & exit /b 1
 )
 
-REM --- Update, then set up ----------------------------------------------
-git pull --ff-only --quiet 2>nul
-powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0sprint\setup.ps1" %*
-if errorlevel 1 (
-  echo.
-  echo   Setup did not finish. Nothing was started.
-  pause & exit /b 1
-)
-
-REM --- Claude Code: .cmd every time, never the .ps1 the policy blocks ---
-where claude.cmd >nul 2>&1 || (
+REM --- Claude Code first: the setup installs the engine through it ------
+REM claude.exe is the native install and claude.cmd the npm one. Either
+REM works. Never the claude.ps1 that the execution policy blocks.
+set "CLAUDE="
+for %%C in (claude.exe claude.cmd) do if not defined CLAUDE for /f "delims=" %%P in ('where %%C 2^>nul') do if not defined CLAUDE set "CLAUDE=%%P"
+if not defined CLAUDE (
   echo.
   echo   Installing Claude Code, one moment...
   REM npm.cmd, not npm: the .ps1 wrapper is what the execution policy refuses.
@@ -54,11 +49,33 @@ where claude.cmd >nul 2>&1 || (
     echo       npm.cmd install -g @anthropic-ai/claude-code
     pause & exit /b 1
   )
+  for /f "delims=" %%P in ('where claude.cmd 2^>nul') do if not defined CLAUDE set "CLAUDE=%%P"
+)
+if not defined CLAUDE (
+  echo   Claude Code is installed but this window cannot see it yet.
+  echo   Close this window and double-click GO.cmd again.
+  pause & exit /b 1
 )
 
+REM --- Update, then set up: the engine installs as a Claude Code plugin --
+git pull --ff-only --quiet 2>nul
+powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0sprint\setup.ps1" %*
+if errorlevel 1 (
+  echo.
+  echo   Setup did not finish. Nothing was started.
+  pause & exit /b 1
+)
+
+REM --- Start the session ------------------------------------------------
+REM Downloads land in sprint\out, the folder GO.txt names, for the plugin's
+REM MCP server as well as the script. The settings file stops this
+REM checkout's own .mcp.json server, which the plugin already brings, so the
+REM session neither asks about it nor runs it twice. Both last for this
+REM session only; nothing is saved.
+set "KIE_AI_DOWNLOAD_DIR=%~dp0sprint\out"
 echo.
 echo   Starting Claude Code. When it is ready, paste this one line:
 echo.
 echo       Read sprint/GO.txt and do exactly what it says.
 echo.
-call claude.cmd
+call "%CLAUDE%" --settings "%~dp0sprint\session-settings.json"

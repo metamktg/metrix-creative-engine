@@ -1,11 +1,74 @@
 # Setup
 
-Three short steps: the key, the skills, a check. No build, no MCP server, no Node
-install beyond what Claude Code already needs.
+The engine installs as one Claude Code plugin: its skills, its MCP server and a
+session hook, together. Take that route unless you have a reason not to. Nothing
+needs building.
 
-## 1. Put your Kie key in the environment
+You need:
 
-Get one at <https://kie.ai/api-key> and make sure the account has credits.
+- Claude Code.
+- Node.js 20 or newer on your PATH. The MCP server and the session hook run on it.
+- Git, for the marketplace install.
+- A Kie.ai key from <https://kie.ai/api-key>, on an account with credits.
+
+## 1. Install the plugin
+
+```
+claude plugin marketplace add metamktg/metrix-creative-engine
+claude plugin install metrix-creative-engine@metrix-creative-engine
+```
+
+The plugin has three options. Set them inside Claude Code with
+`/plugin configure metrix-creative-engine@metrix-creative-engine`, or set the
+two folders when you install:
+
+```
+claude plugin install metrix-creative-engine@metrix-creative-engine --config runs_dir=<folder> --config assets_dir=<folder>
+```
+
+| Option | Key | What it holds | When left empty |
+| --- | --- | --- | --- |
+| Kie.ai API key | `kie_api_key` | Your key, stored as a secret | `KIE_AI_API_KEY` from the environment |
+| Runs folder | `runs_dir` | Generated files, receipts, render specs and the task ledger | `KIE_AI_DOWNLOAD_DIR`, else `./out` in the folder Claude Code started in |
+| Assets folder | `assets_dir` | Brand kits (`brand-kits/<account>/`), product references, approved briefs and accepted media | The folder you work in |
+
+Keep the key out of `--config`: a command line lands in your shell history. Use
+the `/plugin configure` dialog, or put the key in the environment (step 2).
+
+Restart Claude Code after installing or changing an option. Each session then
+opens with one line that names the runs folder, the assets folder and where the
+key came from, or says it is missing. The MCP server states both folders in its
+handshake too.
+
+Client material belongs in the runs and assets folders. Never put a brief, a
+brand kit, a product photo or a receipt in this repository: it is public, and a
+plugin install copies it to every user.
+
+**Use it.** Hand Claude Code an approved brief, for example
+`produce the creative from briefs/creative_briefs.json`. The entry skill,
+`metrix-creative-engine:metrix-produce`, checks the brief, reads its declared
+format and runs the other skills in order.
+
+**Update:**
+
+```
+claude plugin marketplace update metrix-creative-engine
+claude plugin update metrix-creative-engine@metrix-creative-engine
+```
+
+Then restart. An update arrives when the plugin's version rises.
+
+**Remove:** `claude plugin uninstall metrix-creative-engine@metrix-creative-engine`.
+
+**Coming from the old copies.** Earlier setups copied or linked each skill into
+`~/.claude/skills`. A copy left there loads beside the plugin's own, so the same
+skill is listed twice (`kie-generate` and `metrix-creative-engine:kie-generate`).
+Move those folders out once the plugin is installed.
+
+## 2. Or put your key in the environment
+
+The plugin reads `KIE_AI_API_KEY` when its own key option is empty, and so does
+the bundled script.
 
 **Windows (permanent, all future terminals):**
 
@@ -26,35 +89,13 @@ export KIE_AI_API_KEY="your-key-here"
 the Claude Code environment, where the environment's other secrets live. It
 cannot live in the repo.
 
-Optional: `KIE_AI_DOWNLOAD_DIR` sets a default folder for downloaded results.
-
-## 2. Install the skills
-
-**Windows:**
-
-```
-git clone https://github.com/metamktg/metrix-creative-engine.git
-mkdir "%USERPROFILE%\.claude\skills" 2>nul
-xcopy /E /I /Y metrix-creative-engine\skills "%USERPROFILE%\.claude\skills"
-```
-
-**macOS / Linux:**
-
-```bash
-git clone https://github.com/metamktg/metrix-creative-engine.git
-mkdir -p ~/.claude/skills
-ln -s "$(pwd)/metrix-creative-engine/skills/"* ~/.claude/skills/
-```
-
-The symlink form updates itself on `git pull`. The Windows copy does not, so
-re-run the `xcopy` after pulling.
-
-**Claude Code on the web:** nothing to install. Open a session on this repo and
-the skills in `skills/` are picked up from the checkout.
+Optional: `KIE_AI_DOWNLOAD_DIR` sets the runs folder when the plugin's option is
+empty, and `METRIX_ASSETS_DIR` the assets folder.
 
 ## 3. Check it works
 
-One command proves the whole chain and tells you pass or fail:
+From a clone of this repository, one command proves the whole chain and tells
+you pass or fail:
 
 ```
 node scripts/smoke-live.mjs
@@ -79,32 +120,85 @@ generate a 4:5 photo of a red bicycle against a white wall
 
 A result URL means the whole chain works. That is one image, a few credits.
 
-## If you prefer the MCP server
+## Other ways to install
 
-Optional. Generating works fully through the script. The server adds typed tool
-results the model reads instead of parsing, live progress while a task runs, a
-free offline brief check (`kie_validate_brief`, which the script does not have),
-the guarded creator lip-sync tools, the model catalog and routing documents as
-resources, and the render workflow as selectable prompts. It needs a build step,
-which is why it is not the default.
+### Unzip into your skills folder
+
+Download the repository as a zip, or clone it, and put it at
+`~/.claude/skills/metrix-creative-engine/`, so that
+`~/.claude/skills/metrix-creative-engine/.claude-plugin/plugin.json` exists.
+GitHub names the zip's top folder after the branch (`metrix-creative-engine-main`),
+so rename it. The next session loads it as the plugin
+`metrix-creative-engine@skills-dir`, with the same skills, MCP server and hook.
+Set its options with `/plugin configure metrix-creative-engine@skills-dir`. To
+update, replace the folder with a newer copy.
+
+### One skill on its own
+
+Copy one folder from `skills/` into `~/.claude/skills/` (every project) or
+`.claude/skills/` (one project):
 
 ```
-cd metrix-creative-engine
-corepack enable
-pnpm install
-pnpm run build
-claude mcp add kie-ai --scope user --env KIE_AI_API_KEY=your-key -- node <absolute-path>/dist/index.js
+xcopy /E /I /Y metrix-creative-engine\skills\kie-generate "%USERPROFILE%\.claude\skills\kie-generate"   REM Windows
+ln -s "$(pwd)/metrix-creative-engine/skills/kie-generate" ~/.claude/skills/                           # macOS / Linux
 ```
 
-Skills prefer MCP tools when `/mcp` lists `kie-ai`, and fall back to the script
-otherwise. Either way they work.
+The three generating skills (`kie-generate`, `kie-tasks`, `metrix-ad-creative`)
+carry `scripts/kie.mjs` and need only `KIE_AI_API_KEY`. The symlink form updates
+itself on `git pull`; a copy does not. Do not install a skill both ways: it loads
+twice.
 
-To check the server end to end without spending a credit, run
-`pnpm run check:mcp-surface` after a build. It drives the built bundle over a
-real stdio MCP session against a stubbed Kie and asserts the handshake, the
+### The MCP server alone
+
+For Claude Desktop or any other MCP client. The server is the committed
+`server/index.js`, a single file with every dependency inside it, so a clone is
+enough. It adds typed tool results the model reads instead of parsing, live
+progress while a task runs, a free offline brief check (`kie_validate_brief`,
+which the script does not have), the guarded creator lip-sync tools, the model
+catalog and routing documents as resources, and the render workflow as
+selectable prompts. Without the skills it has no workflow of its own.
+
+Claude Code:
+
+```
+claude mcp add kie-ai --scope user --env KIE_AI_API_KEY=your-key -- node <absolute-path>/server/index.js
+```
+
+Claude Desktop, in `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "kie-ai": {
+      "command": "node",
+      "args": ["<absolute-path>/server/index.js"],
+      "env": {
+        "KIE_AI_API_KEY": "your-key",
+        "KIE_AI_DOWNLOAD_DIR": "<absolute-path-to-your-runs-folder>",
+        "METRIX_ASSETS_DIR": "<absolute-path-to-your-assets-folder>"
+      }
+    }
+  }
+}
+```
+
+Every variable the server reads is in
+[`MCP_TOOLS.md`](MCP_TOOLS.md#configuration). Skills prefer MCP tools when
+`/mcp` lists `kie-ai`, and fall back to the script otherwise.
+
+To check the server end to end without spending a credit, run `pnpm install`
+then `pnpm run check:mcp-surface` in a clone. It drives the committed bundle over
+a real stdio MCP session against a stubbed Kie and asserts the handshake, the
 advertised capabilities, every tool's output schema, the resources, the prompts
 and the progress notifications. The expected tool, resource and prompt lists are
 in that script.
+
+### Claude Code on the web
+
+Nothing to install. A session on this repository reads `AGENTS.md`, which sends
+production to `skills/metrix-produce/SKILL.md`, and `.mcp.json` starts the MCP
+server from the committed bundle with the environment's `KIE_AI_API_KEY`. The
+session hook installs the development dependencies so `npm run verify` can run.
 
 ## Optional: open an edit in Kdenlive (Windows)
 
@@ -118,7 +212,11 @@ stops with a message when the editor is not there. Nothing else in the repositor
 | Symptom | Cause |
 | --- | --- |
 | "KIE_AI_API_KEY is not set" | Key missing from the environment. On Windows, reopen the terminal after `setx` |
-| Skill not listed by `/skills` | Not copied into `.claude/skills`, or Claude Code needs a restart |
+| `plugin:metrix-creative-engine:kie-ai` failed to connect (`/mcp`, `claude mcp list`) | No key: set the plugin's key option or `KIE_AI_API_KEY`, then restart Claude Code |
+| Skill not listed by `/skills` | Not installed: `claude plugin list` should show `metrix-creative-engine`. Restart Claude Code after installing |
+| Every skill listed twice | Old copies in `~/.claude/skills` beside the plugin. Move them out |
+| "node" not found as a session starts | Node.js is not on PATH. Install Node 20 or newer |
+| An update did not arrive | Run `claude plugin marketplace update metrix-creative-engine` first. `claude plugin update` moves only when the version rises |
 | "Kie error … code 401" | Key wrong or revoked. Check <https://kie.ai/api-key> |
 | "Kie error … code 402" | Out of credits |
 | "Kie error … code 429" | Request limit exceeded. Pace the batch and retry |
@@ -174,8 +272,8 @@ storage. Download anything you intend to keep or hand to a client.
 ## The task ledger
 
 On by default. Every generation this server or the CLI starts appends one line
-to `<KIE_AI_DOWNLOAD_DIR or ./out>/kie-ledger.jsonl`, and another when it
-settles. The settle line carries the credits the task consumed when Kie reports
+to `kie-ledger.jsonl` in the runs folder (the plugin's option, else
+`KIE_AI_DOWNLOAD_DIR`, else `./out`), and another when it settles. The settle line carries the credits the task consumed when Kie reports
 them, and a task with no recorded cost is unknown, not free.
 
 It exists because Kie's result URLs expire after about 24 hours while the

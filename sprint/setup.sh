@@ -3,8 +3,9 @@
 #
 #   bash sprint/setup.sh
 #
-# Installs the skills, makes the sprint folders, and proves the key works.
-# Safe to re-run.
+# Installs the engine as a Claude Code plugin, makes the sprint folders, and
+# proves the key works. Safe to re-run: every step is a no-op when its work is
+# already done.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,12 +44,52 @@ else
   echo "  key: already set in this terminal"
 fi
 
-mkdir -p "$skills"
-for s in "$repo"/skills/*; do
-  rm -rf "$skills/$(basename "$s")"
-  ln -s "$s" "$skills/$(basename "$s")"
+# The engine, as one Claude Code plugin: the skills, the MCP server and the
+# session hook, from GitHub, the way every user installs them. Not from this
+# checkout: a plugin install copies its source folder, and this one holds
+# sprint/briefs, sprint/refs and sprint/out, which are client material. Each
+# command is a no-op when its work is already done.
+if ! command -v claude >/dev/null 2>&1; then
+  printf '  Claude Code is not installed: https://docs.claude.com/en/docs/claude-code/setup\n'
+  exit 1
+fi
+plugin=metrix-creative-engine@metrix-creative-engine
+for step in "marketplace add metamktg/metrix-creative-engine" "marketplace update metrix-creative-engine" "install $plugin" "update $plugin"; do
+  # The words of $step are the command's arguments, so they are not quoted.
+  # shellcheck disable=SC2086
+  if ! out="$(claude plugin $step 2>&1)"; then
+    printf '  plugin: "claude plugin %s" failed:\n%s\n' "$step" "$out"
+    exit 1
+  fi
 done
-echo "  skills: linked into $skills"
+echo "  plugin: $plugin installed and current"
+
+# The old setup linked each skill into ~/.claude/skills, and those links load
+# beside the plugin's copies, so each skill would be listed twice. A link
+# that points into this checkout is this script's own and goes. Anything else
+# may be someone's edited copy, so it is named and left alone.
+kept=""
+for s in "$repo"/skills/*; do
+  dest="$skills/$(basename "$s")"
+  if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$s" ]; then
+    rm "$dest"
+  elif [ -e "$dest" ]; then
+    kept="$kept $(basename "$s")"
+  fi
+done
+if [ -n "$kept" ]; then
+  printf '  skills: standalone copies in %s load beside the plugin'"'"'s:%s\n' "$skills" "$kept"
+  printf '          Move them out of %s to load only the plugin'"'"'s.\n' "$skills"
+fi
+
+# Brand kits live in the assets folder: METRIX_ASSETS_DIR when the
+# environment sets it, else the plugin's assets folder option. load.sh looks
+# there before this checkout's own brand-kits folder.
+if [ -z "${METRIX_ASSETS_DIR:-}" ]; then
+  METRIX_ASSETS_DIR="$(claude plugin configure "$plugin" --json 2>/dev/null | node -e 'let s="";process.stdin.on("data",(d)=>(s+=d)).on("end",()=>{try{process.stdout.write(JSON.parse(s).inputs?.assets_dir||"")}catch{}})' || true)"
+fi
+export METRIX_ASSETS_DIR
+if [ -n "$METRIX_ASSETS_DIR" ]; then echo "  assets: $METRIX_ASSETS_DIR"; fi
 
 mkdir -p "$here/briefs" "$here/refs" "$here/out"
 echo "  folders: sprint/briefs, sprint/refs, sprint/out"
@@ -66,4 +107,9 @@ fi
 # load.sh opens the folder itself when it finds nothing.
 bash "$here/load.sh" "$@" || true
 
-printf 'Ready.\n\n'
+# The same start GO.cmd makes on Windows: downloads land in sprint/out, and the
+# settings file stops this checkout's own .mcp.json server, which the plugin
+# already brings. Both last for that session only.
+printf 'Ready. Start Claude Code with:\n\n'
+printf '  cd %q && KIE_AI_DOWNLOAD_DIR="$PWD/sprint/out" claude --settings sprint/session-settings.json\n\n' "$repo"
+printf 'then paste:  Read sprint/GO.txt and do exactly what it says.\n\n'

@@ -2,9 +2,9 @@
 #
 #   powershell -ExecutionPolicy Bypass -File sprint\setup.ps1
 #
-# Installs the skills, makes the sprint folders, and proves the key works.
-# Safe to re-run: it overwrites the skills with the current version, which is
-# what you want after a git pull.
+# Installs the engine as a Claude Code plugin, makes the sprint folders, and
+# proves the key works. Safe to re-run: every step is a no-op when its work is
+# already done, so a re-run after a git pull only picks up a new version.
 
 # Passed straight through to load.ps1. It lives here because setup.ps1 is the
 # only entry point that updates itself first, so it is the only one that can be
@@ -91,10 +91,62 @@ if ([string]::IsNullOrWhiteSpace($env:KIE_AI_API_KEY)) {
   Write-Host "  key: already set in this terminal" -ForegroundColor Green
 }
 
-# 2. Skills --------------------------------------------------------------
-New-Item -ItemType Directory -Force -Path $skills | Out-Null
-Copy-Item -Path (Join-Path $repo "skills\*") -Destination $skills -Recurse -Force
-Write-Host "  skills: installed to $skills" -ForegroundColor Green
+# 2. The engine, as one Claude Code plugin --------------------------------
+# The skills, the MCP server and the session hook install together, from
+# GitHub, the way every user installs them. Not from this checkout: a plugin
+# install copies its source folder, and this one holds sprint\briefs,
+# sprint\refs and sprint\out, which are client material. Each command is a
+# no-op when its work is already done.
+$claude = Get-Command claude.exe, claude.cmd -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $claude) {
+  Write-Host "  Claude Code is not installed, or not on PATH. GO.cmd installs it." -ForegroundColor Red
+  exit 1
+}
+$plugin = "metrix-creative-engine@metrix-creative-engine"
+$steps = @(
+  @("plugin", "marketplace", "add", "metamktg/metrix-creative-engine"),
+  @("plugin", "marketplace", "update", "metrix-creative-engine"),
+  @("plugin", "install", $plugin),
+  @("plugin", "update", $plugin)
+)
+foreach ($step in $steps) {
+  # A native command's stderr is progress, not a PowerShell error.
+  $ErrorActionPreference = "Continue"
+  $out = & $claude.Source @step 2>&1 | ForEach-Object { "$_" }
+  $code = $LASTEXITCODE
+  $ErrorActionPreference = "Stop"
+  if ($code -ne 0) {
+    Write-Host ("  plugin: 'claude " + ($step -join " ") + "' failed (exit " + $code + "):") -ForegroundColor Red
+    $out | ForEach-Object { Write-Host ("    " + $_) }
+    exit 1
+  }
+}
+Write-Host "  plugin: $plugin installed and current" -ForegroundColor Green
+
+# The old setup copied each skill into ~/.claude/skills. Those copies load
+# beside the plugin's, so every skill would be listed twice. They are not
+# moved here, because one may be someone's edited copy: this names them and
+# prints the command that moves them aside.
+$old = @(Get-ChildItem -Path (Join-Path $repo "skills") -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $skills $_.Name) } | ForEach-Object { $_.Name })
+if ($old.Count -gt 0) {
+  $backup = Join-Path $env:USERPROFILE (".claude\skills-before-plugin-" + (Get-Date -Format "yyyyMMdd"))
+  Write-Host ("  skills: " + $old.Count + " standalone copies in " + $skills + " load beside the plugin's:") -ForegroundColor Yellow
+  Write-Host ("          " + ($old -join ", "))
+  Write-Host "          To load only the plugin's, move them aside with:"
+  Write-Host ("          `$to = '" + $backup + "'; New-Item -ItemType Directory -Force `$to | Out-Null; foreach (`$n in '" + ($old -join "','") + "') { Move-Item -LiteralPath (Join-Path '" + $skills + "' `$n) -Destination `$to }")
+}
+
+# Brand kits live in the assets folder: METRIX_ASSETS_DIR when the
+# environment sets it, else the plugin's assets folder option. load.ps1 looks
+# there before this checkout's own brand-kits folder.
+if (-not $env:METRIX_ASSETS_DIR) {
+  $ErrorActionPreference = "Continue"
+  $configured = (& $claude.Source plugin configure $plugin --json 2>$null) -join "`n"
+  $ErrorActionPreference = "Stop"
+  try { $assetsDir = ($configured | ConvertFrom-Json).inputs.assets_dir } catch { $assetsDir = "" }
+  if ($assetsDir) { $env:METRIX_ASSETS_DIR = $assetsDir }
+}
+if ($env:METRIX_ASSETS_DIR) { Write-Host "  assets: $env:METRIX_ASSETS_DIR" -ForegroundColor Green }
 
 # 3. Folders -------------------------------------------------------------
 foreach ($d in @("briefs", "refs", "out")) {

@@ -108,7 +108,19 @@ if [ "$n" -gt 0 ]; then printf '  refs:   %d image(s) from %s\n' "$n" "$srcdir";
 # Nothing local? Pull the brand kit's recorded asset URLs. A render without
 # references invents the product.
 if [ "$n" -eq 0 ]; then
-  kit="$(find "$sprint/../brand-kits" -name brand-kit.json 2>/dev/null | head -2)"
+  # Kits live in the assets folder's brand-kits (METRIX_ASSETS_DIR, which
+  # setup.sh fills from the plugin's assets folder option). A kit kept in this
+  # checkout's own git-ignored brand-kits still counts. The first place that
+  # holds kits is used, and only when it holds exactly one.
+  kit=""
+  for kitdir in ${METRIX_ASSETS_DIR:+"$METRIX_ASSETS_DIR/brand-kits"} "$sprint/../brand-kits"; do
+    kit="$(find "$kitdir" -name brand-kit.json 2>/dev/null | head -2)"
+    [ -n "$kit" ] && break
+  done
+  if [ -n "$kit" ] && [ "$(printf '%s\n' "$kit" | wc -l)" != "1" ]; then
+    printf '  refs:   several brand kits in %s, so none was used.\n' "$kitdir"
+    printf '          Put the product images in a folder of their own and pass it.\n'
+  fi
   if [ "$(printf '%s\n' "$kit" | wc -l)" = "1" ] && [ -n "$kit" ]; then
     node -e '
       const fs=require("fs"), {execFileSync}=require("child_process");
