@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<!-- Council live session page template (F11).
+     Filled by render-session.py, never by an LLM: every {{PLACEHOLDER}} is
+     substituted programmatically. A copy of this file is placed in each
+     session dir at setup so upgrades never break an in-flight session.
+     Pure HTML asset: exempt from skill prose token budgets by design
+     (governance hooks scope ^skills/.*\.md$). -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function () {
+  var KEY = "council-live-view:" + location.pathname;
+  function keyFor(d) {
+    var card = d.closest(".card");
+    var title = card ? card.querySelector(".card-title") : null;
+    var section = d.closest("section");
+    var summary = d.querySelector("summary");
+    return [
+      section ? section.id : "",
+      title ? title.textContent : "",
+      summary ? summary.textContent : ""
+    ].join("|");
+  }
+  try {
+    var saved = JSON.parse(sessionStorage.getItem(KEY) || "null");
+    if (saved) {
+      addEventListener("DOMContentLoaded", function () {
+        var open = saved.open || [];
+        document.querySelectorAll("details").forEach(function (d) {
+          if (open.indexOf(keyFor(d)) !== -1) d.open = true;
+        });
+        scrollTo(0, saved.y || 0);
+      });
+    }
+  } catch (e) {}
+  setTimeout(function () {
+    try {
+      var open = [];
+      document.querySelectorAll("details").forEach(function (d) {
+        if (d.open) open.push(keyFor(d));
+      });
+      sessionStorage.setItem(KEY, JSON.stringify({ open: open, y: scrollY }));
+    } catch (e) {}
+    location.reload();
+  }, 10000);
+})();
+</script>
+<title>Council Live: metrix-creative-engine end-to-end reconciliation</title>
+<style>
+  :root {
+    --bg: #101218; --panel: #171a22; --panel-2: #1c202a;
+    --line: rgba(232,230,225,0.09); --text: #e8e6e1; --muted: #9ba0ab;
+    --faint: #6b7078; --gate: #e5b95c;
+    --ok: #34d399;
+    --serif-display: "Fraunces", Georgia, serif;
+    --serif-body: "Newsreader", Georgia, serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f6f4ef; --panel: #ffffff; --panel-2: #efece5;
+      --line: rgba(24,26,34,0.12); --text: #1c1e26; --muted: #5b6068;
+      --faint: #8a8f98;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  body { background: var(--bg); color: var(--text); font-family: var(--serif-body); font-size: 16.5px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 32px; }
+  header { padding: 56px 0 0; }
+  .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+  .kicker .sep { color: var(--faint); }
+  h1 { font-family: var(--serif-display); font-weight: 500; font-size: clamp(30px,4.5vw,50px); line-height: 1.08; letter-spacing: -0.015em; margin: 20px 0 10px; max-width: 24ch; }
+  .spectrum { height: 3px; margin: 28px 0 0; background: linear-gradient(90deg, #60a5fa 0%, #60a5fa 33%, #f472b6 33%, #f472b6 67%, #a78bfa 67%, #a78bfa 100%); }
+  .bench { display: flex; flex-wrap: wrap; gap: 10px 22px; padding: 16px 0 0; font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .bench span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+  .tracker { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 30px 0 0; font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .tracker li { padding: 6px 14px; border: 1px solid var(--line); border-radius: 99px; color: var(--faint); }
+  .tracker li.t-done { color: var(--ok); border-color: rgba(52,211,153,0.4); }
+  .tracker li.t-active { color: var(--gate); border-color: rgba(229,185,92,0.5); }
+  section { padding: 56px 0 0; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  h2 { font-family: var(--serif-display); font-weight: 500; font-size: 28px; letter-spacing: -0.01em; }
+  h3 { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin: 26px 0 12px; }
+  .badge { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; padding: 3px 10px; border-radius: 99px; display: inline-block; }
+  .b-pending { color: var(--faint); border: 1px solid var(--line); }
+  .b-active { color: var(--gate); border: 1px solid rgba(229,185,92,0.5); }
+  .b-done { color: var(--ok); border: 1px solid rgba(52,211,153,0.4); }
+  .muted { color: var(--faint); font-style: italic; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px 14px; }
+  .card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .card-title { font-family: var(--serif-display); font-size: 17px; font-weight: 500; flex: 1; }
+  details { margin-top: 10px; }
+  summary { font-family: var(--mono); font-size: 12px; color: var(--muted); cursor: pointer; }
+  .card-body { padding: 12px 2px 2px; font-size: 14.5px; }
+  .card-body h3, .card-body h4, .card-body h5, .card-body h6 { margin: 14px 0 6px; }
+  .card-body p, .card-body ul, .card-body ol { margin: 8px 0; }
+  .card-body ul, .card-body ol { padding-left: 20px; }
+  .prose { max-width: 76ch; font-size: 15px; }
+  .prose p, .prose ul, .prose ol { margin: 10px 0; }
+  .prose ul, .prose ol { padding-left: 22px; }
+  .prose h3, .prose h4, .prose h5, .prose h6 { margin: 20px 0 8px; }
+  pre { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: 10px 0; }
+  code { font-family: var(--mono); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  th { font-family: var(--mono); font-size: 11.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .tbl-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; margin: 12px 0; }
+  .pair { display: inline-flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 6px 14px; margin: 0 8px 8px 0; font-size: 14px; }
+  .pair .vs { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .footer-note { margin: 72px 0 56px; border-top: 1px solid var(--line); padding-top: 20px; font-family: var(--mono); font-size: 12.5px; color: var(--faint); line-height: 1.7; }
+  .footer-note b { color: var(--muted); font-weight: 500; }
+  a { color: var(--gate); }
+  @media (max-width: 820px) { body { font-size: 15.5px; } .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="kicker">
+    <span>Council Live Session</span><span class="sep">/</span>
+    <span>mce-end-to-end-reconciliation-20261122-1558</span><span class="sep">/</span>
+    <span>2026-11-22</span><span class="sep">/</span>
+    <span>auto &middot; balanced &middot; workflow</span>
+  </div>
+  <h1>metrix-creative-engine end-to-end reconciliation</h1>
+  <div class="spectrum" role="presentation"></div>
+  <div class="bench" aria-label="Council bench"><span><i class="dot" style="background:#60a5fa"></i>Architect</span><span><i class="dot" style="background:#f472b6"></i>Artisan</span><span><i class="dot" style="background:#a78bfa"></i>Craftsman</span></div>
+  <ol class="tracker" aria-label="Phase tracker"><li class="t-done">Assembly</li><li class="t-active">Deliberation</li><li>Verdict</li><li>Planning</li></ol>
+</header>
+
+<section class="wrap" id="assembly"><div class="sec-head"><h2>Assembly</h2><span class="badge b-done">Complete</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Score</th><th>Rationale</th><th>Loaded skills</th></tr></thead><tbody><tr><td><i class="dot" style="background:#60a5fa"></i> Architect</td><td>10</td><td>stage contracts, run spine, brief schema, format registry</td><td>codebase-context, api-design</td></tr><tr><td><i class="dot" style="background:#f472b6"></i> Artisan</td><td>9</td><td>storyboard, type, transitions, captions, sound and SFX craft</td><td>motion-design</td></tr><tr><td><i class="dot" style="background:#a78bfa"></i> Craftsman</td><td>8</td><td>CI green, evals, QA-into-review gates, plugin packaging</td><td>testing-strategy</td></tr></tbody></table></div><p class="muted">Estimated cost: ~30-60K tokens per agent run; 3 agents</p></section>
+<section class="wrap" id="deliberation"><div class="sec-head"><h2>Deliberation</h2><span class="badge b-active">In progress</span></div><h3>Round 1: Position</h3><div class="cards"><div class="card"><div class="card-head"><i class="dot" style="background:#60a5fa"></i><span class="card-title">Architect</span><span class="badge b-done">Complete</span></div><details><summary>View position</summary><div class="card-body"><h3>Architect Position — MCE end-to-end reconciliation (brief JSON to launch-ready creative, every format, CI green)</h3>
+<p><strong>Core recommendation:</strong> Build the data spine before any new format: a <code>mce.formats/1</code> registry (one row per asset_type) and a <code>mce.run/1</code> append-only manifest where every stage writes a schema-stamped, hash-bound report, so review can only pass what QA passed and handoff can only ship what review signed. Then express post-production (VO, music bed, SFX, GFX layers, transitions, cuts, captions) entirely as fields in <code>mce.timeline/2</code>, so every editorial decision is checkable by a script in CI rather than living only in composition HTML.</p>
+<p><strong>Key argument:</strong> The engine already has strong stage-local contracts (16 <code>mce.*/N</code> schema ids across timeline, cutplan, phrasemap, zones, eyestate, asrcheck) but no contract <em>between</em> stages, which is exactly where every one of the audit&#x27;s broken handoffs sits. The shape of the data tells you the fix: (1) the brief is stripped at the door because <code>briefSchema</code> is a plain <code>z.object</code> and declares neither <code>testing_framework.cells</code> nor <code>matrix_naming_convention</code>, which <code>make-row.mjs:33-34</code> hard-requires; (2) <code>qa-video.mjs:428</code> prints its report to stdout with no <code>schema</code> id and no input hashes, so <code>validate_review_gates.py</code> (which binds artifacts by sha256 only) has nothing to bind; (3) format knowledge is keyed by <code>asset_type</code> in at least four code places (<code>ASSET_TYPES</code>/<code>MOTION_TYPES</code> in <code>src/brief.ts</code>, <code>FORMAT_MODULES</code> plus the hard-coded <code>requiresProductionReview</code> list in <code>src/prompts.ts:85</code>, storyboard <code>kind</code>, the zone table) and they already disagree (claymation is in <code>ASSET_TYPES</code> but not in <code>MOTION_TYPES</code>; carousel has a storyboard kind nothing renders). One registry row per format, read by brief, prompts, storyboard check, render, QA and review, removes drift by construction; one run manifest that each stage appends to (inputs by path+sha256, outputs by path+sha256+schema, verdict) turns &quot;proof on every technical claim&quot; into a mechanical property. Post-production completes the picture: the timeline schema already models clips, shots, scenes, cut points, caption groups, <code>audio.voice</code>, <code>audio.sfx[]</code> and <code>audio.music.sections[]</code>, and <code>audio-graph.mjs</code> already sidechain-ducks music under voice, but there is no field for transitions or GFX layers (zero matches for <code>transition</code>/<code>gfx</code>/<code>overlay</code> in <code>timeline/schema.mjs</code>), so those agency-quality details are unverifiable today. Adding optional <code>transitions[]</code> (bound to cut point ids) and <code>gfx[]</code> (layer, from/to refs, zone id, copy source) to <code>mce.timeline/2</code> lets <code>timeline check</code>, <code>render --mode check</code> and <code>qa-video</code> assert them the same way they already assert captions. Every addition is an optional field or a new schema id, so nothing existing breaks.</p>
+<p><strong>Risks if ignored:</strong></p>
+<ul><li>Structural/data: new formats (static-compose, shopping/DPA, carousel, VO, b-roll, ingest) each re-encode format rules in another place, raising the six-place drift; a shopping price or carousel card count retyped instead of bound to the brief/feed by field path is a launch-blocking factual error the gates cannot see.</li><li>Integrity/performance: without hash-bound stage reports, a stale or failed QA artifact can satisfy review (proven gap: review never reads QA), and re-runs cannot be skipped safely, so every retry re-spends Kie credits on generations that already settled (the ledger holds the taskId, but no stage knows which output it fed).</li><li>Integration/migration: two Kie protocol implementations (<code>src/client.ts</code>+<code>src/protocol.ts</code> vs <code>skills/metrix-ad-creative/scripts/kie.mjs</code>, 374 lines) and non-Kie outputs (Higgsfield, Canva, direct Gemini/Veo, vendored <code>media-use</code> routing to HeyGen) mean spend and provenance live outside one ledger; the MST scan receives no receipt, so downstream cannot prove only the isolated slot changed.</li></ul>
+<p><strong>Dependencies on other domains:</strong></p>
+<ul><li>Craftsman: test design for the registry-consistency test (every registry row resolves to an existing prompt module, zone ids, QA and review gates), golden fixture briefs per format, and stubbed spend-path evals (Q10); owns keeping <code>npm run verify</code> the single gate.</li><li>Skeptic: failure modes of the run manifest (partial writes, hash of a file mutated after its stage, concurrent runs on one <code>out/</code> dir) and of feed-bound shopping renders.</li><li>Advocate/Artisan (creative quality lens): the per-format quality bar that becomes registry <code>qa</code>/<code>review</code> gate lists, transition and GFX vocabulary (what <code>kind</code> values are allowed), caption style rules per placement.</li><li>Operator: CI runtime budget (Chrome render test cannot be skipped), plugin packaging and <code>plugin validate</code> in CI (Q9), and the environment variables that replace the <code>X:/Metrix/...</code> Windows defaults.</li><li>Owner / Metrix IAP: the versioned upstream brief JSON schema (Q3); until it exists we mirror field names exactly.</li></ul>
+<hr>
+<h4>Appendix A — Context Briefing (codebase-context)</h4>
+<h5>Tech Stack</h5>
+<ul><li><strong>Runtime/Language:</strong> Node &gt;=20 (CI Node 22), TypeScript ~5.9.3, ESM; Python 3.12 for review/retention/client-library gates.</li><li><strong>Server:</strong> <code>@modelcontextprotocol/sdk</code> ^1.21.1, <code>zod</code> ^3.25.76; bundled by esbuild ^0.27.3 to <code>dist/index.js</code> (bin <code>kie-ai-mcp-server</code>).</li><li><strong>Test:</strong> vitest ^4.1.10 (includes real headless Chrome render-health test), Python unittest.</li><li><strong>Media:</strong> ffmpeg/ffprobe, headless Chrome via CDP (<code>render.mjs</code> + <code>runtime.js</code>), whisper.cpp v1.9.5 + pinned ggml models, MediaPipe venv, <code>hyperframes</code> 0.9.19 (devDependency) vs 0.8.186 in <code>tools/manifest.json</code> (<code>cli_permitted: false</code>).</li><li><strong>Database:</strong> none. Persistence is files: JSONL ledger (<code>src/ledger.ts</code>), JSON stage reports, gitignored <code>out/</code> and <code>renders/</code>.</li><li><strong>Auth:</strong> Kie <code>Authorization: Bearer</code> (proxy-injected in cloud); optional Gemini <code>x-goog-api-key</code>, ElevenLabs <code>xi-api-key</code>.</li><li><strong>Hosting:</strong> local stdio MCP server; CI on GitHub Actions ubuntu-latest.</li></ul>
+<h5>Directory Structure (annotated)</h5>
+<pre><code>src/                    MCP server: index, config, tools, prompts, resources, client+protocol (Kie), schemas, ledger, brief
+  __tests__/            vitest suites incl. render-health (real Chrome)
+prompts/                00-core 01-brand-intake 02-render-bridge 03-handoff(never imported) 04-self-validation 05-mst 06-production-review 07-ugc-creative-direction
+  formats/              carousel claymation motion-graphic static ugc video
+skills/                 15 skill folders + VENDORED.json
+  own (6)               metrix-ad-creative, metrix-video-assembly, ugc-creator-edit, kie-generate, kie-tasks, brand-kit-builder
+  vendored (9)          figma, hyperframes, hyperframes-cli, hyperframes-registry, media-use, remotion-to-hyperframes, reverse-any-video, slideshow, style-sampling
+  metrix-video-assembly/scripts/  render.mjs runtime.js timeline.mjs timeline/{schema,plan,check,emit,rules} qa-video audio-graph compose-bed beats captions/ phrase-map phrase-align asr-check make-srt make-row check-storyboard placement-zones render-checks media/
+scripts/                sync-copies, check-mcp-surface, validate_review_gates.py, prepare_review_record.py, check_script.py, retain_drafts.py, client_library.py
+tools/manifest.json     pinned binaries/models
+docs/                   playbooks, standards (generated), audits/</code></pre>
+<p>Note for the council: the brief said &quot;16 skills&quot;; the tree has 15 skill folders. <code>reverse-any-video</code> and <code>style-sampling</code> are vendored (per <code>skills/VENDORED.json</code>), not own.</p>
+<h5>Architectural Patterns</h5>
+<ul><li><strong>Pipeline:</strong> file-in/file-out stage CLIs, each validating its own schema and emitting JSON to stdout or a named file; no orchestrator.</li><li><strong>Contracts:</strong> stage-local schema ids (<code>mce.timeline/1|2</code>, <code>mce.cutplan/1</code>, <code>mce.phrasemap/1</code>, <code>mce.zones/1</code>, <code>mce.eyestate/1</code>, <code>mce.asrcheck/1</code>, <code>mce.captioncues/1</code>, <code>mce.qaexempt/1</code>, <code>mce.tools/1|2</code>); inputs bound by <code>{path, sha256, schema}</code> inside the timeline (good precedent).</li><li><strong>Gates over parsers:</strong> <code>validateBrief</code> blocks, never repairs; review gates hash-bind evidence.</li><li><strong>Single source of truth:</strong> <code>scripts/skill-copies.json</code> byte copies; generated standard doc.</li></ul>
+<h5>Data Model</h5>
+<div class="tbl-wrap"><table><thead><tr><th>Entity</th><th>Where</th><th>Key fields</th><th>Relationships</th></tr></thead><tbody><tr><td>Brief</td><td><code>src/brief.ts</code> briefSchema</td><td>brief_metadata{brief_id, asset_type, confidence, mode}, creative_specifications, visual_direction, copy_architecture, brand_assets[], testing_framework{isolated_variable, matrix_position}, qa_requirements</td><td>1 brief -&gt; 1 format row; matrix brief -&gt; N cells (fields stripped today)</td></tr><tr><td>LedgerEntry</td><td><code>src/ledger.ts</code></td><td>ts, taskId, model, event created/settled, resultUrls, name, param, credits</td><td>many per task; no link to brief_id or run</td></tr><tr><td>Storyboard</td><td>check-storyboard input</td><td>schema_version 2, format{ratio, placement}, scenes[].text[]</td><td>derives timeline (<code>derived_from</code> hash)</td></tr><tr><td>Timeline</td><td><code>mce.timeline/2</code></td><td>clips, shots, scenes, points(cut/event), captions.groups, audio{voice, sfx[], music{sections}}, inputs{phrasemap, cutplan by sha256}</td><td>consumes cutplan/phrasemap; feeds emit/render/qa</td></tr><tr><td>Zone</td><td><code>mce.zones/1</code></td><td>ratio, placements[], top/bottom/side, enforcement</td><td>referenced by storyboard placement and (in working tree) render check</td></tr><tr><td>QA report</td><td>qa-video stdout</td><td>no schema id, no input hashes</td><td>should feed review; does not</td></tr><tr><td>Review record</td><td>validate_review_gates.py</td><td>artifacts{role: sha256}, bundle_sha256, evidence[], checks</td><td>binds files, not QA verdicts</td></tr><tr><td>Receipt / handoff</td><td>prompts/03-handoff.md</td><td>(none written)</td><td>MST scan expects it</td></tr></tbody></table></div>
+<pre><code>Brief ──1:1──&gt; FormatRow ──&gt; Storyboard ──derived_from──&gt; Timeline ──&gt; Render ──&gt; QA ──X──&gt; Review ──X──&gt; Receipt
+  │                                  ▲                       ▲
+  └─cells(stripped)──X──&gt; make-row    └──── Ledger(taskId) ───┘   (no brief/run link)
+X = missing edge</code></pre>
+<h5>Conventions</h5>
+<ol><li>Schema ids <code>mce.&lt;noun&gt;/&lt;int&gt;</code> with literal check, e.g. <code>schema: lit(TIMELINE)</code> in <code>timeline/schema.mjs</code>.</li><li>Hash binding <code>{path, sha256, schema}</code> for derived inputs, e.g. <code>inputs.cutplan</code> in the timeline.</li><li>snake_case JSON fields, camelCase TS identifiers (<code>brief_metadata</code> vs <code>validateBrief</code>).</li><li>Canonical-copy discipline: edit the first path in <code>skill-copies.json</code>, run <code>npm run sync:copies</code>.</li><li>Verdicts as <code>PASS|WARN|FAIL</code> with reasons arrays (render check, zone check, storyboard check).</li></ol>
+<h5>Infrastructure Constraints</h5>
+<ul><li>One gate: <code>npm run verify</code>; CI must not skip the Chrome render test.</li><li>Rebuilt <code>dist/</code> does not reach a running MCP server; a bundled <code>kie.mjs</code> (Q7) inherits this.</li><li>Windows defaults <code>X:/Metrix/...</code> in <code>media/eye_state.py:179</code>, <code>media/eye-state.mjs:211</code>, <code>asr-check.mjs</code> — must resolve from env (<code>MCE_*</code>) or <code>tools/manifest.json</code>, never a drive letter.</li><li>Working tree carries an uncommitted <code>render.mjs</code> change that routes <code>--mode check</code> through <code>placement-zones.mjs</code> <code>zoneFor</code>/<code>checkBoxes</code> (closes deepen finding 1, 20% vs 35%); it is not yet committed or CI-proven.</li><li>Client data only in gitignored <code>out/</code>, <code>renders/</code>.</li></ul>
+<h5>Integration Points</h5>
+<div class="tbl-wrap"><table><thead><tr><th>Service</th><th>Purpose</th><th>Auth</th></tr></thead><tbody><tr><td>Kie.ai Market API (<code>api.kie.ai</code>, upload <code>kieai.redpandaai.co</code>)</td><td>image/video/TTS/music generation</td><td>Bearer, proxy-injected</td></tr><tr><td>Gemini / Veo direct</td><td>fallback generation, TTS</td><td><code>x-goog-api-key</code></td></tr><tr><td>ElevenLabs</td><td>TTS fallback</td><td><code>xi-api-key</code></td></tr><tr><td>HeyGen (via vendored media-use)</td><td>music/SFX/stock/voice catalog</td><td>HeyGen sign-in, outside ledger</td></tr><tr><td>Higgsfield, Canva, Figma, Flashloop MCPs</td><td>optional finishing</td><td>harness OAuth, not repo deps</td></tr><tr><td>Metrix IAP (upstream)</td><td><code>creative_briefs.json</code></td><td>file handoff</td></tr><tr><td>metrix-mst-creative-scan (downstream)</td><td>row manifest + receipt</td><td>file handoff</td></tr></tbody></table></div>
+<h5>Warnings / Tech Debt</h5>
+<ul><li><code>brand_assets</code> is an array; five docs gate on <code>brand_assets.missing</code> (object) — the blocker is unexpressible.</li><li><code>qa-video</code> output is unaddressable by hash or schema.</li><li><code>kie_create_task</code> bypasses the UGC preproduction guard.</li><li>HyperFrames 0.9.19 vs 0.8.186 pin disagreement.</li><li><code>metrix-video-assembly/SKILL.md</code> is 607 lines; stage knowledge belongs in CLIs and registry, prose should point at them.</li></ul>
+<hr>
+<h4>Appendix B — Contract design (api-design applied to stage CLIs and files)</h4>
+<p>The &quot;API&quot; here is a set of file contracts and one CLI. No new MCP tools are required for the spine; one optional MCP tool (<code>kie_run_status</code>) may read the manifest later.</p>
+<h5>B1. Format registry — <code>skills/metrix-ad-creative/references/formats.json</code> (canonical; copies via skill-copies.json; <code>src/</code> imports it at build)</h5>
+<pre><code>interface FormatsFile { schema: &quot;mce.formats/1&quot;; formats: FormatRow[] }
+interface FormatRow {
+  asset_type: string;                 // brief enum is GENERATED from this list
+  aliases?: string[];                 // replaces RATIO_SUFFIX special-casing where needed
+  medium: &quot;image&quot; | &quot;image_set&quot; | &quot;video&quot; | &quot;audio&quot;;
+  motion: boolean;                    // replaces MOTION_TYPES
+  style_of?: string[];                // claymation: a style applicable to these media
+  required_brief_fields: string[];    // dotted paths, e.g. &quot;creative_specifications.duration_seconds&quot;, &quot;cards&quot;, &quot;feed&quot;
+  placements: string[];               // zone ids in mce.zones/1
+  prompt: { module: string; review: boolean };     // replaces FORMAT_MODULES + requiresProductionReview
+  plan: { storyboard_kind: string | null; shotlist: boolean };
+  route: &quot;compose_static&quot; | &quot;compose_set&quot; | &quot;assemble_video&quot; | &quot;vo&quot; | &quot;broll&quot; | &quot;ingest&quot;;
+  qa: string[];                        // gate ids: &quot;qa_video&quot;, &quot;qa_image&quot;, &quot;qa_set&quot;, &quot;feed_integrity&quot;, &quot;asr_lock&quot;
+  review: string[];                    // review gate ids from review-gates.md
+  handoff: { receipt: true; mst_row: boolean };
+}</code></pre>
+<p>Order of rows matches Q5: existing seven, then <code>static_compose</code> route under <code>static</code>, <code>shopping</code>, <code>carousel</code> via <code>compose_set</code>, <code>voiceover</code>, <code>broll</code>, ingest as a route not a type.</p>
+<p>CI test (vitest, no network): every row resolves its prompt module file, every placement exists in <code>mce.zones/1</code>, every qa/review id has an implementation, <code>ASSET_TYPES === formats.map(asset_type)</code>.</p>
+<h5>B2. Brief extensions (optional, upstream names, Q3)</h5>
+<pre><code>testing_framework: { isolated_variable?, matrix_position?,
+  cells?: Array&lt;Record&lt;string, string&gt;&gt;; matrix_naming_convention?: string }
+cards?: Array&lt;{ index: number; job: string; copy?: Record&lt;string,string&gt; }&gt;;   // carousel
+feed?: { path?: string; url?: string; format: &quot;csv&quot; | &quot;meta_catalog&quot;; sku_field: string; bind: Record&lt;string,string&gt; }; // shopping
+script?: { text: string; sha256?: string; voice?: string };                    // VO/AI-UGC lock
+brand_assets: Array&lt;BrandAsset&gt; | { items: BrandAsset[]; missing?: string[] }  // accept both; normalize to object</code></pre>
+<p>Cross-field rules: <code>mode=matrix</code> and route uses rows -&gt; <code>cells</code> and <code>matrix_naming_convention</code> required; registry <code>required_brief_fields</code> checked generically. Use <code>.passthrough()</code> on <code>testing_framework</code> only after the fields are declared, so nothing upstream is silently dropped again.</p>
+<h5>B3. Run manifest — <code>out/runs/&lt;run_id&gt;/run.json</code></h5>
+<pre><code>interface Run {
+  schema: &quot;mce.run/1&quot;;
+  run_id: string;                      // `${brief_id}--${utc compact}`
+  brief: FileRef;                      // normalized brief, hashed
+  format: string;                      // registry asset_type
+  registry_sha256: string;
+  stages: StageRecord[];               // append-only; never rewritten
+}
+interface FileRef { role: string; path: string; sha256: string; schema?: string }
+interface StageRecord {
+  stage: &quot;plan&quot; | &quot;generate&quot; | &quot;ingest&quot; | &quot;assemble&quot; | &quot;render&quot; | &quot;qa&quot; | &quot;review&quot; | &quot;handoff&quot;;
+  seq: number; started_at: string; finished_at: string;
+  tool: { name: string; version: string };      // CLI + package version or git sha
+  inputs: FileRef[];                            // each MUST equal an output of an earlier stage or the brief
+  outputs: FileRef[];
+  ledger_task_ids?: string[];                   // generate/ingest
+  verdict: &quot;PASS&quot; | &quot;WARN&quot; | &quot;FAIL&quot; | &quot;BLOCKED&quot;;
+  reasons: string[];
+}</code></pre>
+<p>Invariants (each a test): a stage may run only if every input hash matches a prior output; <code>review</code> requires a <code>qa</code> record with <code>verdict=PASS|WARN</code> whose outputs include every artifact reviewed; <code>handoff</code> requires <code>review</code> PASS. Re-run of a stage with identical input hashes and a PASS record is a no-op (credit-safe resume). Writes are temp-file + rename.</p>
+<h5>B4. CLI — <code>node skills/metrix-ad-creative/scripts/mce.mjs &lt;cmd&gt;</code></h5>
+<div class="tbl-wrap"><table><thead><tr><th>Command</th><th>Reads</th><th>Writes</th><th>Spend</th></tr></thead><tbody><tr><td><code>run init --brief &lt;json&gt;</code></td><td>brief, registry</td><td>run.json, normalized brief</td><td>no</td></tr><tr><td><code>run plan</code></td><td>brief</td><td>storyboard (+ shotlist for b-roll, cue sheet for audio)</td><td>no</td></tr><tr><td><code>run generate [--quote]</code></td><td>plan</td><td>Kie tasks via bundled client; ledger lines with <code>run_id</code></td><td>yes, quote first</td></tr><tr><td><code>run ingest --file &lt;f&gt; --origin &lt;o&gt;</code></td><td>any external file</td><td>ledger line <code>provider!=kie</code>, FileRef</td><td>no</td></tr><tr><td><code>run assemble</code></td><td>plan + generated/ingested refs</td><td>timeline, compositions, audio graph</td><td>no</td></tr><tr><td><code>run render</code></td><td>timeline/compositions</td><td>masters, stills</td><td>no</td></tr><tr><td><code>run qa</code></td><td>masters</td><td><code>mce.qa/1</code> report file</td><td>no</td></tr><tr><td><code>run review</code></td><td>qa report + masters</td><td>review record via validate_review_gates.py</td><td>no</td></tr><tr><td><code>run handoff</code></td><td>review record</td><td><code>mce.receipt/1</code>, MST <code>mce.row/1</code> when matrix</td><td>no</td></tr><tr><td><code>run status</code></td><td>run.json</td><td>stdout summary</td><td>no</td></tr></tbody></table></div>
+<p>Exit codes: 0 PASS/WARN, 1 FAIL (gate), 2 input/contract error, 3 BLOCKED (missing asset, missing packet, unapproved spend). Stub mode (<code>KIE_AI_BASE_URL</code> pointing at the existing check-mcp-surface stub) covers Q10 evals in CI.</p>
+<h5>B5. QA report — <code>mce.qa/1</code> (qa-video, new qa-image, qa-set write a file, not only stdout)</h5>
+<pre><code>interface QaReport { schema: &quot;mce.qa/1&quot;; subject: FileRef; inputs: FileRef[];   // timeline, storyboard, zones
+  checks: Array&lt;{ id: string; verdict: &quot;PASS&quot;|&quot;WARN&quot;|&quot;FAIL&quot;; reasons: string[] }&gt;;
+  verdict: &quot;PASS&quot;|&quot;WARN&quot;|&quot;FAIL&quot;; exemptions?: FileRef }</code></pre>
+<p><code>validate_review_gates.py</code> adds artifact role <code>qa_report</code>; FAIL if absent, if <code>subject.sha256</code> differs from the master under review, or if <code>verdict=FAIL</code>.</p>
+<h5>B6. Ledger additions (optional fields; <code>src/ledger.ts</code>)</h5>
+<p><code>provider?: &quot;kie&quot; | &quot;gemini&quot; | &quot;veo&quot; | &quot;elevenlabs&quot; | &quot;higgsfield&quot; | &quot;canva&quot; | &quot;heygen&quot; | &quot;desktop&quot;</code> (absent means kie), <code>run_id?</code>, <code>brief_id?</code>, <code>file_sha256?</code> for ingested outputs. Non-Kie outputs get a synthetic <code>taskId</code> <code>ext:&lt;sha256[:16]&gt;</code>. Vendored media-use stays byte-identical; the router skill states that any media-use acquisition enters through <code>run ingest</code>.</p>
+<h5>B7. Post-production in <code>mce.timeline/2</code> (optional, additive)</h5>
+<pre><code>transitions?: Array&lt;{ id; at: PointRef /* a cut point id */; kind: &quot;cut&quot;|&quot;dissolve&quot;|&quot;dip&quot;|&quot;whip&quot;|&quot;match&quot;|&quot;wipe&quot;; dur: number; why: string }&gt;;
+gfx?: Array&lt;{ id; layer: &quot;lower_third&quot;|&quot;price_badge&quot;|&quot;logo_bug&quot;|&quot;end_card&quot;|&quot;cta&quot;|&quot;sticker&quot;|&quot;progress&quot;;
+  from: Ref; to: Ref; zone: string /* mce.zones/1 id */; copy_source?: string /* brief or feed path */; enter?: string; why: string }&gt;;
+audio.duck?: { under: &quot;voice&quot;; depth_db: number; attack_ms: number; release_ms: number }; // makes audio-graph&#x27;s sidechain values declarative
+grade?: { lut: FileRef; before_after: FileRef[] };</code></pre>
+<p>Checks: <code>timeline check</code> rejects a transition on a non-cut point or longer than the adjacent min_shot; every <code>gfx</code> box is zone-checked by <code>render --mode check</code>; every <code>copy_source</code> resolves to a value equal to on-screen text (same rule captions already follow); <code>qa-video</code> measures LUFS vs <code>storyboard.lufs</code>, true peak, and voice intelligibility under the bed.</p>
+<h5>B8. Handoff receipt — <code>mce.receipt/1</code></h5>
+<p><code>{ schema, run_id, brief: FileRef, format, deliverables: FileRef[] (per ratio/mode), qa: FileRef, review: FileRef, ledger: { task_ids: string[], credits_total?: number }, mst?: { row: FileRef } }</code>. <code>prompts/03-handoff.md</code> is imported in <code>src/prompts.ts</code> and attached to every format prompt as the last section.</p>
+<h5>Error contract (shared by all CLIs)</h5>
+<div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Exit</th><th>When</th></tr></thead><tbody><tr><td>CONTRACT_SCHEMA</td><td>2</td><td>input file schema id missing or wrong</td></tr><tr><td>CONTRACT_HASH</td><td>2</td><td>input sha256 does not match the producing stage&#x27;s output</td></tr><tr><td>GATE_FAIL</td><td>1</td><td>any check FAIL</td></tr><tr><td>BLOCKED_ASSET</td><td>3</td><td>required brief field or brand asset missing</td></tr><tr><td>BLOCKED_SPEND</td><td>3</td><td>generate without quote, lip sync without packet</td></tr><tr><td>TOOL_MISSING</td><td>2</td><td>resolver cannot find ffmpeg/chrome/whisper from env or manifest</td></tr></tbody></table></div>
+<h5>Sequencing (fits Q1 parallelism)</h5>
+<ol><li>Commit the working-tree safe-zone change only with verify + CI green.</li><li>In parallel (no render.mjs/runtime.js contact): registry + generated brief enum + prompts read registry; brief optional fields; <code>mce.qa/1</code> file output + review reads it; ledger optional fields; tool resolver; plugin.json + CI <code>plugin validate</code>.</li><li>Run spine CLI over existing stages (video first, then static).</li><li>Timeline B7 fields and checks (touches render check: gated by CI).</li><li>New routes in Q5 order, each a registry row plus a golden fixture brief that runs end to end in stub mode in CI.</li></ol></div></details></div><div class="card"><div class="card-head"><i class="dot" style="background:#f472b6"></i><span class="card-title">Artisan</span><span class="badge b-done">Complete</span></div><details><summary>View position</summary><div class="card-body"><h4>Artisan Position — MCE end-to-end reconciliation (visual system, GFX, transitions, captions)</h4>
+<p><strong>Core recommendation:</strong> Make the <em>look</em> a compiled, checked contract, the way placement zones already are. One <code>mce.look/1</code> file per run (compiled from the brand kit: colour, type, caption style, motion and transition tokens) feeds the single Chrome renderer for every format (video, static-compose, carousel, shopping, motion graphic), and the render and QA gates measure the result (contrast, type floor, safe zone, transition-vs-timeline parity) instead of trusting the HTML author.</p>
+<p><strong>Key argument:</strong> The engine already proves the pattern works: <code>placement-zones.json</code> is one table with provenance, <code>render.mjs</code> now reads it through <code>zoneFor()</code> (<code>skills/metrix-video-assembly/scripts/render.mjs:547</code>), and the render check fails a box inside the overlay bands. Everything else visual is still hand-authored and unchecked. The composition template hard-codes its palette and fonts (<code>assets/template/index.html:21-27</code>: <code>--bg #f4efe6</code>, <code>--ink #101010</code>, <code>--accent #8a5a2b</code>, <code>@font-face</code> commented out), and no script reads <code>brand-kit.json</code> into CSS (grep for <code>var(--</code> across assembly and ad-creative scripts: zero hits). There is no contrast check anywhere in render, render-checks or qa-video, so white captions with a 45% shadow (<code>.on-image</code>, template line 37) over a bright Kie frame pass every gate. Transitions live outside the timeline: the runtime supports <code>cut|fade|dip|slide|zoom</code> per scene and defaults to <code>dip</code> (<code>runtime.js:11,63-64</code>), but the timeline schema only knows points of kind <code>cut|event</code> (<code>timeline/schema.mjs:109</code>), so <code>timeline emit</code> cannot produce a transition, the template dips between every scene by default, and <code>qa-video</code> <code>transitions.at_cuts</code> assumes hard cuts and would flag a <code>fade</code> crossfade as double exposure (<code>qa-video.mjs:32-34</code>). SFX carry <code>at</code> and <code>why</code> (<code>schema.mjs:134</code>) but are not bound to the transition or text slam they accent. Top-tier agency finish is not more effects; it is a small vocabulary used with intent and verified frame by frame: hard cuts on beat by default, a motivated transition only at a role change (hook to show, proof to offer), every whoosh tied to the transition it sells, captions in one house style with a plate or stroke that clears contrast on the worst pixel under them, and the same type scale and tokens on the static, the carousel card and the end card. Putting this into the format registry (Q4) and the run spine (Q2) means every format reads the same look and every gate proves it.</p>
+<p><strong>Risks if ignored:</strong></p>
+<ul><li>Visual drift across formats: each static, carousel card, SKU overlay and video end card gets its own one-off CSS, so the same campaign ships three type scales and two reds, and carousel seams do not line up.</li><li>Unreadable captions and CTAs ship green: no gate measures text contrast against the generated background, and model frames vary per take, so legibility is luck. The only type check is a size floor (<code>W * 0.03</code>, <code>render.mjs:548</code>, duplicating <code>min_font_ratio</code> in the zones table).</li><li>Transition and SFX choices stay unreviewable: they are authored in HTML attributes the timeline does not know, so <code>timeline check</code> cannot hold them to beats or roles, QA cannot tell an intended crossfade from a bad blend, and whooshes drift off their cuts.</li></ul>
+<p><strong>Dependencies on other domains:</strong></p>
+<ul><li>Architect: format registry (Q4) carries per-format <code>look</code> requirements (which tokens, which gates); run spine (Q2) records <code>look.json</code> by sha256 like other stage inputs; timeline schema gains an optional <code>transitions[]</code> (new field optional, per AGENTS rule).</li><li>Craftsman: vitest fixtures for the contrast check (known-bad white-on-white frame must FAIL, plated caption must PASS), a transition parity test, and a brand-kit compiler unit test; all inside <code>npm run verify</code>, no spend.</li><li>Advocate: caption readability standard (chars per line, CPS already in <code>captionRules</code>) and sound-off comprehension of the first second.</li><li>Skeptic/Operator: font licensing path for client brand fonts (only Google Fonts are installed; licensed faces come from kit files), and render-time budget for the extra contrast sampling.</li><li>Owner/Guardian (fact, not policy debate): <code>brand-kits/eastcoastartstudio/</code> is git-tracked (<code>git ls-files</code> lists four files) and names a real account, while the map describes brand-kits as anonymous/sample; the <code>look</code> compiler should read kits from the private run dir, with an anonymous sample kit as the committed fixture.</li></ul>
+<hr>
+<h4>Appendix A — Proposed <code>mce.look/1</code> (compiled tokens)</h4>
+<p>Primitive -&gt; semantic -&gt; component. Compiled by a pure <code>look compile &lt;brand-kit.json&gt;</code> step; written into the run dir; injected into the composition as CSS custom properties by <code>render.mjs</code> (same channel as <code>window.__MCE</code>).</p>
+<div class="tbl-wrap"><table><thead><tr><th>Layer</th><th>Token</th><th>Source</th><th>Example</th></tr></thead><tbody><tr><td>Primitive</td><td><code>color.ink</code>, <code>color.paper</code>, <code>color.accent</code></td><td>brand-kit colours / logo <code>artwork_colour</code></td><td><code>#101010</code>, <code>#f0f0f0</code></td></tr><tr><td>Primitive</td><td><code>font.display</code>, <code>font.body</code> + files/hashes</td><td>brand kit fonts or named Google family</td><td>resolved and health-checked</td></tr><tr><td>Primitive</td><td><code>type.scale</code></td><td>fractions of frame width, ratio-aware</td><td>hook 0.084, line 0.050, cta 0.054, caption 0.046, floor = zones <code>min_font_ratio</code></td></tr><tr><td>Semantic</td><td><code>text.on-image</code>, <code>text.on-paper</code>, <code>surface.plate</code></td><td>derived</td><td>plate = ink at 0.72 alpha</td></tr><tr><td>Component</td><td><code>caption.house</code></td><td>fill, stroke or plate, active-word highlight, max_lines 2</td><td>one style per run</td></tr><tr><td>Component</td><td><code>cta.button</code>, <code>endcard.logo</code></td><td>logo role (primary/reverse) by ground luminance</td><td>reverse logo over imagery</td></tr><tr><td>Motion</td><td>duration and easing scale (Appendix B)</td><td>fixed house scale</td><td></td></tr></tbody></table></div>
+<p>Rules: no raw hex or px in components; the min type floor reads <code>min_font_ratio</code> from the zones table instead of the <code>0.03</code> literal in <code>render.mjs:548</code>.</p>
+<h4>Appendix B — Motion Design Specification (motion-design skill)</h4>
+<h5>Step 1: Motion opportunities in an ad</h5>
+<ul><li>State: text enter/settle/exit (hook, label, CTA), caption cue change, price/offer reveal.</li><li>Navigation: scene-to-scene transition (cut, dip, push/slide, zoom/whip).</li><li>Feedback/attention: CTA pulse in the last second, product callout, count-up of a number.</li><li>Data: carousel card-to-card continuity element; shopping price badge.</li></ul>
+<h5>Step 2: Motion principles (frame-based at 30 fps, the timeline clock)</h5>
+<div class="tbl-wrap"><table><thead><tr><th>Property</th><th>Value</th><th>Usage</th></tr></thead><tbody><tr><td>Duration micro</td><td>4 f (0.133 s)</td><td>caption cue in/out, active-word highlight</td></tr><tr><td>Duration short</td><td>8 f (0.267 s)</td><td>pop, label, badge</td></tr><tr><td>Duration medium</td><td>0.35 s (= <code>settleDefault</code>, <code>rules.mjs</code>/<code>runtime.js:37</code>)</td><td>hook rise/slam, dip, push</td></tr><tr><td>Duration long</td><td>15 f (0.5 s)</td><td>end card resolve; ceiling for any single move</td></tr><tr><td>Ease enter</td><td>cubic out <code>1-(1-p)^3</code> (<code>runtime.js:42</code>)</td><td>all enters</td></tr><tr><td>Ease scene</td><td>cubic in-out (<code>runtime.js:43</code>)</td><td>scene exits, dips</td></tr><tr><td>Ease overshoot</td><td>back, c1 1.70158 (<code>runtime.js:44</code>)</td><td><code>pop</code> only, CTA and badges</td></tr><tr><td>Stagger</td><td>3 f (0.1 s), max 5 items</td><td>multi-line hook, bullet proofs</td></tr><tr><td>Distance</td><td>rise 0.6 em, slide 6% frame</td><td>as in runtime today</td></tr></tbody></table></div>
+<p><code>data-dur</code> must be one of the scale values (timeline check enforces; free numbers become a WARN then FAIL).</p>
+<h5>Step 3: Specs</h5>
+<p><strong>Hook text (first second, sound off)</strong> — Trigger: t=0 or first cut. Property: opacity + translateY / scale. From -&gt; To: <code>rise</code> 0.6em-&gt;0 or <code>slam</code> scale 1.35-&gt;1. Duration: medium. Easing: enter. Must be settled by 1.0 s (existing <code>line_unread</code> craft check). <strong>Caption cue</strong> — Trigger: phrase start from phrase map. Property: opacity; active word colour. Duration: micro. Easing: enter. Exit fade micro (<code>exit_fade</code> rule). <strong>Scene transition</strong> — Trigger: timeline <code>transitions[]</code> entry. <code>cut</code> (default, 0 frames, snapped to beat or phrase edge); <code>dip</code> medium, only at a ROLES boundary (<code>hook|show|proof|offer|cta</code>, <code>schema.mjs:54</code>); <code>push</code>/<code>whip</code> medium, only with a bound SFX; crossfade <code>fade</code> allowed only when declared, and QA exempts exactly that window. <strong>SFX accent</strong> — bound by <code>transition_id</code> or <code>text_id</code>; onset lands within the existing <code>onsetGuard</code> lead (<code>rules.mjs:57</code>) of the visual event, volume &lt;= 0.6, under the sidechain duck of the bed (<code>audio-graph.mjs:30</code>). <strong>CTA end card</strong> — logo resolve long + CTA <code>pop</code> short at +3 f; one pulse (scale 1-&gt;1.04-&gt;1, medium) no earlier than 1 s before end.</p>
+<h5>Step 4: Choreography (end card)</h5>
+<ol><li>Background settles at 0 ms (cut, beat-snapped).</li><li>Logo fades in at 0 ms (500 ms, ease-out).</li><li>Offer line rises at 100 ms (350 ms, ease-out).</li><li>CTA pops at 200 ms (267 ms, back).</li><li>SFX tick on the CTA pop onset.</li></ol>
+<p>Exit: none (hold to end; poster frame taken from the settled state).</p>
+<h5>Step 5: Reduced-motion alternatives (ad equivalent)</h5>
+<div class="tbl-wrap"><table><thead><tr><th>Animation</th><th>Full motion</th><th>Reduced / static deliverable</th></tr></thead><tbody><tr><td>Hook slam/rise</td><td>scale/translate</td><td>settled frame is the poster and the static-compose variant</td></tr><tr><td>Scene push/whip</td><td>transform</td><td>hard cut</td></tr><tr><td>Caption cue</td><td>fade + word highlight</td><td><code>clean</code> mode (already `modes: cap</td><td>clean`) plus SRT</td></tr><tr><td>CTA pulse</td><td>scale</td><td>static CTA</td></tr></tbody></table></div>
+<p>Every animated element must be legible at its settled frame; the static and carousel routes render that settled state from the same composition, so the still and the video can never disagree.</p>
+<h5>Step 6: Performance</h5>
+<ul><li>Animate only opacity, transform and clip-path (runtime already does: <code>runtime.js:87-121</code>); no width/height/top/left.</li><li>Frame-accurate seek is deterministic (<code>window.__seek</code>), so the cost is render time, not dropped frames; contrast sampling reuses the frames and <code>__layout</code> boxes <code>check</code> already captures.</li></ul>
+<h4>Appendix C — Gates to add (all no-spend, inside <code>npm run verify</code>)</h4>
+<ol><li><code>contrast</code> in <code>render.mjs --mode check</code>: for each text box at its settled time, compute WCAG contrast between text colour and the 95th-percentile worst background luminance under the box; FAIL below 4.5:1 (3:1 when type &gt;= large threshold of the type scale). Plates/strokes count as background.</li><li><code>transition parity</code> in <code>qa-video --timeline</code>: every declared transition window is exempt from <code>transitions.at_cuts</code>; every undeclared blend still fails.</li><li><code>look parity</code>: rendered computed styles of text items use only <code>--look-*</code> tokens (runtime reads <code>getComputedStyle</code>, compares against <code>look.json</code>).</li><li>Carousel seam check: continuity element x/y matches across card edges within 1 px; card grid from one template.</li><li>Shopping: rendered price text equals feed field by SKU (Architect&#x27;s feed reader), styled by <code>cta</code>/<code>badge</code> tokens.</li></ol></div></details></div><div class="card"><div class="card-head"><i class="dot" style="background:#a78bfa"></i><span class="card-title">Craftsman</span><span class="badge b-done">Complete</span></div><details><summary>View position</summary><div class="card-body"><h4>Craftsman Position — MCE end-to-end reconciliation</h4>
+<p><strong>Core recommendation:</strong> Make every stage handoff a typed, versioned artifact (<code>mce.run/1</code> manifest entries, each with a zod schema in <code>src/</code> and a hash), then prove the whole chain in CI with one <strong>zero-spend golden run per format registry entry</strong>: brief fixture -&gt; plan -&gt; stubbed Kie generate (ffmpeg lavfi synthetic media) -&gt; assemble/render -&gt; qa-video -&gt; review gates -&gt; handoff receipt. The format registry drives a parameterized test matrix, so a format cannot be declared without its fixture, storyboard, render, QA and review assertions.</p>
+<p><strong>Key argument:</strong> Today the repo is strong at the unit layer and weak exactly where the owner&#x27;s concern lives: the seams. There are 40 vitest files in <code>src/__tests__/</code> covering stage CLIs in isolation (timeline-check, caption-cues, placement-zones, qa-video-*, make-row, render-health with real headless Chrome), plus Python unittest suites for the review scripts. Nothing exercises stage N&#x27;s output as stage N+1&#x27;s input. That is why the audit&#x27;s five broken handoffs survived a green unit suite: <code>validate_review_gates.py</code> never reads qa-video output (grep for <code>qa</code> in it returns nothing), <code>prompts/03-handoff.md</code> is referenced only from <code>prompts/00-core.md</code> and <code>prompts/README.md</code>, never loaded by <code>src/prompts.ts</code>, and there is no receipt. The cheap fix is not more unit tests; it is contract tests at each seam (schema-validate the real output of stage N with stage N+1&#x27;s input schema) and one integration &quot;golden run&quot; per format that is fast because it never spends: <code>client.ts</code> is already stubbed in <code>scripts/check-mcp-surface.mjs</code>, and <code>render-health.test.ts</code> already proves we can render synthetic boards in CI. Pit of success: add a format to the registry, and <code>formats.test.ts</code> iterates it and fails until <code>src/__tests__/fixtures/runs/&lt;format&gt;/</code> exists with an expected manifest. Proof check on the deepen findings before we plan against them: finding (1) is already fixed by commit 1343e47 (render.mjs now resolves bands via <code>zoneFor</code>/<code>checkBoxes</code>, and the two <code>placement-zones.json</code> files are byte-identical copies managed by <code>scripts/skill-copies.json</code>); finding (3) is half stale (<code>src/brief.ts</code> lines 109-110 now accept <code>matrix_naming_convention</code> and <code>cells</code> with cross-field validation). The plan should cite current code, not the audit snapshot, or we will rebuild things that exist.</p>
+<p><strong>Risks if ignored:</strong></p>
+<ul><li>Regression at the seams: each stage stays green while the run produces a creative that QA flagged but review approved (qa-video -&gt; review gate gap), or a handoff with no receipt. Unit tests cannot catch this class.</li><li>Pattern drift: format knowledge stays in six places; a new format (static-compose, DPA, carousel, VO, b-roll) gets added to prompts but not to render/QA/review, and nothing fails. The Q5 order adds six formats; without a registry-driven matrix that is six new silent gaps.</li><li>Slow, flaky or expensive CI: if the e2e is built on live Kie or real model output, it either costs credits per push or gets skipped. A skipped render test already went red on main (#17/#18); the e2e must be deterministic or it will be ignored.</li></ul>
+<p><strong>Dependencies on other domains:</strong></p>
+<ul><li>Architect: the <code>mce.run/1</code> manifest schema and the format registry shape (one <code>src/formats.ts</code> exported to both TS and the .mjs CLIs via the esbuild bundle, Q7) must be fixed before I can write contract tests; I need stage input/output schemas, not prose.</li><li>Skeptic: edge-case enumeration for the stub (Kie <code>fail</code> state, expired result URL, missing brand asset, lip sync without packet) so the eval cases in Q10 are the real failure modes.</li><li>Advocate/Artisan: the &quot;agency quality&quot; bar as machine-checkable assertions (LUFS target, caption safe-zone, hook-in-first-second, CTA verbatim, no double exposure) — the existing <code>evals/metrix-feed-4x5-product-journey/case.yaml</code> expected_outcome is a good template; it needs to become assertions qa-video emits as JSON.</li><li>Operator: CI time budget; golden runs per format must fit alongside render-health (currently 30 s per-test timeout).</li></ul>
+<hr>
+<h4>Appendix A — Testing strategy (testing-strategy skill)</h4>
+<h5>Step 1: Existing infrastructure (audited)</h5>
+<ul><li>vitest 4, <code>include: src/**/*.test.ts</code>, node env, 30 s timeout, markdown inline loader (tests read real shipped prompts).</li><li>Skill scripts are tested from <code>src/__tests__/</code> by spawning the .mjs CLIs — keep that convention (do not add <code>skills/*/tests/</code>; <code>sync-copies.mjs</code> already skips <code>evals</code>).</li><li>Python unittest via <code>npm run test:*review*</code>, retention, client-library.</li><li>CI: <code>pnpm run verify</code> + top-level SKILL.md assertion; ffmpeg + headless Chrome installed, render tests FAIL not skip.</li><li>No coverage tool, no plugin validation, eval cases exist only for metrix-video-assembly and are not run by CI.</li></ul>
+<h5>Step 3: Pyramid</h5>
+<div class="tbl-wrap"><table><thead><tr><th>Layer</th><th>Count (new)</th><th>Run time</th><th>Mock strategy</th></tr></thead><tbody><tr><td>Unit</td><td>~40-60 cases</td><td>&lt; 5 s total</td><td>Pure: registry lookups, manifest hashing/append, brief field passthrough, gate rules</td></tr><tr><td>Contract (integration)</td><td>1 per seam (~7 seams)</td><td>&lt; 10 s</td><td>Real stage CLI on a fixture input; output parsed by the next stage&#x27;s zod schema</td></tr><tr><td>Golden run (e2e)</td><td>1 per registry format (start: video, ugc, static, carousel; add per Q5)</td><td>&lt; 60 s each, parallel</td><td>Stub Kie HTTP (existing check-mcp-surface stub); synthetic clips/audio via ffmpeg lavfi; real render/QA/review</td></tr><tr><td>Live smoke</td><td>1, manual only</td><td>minutes, spends</td><td><code>scripts/smoke-live.mjs</code>, never in CI</td></tr></tbody></table></div>
+<h5>Step 4: Test specifications</h5>
+<pre><code>File: src/__tests__/format-registry.test.ts            Layer: Unit
+describe(&#x27;format registry&#x27;)
+  it(&#x27;every ASSET_TYPES value has exactly one registry entry&#x27;)
+  it(&#x27;every entry names a prompt file that exists under prompts/formats/&#x27;)
+  it(&#x27;every entry has safe-zone rows resolvable by placement-zones zoneFor&#x27;)
+  it(&#x27;every entry has a golden fixture dir src/__tests__/fixtures/runs/&lt;format&gt;/&#x27;)
+  it(&#x27;no format literal (9:16, 4:5, 1080x1920) appears outside the registry&#x27;)   # extends single-definition.test.ts pattern
+
+File: src/__tests__/run-manifest.test.ts               Layer: Unit
+describe(&#x27;mce.run/1 manifest&#x27;)
+  it(&#x27;append records stage, inputs-by-hash, outputs-by-hash, tool versions&#x27;)
+  it(&#x27;rejects a stage whose declared input hash does not match the file on disk&#x27;)
+  it(&#x27;refuses out-of-order stages (review before qa)&#x27;)
+  it(&#x27;records non-Kie provenance (higgsfield/canva/manual) through the same ledger shape&#x27;)  # Q6
+
+File: src/__tests__/handoff-contracts.test.ts          Layer: Contract
+describe(&#x27;stage seams&#x27;)
+  it(&#x27;brief -&gt; plan: cells/matrix_naming_convention survive validateBrief and reach make-row&#x27;)
+  it(&#x27;storyboard -&gt; timeline plan: check-storyboard output parses as timeline input&#x27;)
+  it(&#x27;timeline emit -&gt; render: emitted composition renders with no missing asset refs&#x27;)
+  it(&#x27;render -&gt; qa-video: qa JSON parses with qaReportSchema&#x27;)
+  it(&#x27;qa-video -&gt; review: validate_review_gates.py FAILs when qa JSON has a FAIL row&#x27;)   # closes finding 5
+  it(&#x27;review -&gt; handoff: 03-handoff prompt is loaded and receipt lists every deliverable hash&#x27;)  # closes finding 4
+  it(&#x27;captions/asr-check: locked script vs ASR proof mismatch blocks VO route&#x27;)
+
+File: src/__tests__/golden-run.test.ts                 Layer: E2E (deterministic)
+describe.each(registryFormats)(&#x27;golden run %s&#x27;)
+  it(&#x27;runs plan..handoff with stubbed Kie and zero ledger spend&#x27;)
+  it(&#x27;manifest has one entry per stage, all hashes verify&#x27;)
+  it(&#x27;qa-video reports PASS for loudness, safe zone, frame-0 thumbnail, no black frames&#x27;)
+  it(&#x27;review record references the qa report hash&#x27;)
+  it(&#x27;FAILs end-to-end when the stub returns a Kie fail state (no silent partial deliverable)&#x27;)
+
+File: scripts/test_validate_review_gates.py (extend)   Layer: Unit (Python)
+  test_qa_fail_row_blocks_approval / test_missing_qa_report_blocks_approval
+
+File: src/__tests__/plugin-package.test.ts             Layer: Unit
+  it(&#x27;plugin.json lists all 16 skills; each has top-level SKILL.md and frontmatter name&#x27;)
+  it(&#x27;vendored skills are byte-identical to VENDORED.json pins&#x27;)
+  it(&#x27;generic skills (kie-generate, kie-tasks, media-use routing) point brief work to metrix-ad-creative&#x27;)  # Q8
+  it(&#x27;every spend-path skill has &gt;=1 eval case with a stubbed run&#x27;)                     # Q10
+
+Evals (Q10), run in CI against the stub:
+  metrix-ad-creative/evals/matrix-brief, missing-asset-blocker, lipsync-without-packet</code></pre>
+<p>Edge cases to cover: brief with zero brand_assets; matrix cells with duplicate names; placement a ratio cannot run (exit 2 path already exists in render.mjs); expired result URL with taskId only; Windows <code>X:/</code> defaults absent on Linux (tool resolution must come from <code>tools/manifest.json</code>, test asserts no drive-letter default).</p>
+<h5>Step 5: Coverage targets</h5>
+<div class="tbl-wrap"><table><thead><tr><th>Category</th><th>Target</th><th>Rationale</th></tr></thead><tbody><tr><td>brief.ts, run manifest, registry, gate logic</td><td>90%+ branch</td><td>Business rules, cheap to test</td></tr><tr><td>Stage CLIs (timeline, captions, qa, audio-graph)</td><td>80% line</td><td>Already well covered; add seam tests not more units</td></tr><tr><td>render.mjs / runtime.js</td><td>Covered by render-health + golden run</td><td>Browser code; behavioral not line coverage</td></tr><tr><td>Vendored HyperFrames skills</td><td>Skip</td><td>Byte-pinned, upstream-owned</td></tr></tbody></table></div>
+<p>Add <code>@vitest/coverage-v8</code> with thresholds only on <code>src/brief.ts</code>, <code>src/ledger.ts</code>, the new manifest and registry modules — not a global number that invites test padding.</p>
+<h5>Step 6: Quality gates</h5>
+<ul><li>Keep <code>npm run verify</code> as the single gate; append <code>test:contracts</code>, <code>test:golden</code>, <code>check:plugin</code> (plugin validate + eval run on stub) in that order so failures are cheapest-first.</li><li>Merge rule from Q1: any diff touching <code>render.mjs</code>/<code>runtime.js</code> requires green render-health and golden runs in CI, not local only.</li><li>Golden fixtures are synthetic and anonymous (fixture-hygiene.test.ts already enforces); client media stays in <code>out/</code>.</li></ul>
+<h5>Quality checks</h5>
+<ul><li>[x] Every business-logic unit (brief, manifest, registry, gates) has a spec</li><li>[x] Every handoff seam has a contract test</li><li>[x] One deterministic e2e per format on the happy path, plus a failure-path run</li><li>[x] Mocks limited to Kie HTTP; render, QA and review run for real</li><li>[x] Locations follow <code>src/__tests__/</code> and <code>scripts/test_*.py</code> conventions</li><li>[x] Coverage targets scoped, not aspirational</li></ul></div></details></div></div></section>
+<section class="wrap" id="verdict"><div class="sec-head"><h2>Verdict</h2><span class="badge b-pending">Pending</span></div><p class="muted">Synthesis has not produced a design yet.</p></section>
+<section class="wrap" id="planning"><div class="sec-head"><h2>Planning</h2><span class="badge b-pending">Pending</span></div><p class="muted">Planning has not produced a PRD yet.</p></section>
+
+<div class="wrap footer-note">
+  <b>Live window:</b> this page regenerates from the session directory as agents write; markdown files remain the artifacts of record.<br>
+  <b>Approvals:</b> all decisions happen in the Claude Code session, never here.
+</div>
+
+</body>
+</html>
