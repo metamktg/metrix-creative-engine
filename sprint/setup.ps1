@@ -158,8 +158,10 @@ if ($old.Count -gt 0) {
   Write-Host ("          " + ($old -join ", "))
   Write-Host "          To load only the plugin's, move them aside with:"
   # The command is PowerShell, so each path in it is quoted for PowerShell: a '
-  # in a folder name (a user named O'Brien) is doubled.
-  $quote = { param($s) "'" + ($s -replace "'", "''") + "'" }
+  # in a folder name (a user named O'Brien) is doubled, and so is each of the
+  # curly quotes PowerShell also reads as one, U+2018 to U+201B.
+  $quotes = "'" + [char]0x2018 + [char]0x2019 + [char]0x201A + [char]0x201B
+  $quote = { param($s) "'" + ($s -replace "[$quotes]", '$0$0') + "'" }
   Write-Host ("          `$to = " + (& $quote $backup) + "; New-Item -ItemType Directory -Force `$to | Out-Null; foreach (`$n in " + (($old | ForEach-Object { & $quote $_ }) -join ",") + ") { Move-Item -LiteralPath (Join-Path " + (& $quote $skills) + " `$n) -Destination `$to }")
 }
 

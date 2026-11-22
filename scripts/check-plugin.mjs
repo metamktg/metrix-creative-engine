@@ -154,38 +154,69 @@ try {
 // such as \\d\\ is not taken for one; escaped regex text with a longer word
 // between its backslashes is, and is listed like any other path.
 const body = String.raw`(?:Program Files(?: \(x86\))?|[^\s"'` + "`" + String.raw`()<>|,;])*`;
-// Before a drive letter: no letter, digit or underscore. Before a root slash:
-// nothing that continues a path, unless it is a file URL's own slashes, in
-// either case and JSON-escaped too (file:///Users, FILE:///Users,
-// file:\/\/\/Users), or an editor link's (vscode://file/Users). An escape
-// ends a word: \n, \r or \t, a \uXXXX or \xXX escape (JSON may write a
-// curly quote as \u201c), or a URL's %XX. Before a Git Bash drive path, which
-// reads like a one-letter URL segment (example.com/p/123), only an escape of
-// an ASCII character or of punctuation does: U+00A0 to U+00BF (a no-break
-// space, guillemets) or U+2000 to U+206F (curly quotes, dashes), whether as
-// \uXXXX, as \xXX or as UTF-8 in %XX. So an encoded letter that ends a
-// segment (caf%C3%A9/p/1) stays part of the word, and an encoded curly quote
-// right before a drive path does not. A closing angle bracket exempts
-// nothing: a placeholder and an HTML tag end the same way, so a root folder
-// name right after a placeholder is listed in known-absolute-paths.json like
-// any other path.
+// Before a drive letter: nothing that continues a word, which is a letter,
+// digit or mark in any script, or an underscore. Before a root slash: nothing
+// that continues a path, which is that or . ~ / \ -, unless it is a file
+// URL's own slashes, in either case and JSON-escaped too (file:///Users,
+// FILE:///Users, file:\/\/\/Users), or an editor link's
+// (vscode://file/Users). So an accented letter ends a URL segment as a plain
+// one does, and neither that segment nor a one-letter segment after it
+// (example.com/cafe/p/123) is a Git Bash drive path. An escape is read as the
+// character it stands for: \n, \r or \t, \uXXXX (a surrogate pair as one
+// character), \u{X}, \UXXXXXXXX, \xXX, or a URL's UTF-8 in %XX. So an
+// escaped letter continues a word as a written one does (caf%C3%A9/p/1), and
+// an escaped quote, space, arrow or bracket ends it (\u201c/c/...,
+// %E2%86%92/c/...), as any character outside those does. A closing angle
+// bracket exempts nothing: a placeholder and an HTML tag end the same way, so
+// a root folder name right after a placeholder is listed in
+// known-absolute-paths.json like any other path.
 const ci = (word) => [...word].map((c) => `[${c.toUpperCase()}${c}]`).join("");
-const afterEscape = String.raw`(?<=\\[nrt])|(?<=\\u[0-9A-Fa-f]{4})|(?<=\\x[0-9A-Fa-f]{2})|(?<=%[0-9A-Fa-f]{2})`;
-const afterAsciiOrPunctEscape = String.raw`(?<=\\[nrt])|(?<=\\u00[0-7ABab][0-9A-Fa-f])|(?<=\\u20[0-6][0-9A-Fa-f])|(?<=\\x[0-7ABab][0-9A-Fa-f])|(?<=%[0-7][0-9A-Fa-f])|(?<=%[Cc]2%[ABab][0-9A-Fa-f])|(?<=%[Ee]2%80%[89ABab][0-9A-Fa-f])|(?<=%[Ee]2%81%[89Aa][0-9A-Fa-f])`;
+const wordChars = String.raw`\p{L}\p{N}\p{M}_`;
+const afterEscape = String.raw`(?<=\\[nrt])|(?<=\\u[0-9A-Fa-f]{4})|(?<=\\u\{[0-9A-Fa-f]{1,6}\})|(?<=\\U[0-9A-Fa-f]{8})|(?<=\\x[0-9A-Fa-f]{2})|(?<=%[0-9A-Fa-f]{2})`;
 const fileUrl = String.raw`(?<=${ci("file")}:(?:\\?\/){2}(?:${ci("localhost")})?)|(?<=:(?:\\?\/){2}${ci("file")})`;
-const notAfterWord = String.raw`(?:(?<![A-Za-z0-9_])|${afterEscape})`;
-const notAfterPath = String.raw`(?:(?<![A-Za-z0-9_.~/\\-])|${afterEscape}|${fileUrl})`;
-const notAfterPathAsciiOrPunct = String.raw`(?:(?<![A-Za-z0-9_.~/\\-])|${afterAsciiOrPunctEscape}|${fileUrl})`;
+const notAfterWord = String.raw`(?:(?<![${wordChars}])|${afterEscape})`;
+const notAfterPath = String.raw`(?:(?<![${wordChars}.~/\\-])|${afterEscape}|${fileUrl})`;
 const slash = String.raw`(?:\\?\/|%2[Ff])`;
 const userRoots = ["Users", "home", "usr/home", "root", "Volumes", "media", "run/media", "private", "var/folders", "mnt/[A-Za-z]"]
   .map((root) => root.split("/").join(slash)).join("|");
+// One group per form, so a match says which it is: the two drive forms, the
+// UNC share, then the two root forms.
 const absolutePath = new RegExp([
   String.raw`${notAfterWord}[A-Za-z]:[\\/]${body}`,
   String.raw`${notAfterWord}[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff]|[\\/])${body}`,
-  String.raw`(?<![A-Za-z0-9_])\\\\[A-Za-z0-9_.$-]{2,}\\${body}`,
+  String.raw`(?<![${wordChars}])\\\\[A-Za-z0-9_.$-]{2,}\\${body}`,
   String.raw`${notAfterPath}${slash}(?:${userRoots})${slash}${body}`,
-  String.raw`${notAfterPathAsciiOrPunct}\\?\/(?:cygdrive\\?\/)?[A-Za-z]\\?\/(?=[A-Za-z0-9_.~-])${body}`,
-].map((form) => `(${form})`).join("|"), "g");
+  String.raw`${notAfterPath}\\?\/(?:cygdrive\\?\/)?[A-Za-z]\\?\/(?=[A-Za-z0-9_.~-])${body}`,
+].map((form) => `(${form})`).join("|"), "gu");
+const continuesWord = new RegExp(`^[${wordChars}]$`, "u");
+const continuesPath = new RegExp(String.raw`^[${wordChars}.~/\\-]$`, "u");
+// The character that an escape ending at index i of a line stands for, or
+// null when no escape ends there. Bytes in %XX that are not UTF-8, a lone
+// surrogate and a code point past U+10FFFF read as U+FFFD, which ends a word.
+const utf8 = new TextDecoder("utf-8", { fatal: true });
+const notAChar = String.fromCharCode(0xfffd);
+const escapedBefore = (line, i) => {
+  const head = line.slice(Math.max(0, i - 12), i);
+  let m;
+  if ((m = head.match(/\\([nrt])$/))) return { n: "\n", r: "\r", t: "\t" }[m[1]];
+  if ((m = head.match(/\\u\{([0-9A-Fa-f]{1,6})\}$/) ?? head.match(/\\U([0-9A-Fa-f]{8})$/))) {
+    const code = parseInt(m[1], 16);
+    return code <= 0x10ffff ? String.fromCodePoint(code) : notAChar;
+  }
+  if ((m = head.match(/\\u([Dd][89ABab][0-9A-Fa-f]{2})\\u([Dd][C-Fc-f][0-9A-Fa-f]{2})$/))) return String.fromCharCode(parseInt(m[1], 16), parseInt(m[2], 16));
+  if ((m = head.match(/\\u([0-9A-Fa-f]{4})$/) ?? head.match(/\\x([0-9A-Fa-f]{2})$/))) return String.fromCharCode(parseInt(m[1], 16));
+  if ((m = head.match(/(?:%[0-9A-Fa-f]{2}){1,4}$/))) {
+    const bytes = m[0].slice(1).split("%").map((hex) => parseInt(hex, 16));
+    for (let k = bytes.length - 1; k >= 0; k--) {
+      try {
+        const c = utf8.decode(Uint8Array.from(bytes.slice(k)));
+        if ([...c].length === 1) return c;
+      } catch {}
+    }
+    return notAChar;
+  }
+  return null;
+};
 // A home folder in a binary file's strings: the one form worth the cost
 // there, in any case (a .pdb may record the path in capitals) and with
 // doubled backslashes.
@@ -251,16 +282,36 @@ const asText = (buf) => {
 };
 // A kit names its brand in identity.canonical_name. Any quoted value of that
 // key counts, in any file and at any depth (a renamed kit, a kit inside
-// another object, JSON that does not parse, a kit escaped into a string), and
-// so does an unquoted one on the key's line in any file that is not code:
-// YAML as a block, a list item or a flow mapping, in a .yml file, a copy of
-// one, a Markdown fence or a text file. In code an unquoted value is an
-// expression, and a type (canonical_name: string) is no brand. Only file paths
-// are reported, never a brand.
+// another object, JSON that does not parse, a kit escaped into a string). So
+// does an unquoted one in any file that is not code, read as YAML reads it.
+// On the key's line, a value inside a flow mapping or list ends at its comma
+// or bracket and any other at a comment, so a block value keeps its commas
+// (Metrix, Acme); a flow mapping or list counts in full ({en: Acme}); and
+// when the key's line ends at the colon, or at a block scalar's | or >, the
+// lines below it that are indented past the key count (a nested mapping, a
+// list, a value on the next line). The key may be quoted, follow a dot
+// (identity.canonical_name) or a backtick, or come after \n in YAML kept in
+// a JSON string, whose \n are read as line breaks. A value ends at a
+// backtick (Markdown code) or a double quote (a string's end). Markdown
+// outside a fence reads as prose: a value there also ends at a comma, a
+// semicolon, a full stop or a table's bar, and a value on the next line is
+// not read. In code an unquoted value is an expression, and so it is in a
+// Markdown fence labelled with a programming language. A Markdown file's
+// front matter is YAML. A type (canonical_name: string, Optional[str] = None,
+// z.string()) is no brand, and neither is a mapping under the key that has a
+// type or $ref key: that is a schema describing the field (JSON Schema,
+// OpenAPI). Punctuation and closing brackets that end a value are not part
+// of it, as in a flow mapping that spans lines (canonical_name: Metrix,).
+// Only file paths are reported, never a brand.
 const quotedBrand = /canonical_name\\?["']?\s*[:=]\s*\\?["']([^"'\\\r\n]*)/g;
-const plainBrand = /(?:^|[\s{,])canonical_name[ \t]*:[ \t]*([^"'\s#,{}[\]][^#,{}\r\n]*)/gm;
-const typeWord = /^(?:(?:string|str|String)(?:\s*\|\s*(?:null|undefined|None))?|Optional\[str\]|null|Null|NULL|None|undefined|~)\s*;?$/;
-const codeFile = /\.(?:[cm]?[jt]sx?|py|pyi|ps1|psm1|sh|bash|cmd|bat)$/i;
+const plainKey = /(?:(?<![A-Za-z0-9_])|(?<=\\[nrt]))(["']?)canonical_name\1[ \t]*:/g;
+const typeName = "(?:str|string|String|None|null|Null|NULL|undefined)";
+const typeWord = new RegExp(String.raw`^(?:~|(?:(?:Optional|Union)\[)?${typeName}(?:[\s\[\]|!?,]*${typeName})*[\s\[\]|!?]*(?:=.*)?|z\.string\(\)\S*)\s*[;,]?$`);
+const codeFile = /\.(?:[cm]?[jt]sx?|py|pyi|ps1|psm1|sh|bash|cmd|bat|html?|vue|svelte|astro|php|rb|go|rs|java|kts?|swift|c|cc|cpp|h|hpp|cs|lua|graphql|gql)$/i;
+const codeFence = /^(?:[cm]?[jt]sx?|javascript|typescript|py|python|pyi|ps1|psm1|powershell|pwsh|sh|bash|zsh|shell|cmd|bat|batch|html?|xml|vue|svelte|astro|php|rb|ruby|go|rs|rust|java|kts?|kotlin|swift|c|cc|cpp|h|hpp|cs|csharp|lua|graphql|gql|sql|css|scss|jsonc?|json5)$/i;
+const fenceLine = /^\s*(`{3,}|~{3,})[ \t]*([^\s`]*)/;
+// A schema's own keys, which a brand map does not have.
+const schemaKey = /(?:^|[{,\s])(["']?)(?:type|\$ref)\1[ \t]*:/;
 const jsonBrands = (value, out = []) => {
   if (Array.isArray(value)) value.forEach((item) => jsonBrands(item, out));
   else if (value && typeof value === "object") {
@@ -271,9 +322,71 @@ const jsonBrands = (value, out = []) => {
   }
   return out;
 };
+// A flow mapping or list, from its opening bracket to the one that closes it.
+const flowBody = (lines, i, start) => {
+  let depth = 0;
+  let body = "";
+  for (let j = i; j < lines.length && j < i + 50; j++) {
+    for (const c of j === i ? start : lines[j]) {
+      body += c;
+      if (c === "{" || c === "[") depth += 1;
+      else if ((c === "}" || c === "]") && --depth === 0) return body;
+    }
+    body += "\n";
+  }
+  return body;
+};
+// A line's or a flow item's value, without its list dashes or its key.
+const valueOf = (piece) => piece.replace(/^\s*(?:-(?:\s+|$))*/, "").replace(/^(?:"[^"]*"|'[^']*'|[^:"'\s][^:"']*?)\s*:(?:\s+|$)/, "");
+const plainBrands = (text, rel) => {
+  const names = [];
+  const markdown = /\.(?:md|markdown|mdx)$/i.test(rel);
+  const lines = text.split(/\r?\n/).flatMap((line) => (line.includes("canonical_name") && /\\[nr]/.test(line) ? line.split(/\\r\\n|\\[nr]/) : [line]));
+  let fence = null;
+  let front = markdown && lines[0] === "---";
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (front && i > 0 && /^(?:---|\.\.\.)$/.test(line)) front = false;
+    const f = markdown && !front ? line.match(fenceLine) : null;
+    if (f) {
+      if (!fence) fence = { mark: f[1], code: codeFence.test(f[2]) };
+      else if (f[1][0] === fence.mark[0] && f[1].length >= fence.mark.length && !f[2]) fence = null;
+      continue;
+    }
+    if (fence?.code) continue;
+    const prose = markdown && !fence && !front;
+    for (const m of line.matchAll(plainKey)) {
+      const before = line.slice(0, m.index);
+      const flow = (before.match(/[{[]/g) ?? []).length > (before.match(/[}\]]/g) ?? []).length;
+      let value = line.slice(m.index + m[0].length).replace(/^[ \t]+/, "");
+      while (/^[&!]\S*(?:[ \t]|$)/.test(value)) value = value.replace(/^[&!]\S*[ \t]*/, "");
+      if (/^["'`]/.test(value)) continue;
+      const pieces = [];
+      if (/^[{[]/.test(value)) {
+        const body = flowBody(lines, i, value);
+        if (!schemaKey.test(body)) pieces.push(...body.split(/[{}[\],\n]/).map(valueOf));
+      } else if (/^(?:[|>][-+0-9]*)?[ \t]*(?:#.*)?$/.test(value)) {
+        if (prose) continue;
+        const below = [];
+        for (let j = i + 1; j < lines.length; j++) {
+          if (markdown && fenceLine.test(lines[j])) break;
+          if (!lines[j].trim()) continue;
+          if (lines[j].match(/^[ \t]*/)[0].length <= m.index) break;
+          below.push(lines[j]);
+        }
+        if (!below.some((l) => schemaKey.test(l))) pieces.push(...below.map(valueOf));
+      } else pieces.push(value.split(flow ? /[,}\]]|[ \t]#|["`]|\\t/ : prose ? /[,;|"`]|\.(?:\s|$)|[ \t]#|\\t/ : /[ \t]#|["`]|\\t/)[0]);
+      for (const piece of pieces) {
+        const name = piece.replace(/(?:^|[ \t])#.*$/, "").replace(/^[\s"']+|[\s"'.,;:!?}\]]+$/g, "");
+        if (name && !typeWord.test(name)) names.push(name);
+      }
+    }
+  }
+  return names;
+};
 const otherBrand = (text, rel) => {
   const names = [...text.matchAll(quotedBrand)].map((m) => m[1]);
-  if (!codeFile.test(rel)) names.push(...[...text.matchAll(plainBrand)].map((m) => m[1].trim()).filter((v) => !typeWord.test(v)));
+  if (!codeFile.test(rel)) names.push(...plainBrands(text, rel));
   if (/\.json$/i.test(rel)) { try { names.push(...jsonBrands(JSON.parse(text))); } catch {} }
   return names.some((name) => name !== "Metrix");
 };
@@ -295,8 +408,18 @@ for (const rel of tracked) {
     continue;
   }
   text.split(/\r?\n/).forEach((line, i) => {
-    for (const m of line.matchAll(absolutePath)) {
-      const hit = m.slice(1).find(Boolean);
+    // A match right after an escaped letter (or, before a root slash, an
+    // escaped path character) is part of a word, as it is after a written
+    // one: skip it and look again from the next character.
+    absolutePath.lastIndex = 0;
+    for (let m; (m = absolutePath.exec(line)); ) {
+      const form = m.slice(1).findIndex((g) => g !== undefined);
+      const hit = m[form + 1];
+      const c = escapedBefore(line, m.index);
+      if (c !== null && (form < 3 ? continuesWord : continuesPath).test(c)) {
+        absolutePath.lastIndex = m.index + 1;
+        continue;
+      }
       if (generic.some((g) => g.test(hit))) continue;
       (found[rel] ??= []).push({ line: i + 1, text: hit, hash: hash(hit) });
     }
@@ -341,7 +464,10 @@ const fixtureKits = [
   "skills/metrix-video-assembly/evals/metrix-reels-refuses-unsourced-proof/files/brand-kit.json",
 ];
 const gap = String.raw`(?:[^A-Za-z0-9]|%[0-9A-Fa-f]{2})*`;
-const notWord = (...rests) => `(?!(?:${rests.map(ci).join("|")})(?![A-Za-z]))`;
+// A rest continues the word only in the case of the letter before it
+// (kitchen, KITCHEN): after a lower-case letter a capital starts a new word,
+// as in BrandKitChen or MasterExecutionPromptEd.
+const notWord = (...rests) => `(?!(?<=[a-z])(?:${rests.join("|")})(?![A-Za-z])|(?<=[A-Z])(?:${rests.map((r) => r.toUpperCase()).join("|")})(?![A-Za-z]))`;
 const kitNames = [
   new RegExp(`${ci("brand")}${gap}${ci("kit")}[Ss]?${notWord("chen", "chens", "e", "es", "ten", "tens", "ty")}`),
   new RegExp(`${ci("master")}${gap}${ci("execution")}${gap}${ci("prompt")}[Ss]?${notWord("ly", "er", "ers", "ing", "ings", "ed")}`),
