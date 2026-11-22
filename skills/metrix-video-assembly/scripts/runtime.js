@@ -224,6 +224,38 @@
 
   const twoFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
+  // What is captured is a canvas copy of each clip, not the video layer itself. Even after
+  // "seeked", requestVideoFrameCallback and the second presentation below, headless Chrome on
+  // Linux still composited the previous source frame into Page.captureScreenshot: a 30 fps WebM
+  // stepped over 60 stills showed a stale frame in 10 of 180 captures, while drawImage of the same
+  // video at the same moment returned the wanted frame in 180 of 180. So each clip gets a sibling
+  // canvas that carries the video's computed style on every seek (layout, object-fit, transforms,
+  // opacity, visibility) and the confirmed frame drawn into it; the video stays in place for
+  // seeking, health and shown(), and paints nothing (clip-path: inset(50%) changes no box, no
+  // visibility and no opacity). The canvas is added at the first seek, after __authored has read
+  // the DOM, so parity sees the page as written.
+  const FRAME_ATTR = "data-clip-frame";
+  function paintFrame(v, visible) {
+    let c = v.__frame;
+    if (!c) {
+      v.__clipPath = getComputedStyle(v).clipPath;
+      c = document.createElement("canvas");
+      c.setAttribute(FRAME_ATTR, v.getAttribute("src") || "");
+      c.setAttribute("aria-hidden", "true");
+      v.after(c);
+      v.style.setProperty("clip-path", "inset(50%)", "important");
+      v.__frame = c;
+    }
+    const cs = getComputedStyle(v);
+    for (const p of cs) c.style.setProperty(p, cs.getPropertyValue(p));
+    c.style.setProperty("clip-path", v.__clipPath || "none");
+    c.style.setProperty("pointer-events", "none");
+    if (!visible || !v.videoWidth || !v.videoHeight) return;
+    if (c.width !== v.videoWidth) c.width = v.videoWidth;
+    if (c.height !== v.videoHeight) c.height = v.videoHeight;
+    c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+  }
+
   // Returns each clip's src and currentTime after the seek, so a caller can check the frame map.
   //
   // A clip that turns visible (v19 shows and hides its shots with visibility:hidden on a
@@ -254,6 +286,7 @@
       const again = Math.min(clipLocal(v, t) + (fps > 0 ? 0.25 / fps : 0.001), Math.max(0, (v.duration || 0) - 0.001));
       await seekTo(v, again, t, { frame: false });
     }));
+    clips.forEach((v, i) => paintFrame(v, on[i]));
     await twoFrames();
     return clips.map((v) => ({ src: v.getAttribute("src"), currentTime: v.currentTime, local: clipLocal(v, t) }));
   }
