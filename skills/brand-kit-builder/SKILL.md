@@ -120,7 +120,11 @@ stopped.
 The full four-artifact pipeline, including building the visual kit and the checks
 that stop a broken one shipping, is **`SOP.md`** beside this file.
 
-Two files per account, in `brand-kits/<account>/`:
+Two files per account, in `brand-kits/<account>/` inside the assets folder
+(`$METRIX_ASSETS_DIR`, which the plugin's assets folder option sets). With no
+assets folder, write them under the folder you work in. Never write a kit inside
+the engine's own folder or any repository: it is client material. Pass the same
+folder to `scripts/audit-brand.mjs --out`.
 
 - **`brand-kit.json`** · the structured kit. Its `brand_assets` array plugs
   straight into the brief contract that `kie_validate_brief` checks.

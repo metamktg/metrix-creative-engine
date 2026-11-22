@@ -1,12 +1,16 @@
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_WAIT_SECONDS, loadConfig } from "../config.js";
+import { ROUTING, serverInstructions } from "../instructions.js";
 import { resolveLedgerPath } from "../ledger.js";
 
 describe("loadConfig", () => {
   it("requires an API key and says where to get one", () => {
     expect(() => loadConfig({})).toThrow(/kie.ai\/api-key/);
     expect(() => loadConfig({ KIE_AI_API_KEY: "   " })).toThrow(/KIE_AI_API_KEY is not set/);
+    expect(() => loadConfig({})).toThrow(/plugin's Kie.ai API key option/);
   });
 
   it("defaults everything optional", () => {
@@ -18,6 +22,8 @@ describe("loadConfig", () => {
       defaultWaitSeconds: DEFAULT_WAIT_SECONDS,
       downloadDir: null,
       ledgerPath: resolveLedgerPath({}, null),
+      assetsDir: null,
+      ignored: [],
     });
   });
 
@@ -45,5 +51,74 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ KIE_AI_API_KEY: "k", KIE_AI_DEFAULT_WAIT_SECONDS: "0" })).toThrow(
       /must be a positive number/,
     );
+  });
+});
+
+// The plugin passes its options as METRIX_*; a standalone install sets KIE_AI_*.
+describe("loadConfig under the plugin", () => {
+  it("prefers the plugin's options over the environment", () => {
+    const config = loadConfig({
+      METRIX_KIE_API_KEY: "from-plugin",
+      KIE_AI_API_KEY: "from-env",
+      METRIX_RUNS_DIR: "/runs/plugin",
+      KIE_AI_DOWNLOAD_DIR: "./out",
+      METRIX_ASSETS_DIR: "/assets",
+    });
+    expect(config.apiKey).toBe("from-plugin");
+    expect(config.downloadDir).toBe("/runs/plugin");
+    expect(config.ledgerPath).toBe(path.resolve("/runs/plugin", "kie-ledger.jsonl"));
+    expect(config.assetsDir).toBe("/assets");
+  });
+
+  // Claude Code passes an unset option as "", so the environment still answers.
+  it("falls back to the environment when an option is empty", () => {
+    const config = loadConfig({
+      METRIX_KIE_API_KEY: "",
+      KIE_AI_API_KEY: "from-env",
+      METRIX_RUNS_DIR: "  ",
+      KIE_AI_DOWNLOAD_DIR: "./out",
+      METRIX_ASSETS_DIR: "",
+    });
+    expect(config.apiKey).toBe("from-env");
+    expect(config.downloadDir).toBe("./out");
+    expect(config.assetsDir).toBeNull();
+    expect(config.ignored).toEqual([]);
+  });
+
+  // Claude Code leaves `${KIE_AI_API_KEY}` literal when the variable is unset.
+  // Taken as a key it would turn "not set" into a 401; as a folder it would
+  // create a directory named after the placeholder.
+  it("reads an unexpanded reference as unset and reports it", () => {
+    expect(() => loadConfig({ KIE_AI_API_KEY: "${KIE_AI_API_KEY}" })).toThrow(/KIE_AI_API_KEY is not set/);
+    const config = loadConfig({
+      METRIX_KIE_API_KEY: "${user_config.kie_api_key}",
+      KIE_AI_API_KEY: "k",
+      METRIX_RUNS_DIR: "${user_config.runs_dir}",
+      KIE_AI_DOWNLOAD_DIR: "${CLAUDE_PLUGIN_DATA}/out",
+      KIE_AI_LEDGER_PATH: "${KIE_AI_LEDGER_PATH}",
+    });
+    expect(config.apiKey).toBe("k");
+    expect(config.downloadDir).toBeNull();
+    expect(config.ledgerPath).toBe(resolveLedgerPath({}, null));
+    expect(config.ignored).toEqual(["METRIX_KIE_API_KEY", "METRIX_RUNS_DIR", "KIE_AI_DOWNLOAD_DIR", "KIE_AI_LEDGER_PATH"]);
+  });
+
+  it("still switches the ledger off on request", () => {
+    expect(loadConfig({ KIE_AI_API_KEY: "k", METRIX_RUNS_DIR: "/runs", KIE_AI_LEDGER_PATH: "off" }).ledgerPath).toBeNull();
+  });
+});
+
+describe("serverInstructions", () => {
+  it("keeps the routing text and states both folders, resolved", () => {
+    const text = serverInstructions({ downloadDir: "./out", assetsDir: "brand" });
+    expect(text.startsWith(ROUTING)).toBe(true);
+    expect(text).toContain(`Runs folder: ${path.resolve("./out")}.`);
+    expect(text).toContain(`Assets folder: ${path.resolve("brand")}.`);
+  });
+
+  it("says plainly when a folder is not set", () => {
+    const text = serverInstructions({ downloadDir: null, assetsDir: null });
+    expect(text).toContain("Runs folder: not set, so downloads are off.");
+    expect(text).toContain("Assets folder: not set.");
   });
 });

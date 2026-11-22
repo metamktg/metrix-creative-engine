@@ -59,7 +59,8 @@ its concept is the point; `--name` on its own writes to `./out`). Exit 2 means t
 out and the task is still running: poll the same taskId, never re-create.
 
 On Windows the path is `scripts\kie.mjs`. Use the skill's own directory, which
-in an installed skill is under `.claude/skills/<skill>/`.
+Claude Code names when it loads the skill: under `.claude/skills/<skill>/` for a
+standalone install, inside the plugin's folder for a plugin install.
 
 **2. MCP tools, if `/mcp` lists `kie-ai`.** `kie_run_task`, `kie_create_task`,
 `kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_ledger` and `kie_download_result`

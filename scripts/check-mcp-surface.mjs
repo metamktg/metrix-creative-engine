@@ -25,7 +25,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const bundle = path.join(repoRoot, "dist", "index.js");
+// The committed bundle, the same file a plugin install launches.
+const bundle = path.join(repoRoot, "server", "index.js");
 
 // ---------------------------------------------------------------- Kie stub
 let reads = 0;
@@ -78,6 +79,12 @@ const downloadDir = await mkdtemp(path.join(tmpdir(), "kie-mcp-surface-"));
 const child = spawn("node", [bundle], {
   env: {
     ...process.env,
+    // The plugin's own variables win over KIE_AI_*, and a session started with
+    // the plugin can carry them. Blank them so the stub key and the temporary
+    // folder below are what the bundle actually reads.
+    METRIX_KIE_API_KEY: "",
+    METRIX_RUNS_DIR: "",
+    METRIX_ASSETS_DIR: "",
     KIE_AI_API_KEY: "stub-key-not-a-real-credential",
     KIE_AI_BASE_URL: `http://127.0.0.1:${stubPort}`,
     KIE_AI_DOWNLOAD_DIR: downloadDir,
@@ -148,6 +155,13 @@ try {
   check("handshake routes creator workflows to prompts and on-demand references",
     ["kie_render_ugc", "kie_render_ai_ugc", "kie_render_video", "kie://ugc-creative-playbook", "kie://production-review-standard"].every((route) => instructions.includes(route)));
   check("handshake keeps workflow routing concise", instructions.length > 0 && instructions.length < 1000);
+  // A plugin install and Claude Desktop have no other channel for these, so the
+  // handshake has to carry them, resolved, exactly as configured.
+  check("handshake states the runs folder and the unset assets folder",
+    instructions.includes(`Runs folder: ${path.resolve(downloadDir)}.`) && instructions.includes("Assets folder: not set."));
+  const engineVersion = JSON.parse(await readFile(path.join(repoRoot, "package.json"), "utf8")).version;
+  check("serverInfo reports the engine version", init.result?.serverInfo?.version === engineVersion,
+    `got ${init.result?.serverInfo?.version}, package.json says ${engineVersion}`);
 
   console.log("\n== Tools ==");
   const tools = (await rpc("tools/list", {})).result?.tools ?? [];

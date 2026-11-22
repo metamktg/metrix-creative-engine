@@ -1,23 +1,25 @@
 {
   "name": "metrix-creative-engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "MCP server and Claude Code skills for generating ad creative through Kie.ai",
+  "description": "Claude Code plugin, MCP server and skills for generating ad creative through Kie.ai",
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "bin": {
-    "kie-ai-mcp-server": "./dist/index.js"
+    "kie-ai-mcp-server": "./server/index.js"
   },
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "build": "node ./build.mjs",
-    "start": "node ./dist/index.js",
+    "start": "node ./server/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config vitest.config.ts",
-    "verify": "npm run check:copies && npm run check:production-standard && npm run typecheck && npm run test && npm run build && npm run check:mcp-surface && npm run test:production-review && npm run test:retention && npm run test:client-library",
+    "verify": "npm run check:copies && npm run check:plugin && npm run check:production-standard && npm run typecheck && npm run test && npm run check:bundle && npm run check:mcp-surface && npm run test:production-review && npm run test:retention && npm run test:client-library",
     "check:copies": "node ./scripts/sync-copies.mjs --check",
+    "check:bundle": "node ./build.mjs --check",
+    "check:plugin": "node ./scripts/check-plugin.mjs",
     "sync:copies": "node ./scripts/sync-copies.mjs",
     "check:production-standard": "python -B skills/ugc-creator-edit/scripts/build_standard_doc.py --check --out docs/UGC_PRODUCTION_STANDARD.md",
     "check:mcp-surface": "node ./scripts/check-mcp-surface.mjs",

@@ -361,11 +361,18 @@ selectable.
 
 | Variable | Required | Default | Meaning |
 | --- | --- | --- | --- |
-| `KIE_AI_API_KEY` | yes | – | Sent as a bearer token. Never logged, never in a URL |
+| `KIE_AI_API_KEY` | yes, unless `METRIX_KIE_API_KEY` is set | – | Sent as a bearer token. Never logged, never in a URL |
 | `KIE_AI_DOWNLOAD_DIR` | no | unset | Enables `kie_download_result` and fixes its directory |
+| `METRIX_KIE_API_KEY` | no | unset | The plugin's Kie.ai API key option. Wins over `KIE_AI_API_KEY` |
+| `METRIX_RUNS_DIR` | no | unset | The plugin's runs folder option. Wins over `KIE_AI_DOWNLOAD_DIR` |
+| `METRIX_ASSETS_DIR` | no | unset | The plugin's assets folder option. Stated in the handshake so the client knows where inputs live |
 | `KIE_AI_DEFAULT_WAIT_SECONDS` | no | 300 | Default timeout for waiting tools |
 | `KIE_AI_REQUEST_TIMEOUT_MS` | no | 60000 | Per-HTTP-request timeout |
 | `KIE_AI_BASE_URL` | no | `https://api.kie.ai` | Override for a proxy or test stub |
 | `KIE_AI_LEDGER_PATH` | no | `<download dir or ./out>/kie-ledger.jsonl` | Where the task ledger lives, or `off` to disable it |
+
+The plugin passes its options as the three `METRIX_*` variables. An empty value, or a
+`${...}` reference the client never expanded, reads as unset, and the server names any
+such variable on stderr at startup.
 
 The server does not upload files. The script's `upload` command tries `KIE_AI_UPLOAD_BASE_URL` first when it is set, then Kie's two default upload hosts.
