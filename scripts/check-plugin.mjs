@@ -150,8 +150,8 @@ try {
 // raw, JSON-escaped or URL-encoded, also inside a file URL. So do a share
 // behind a long-path prefix (a drive behind one is read as a drive), and a
 // home or a volume on a WSL share written with forward slashes or in an
-// editor's remote URI, raw or as a file URL; the generic forms below are
-// tested on the path such a prefix holds. A path may follow
+// editor's remote URI or link, raw or as a file URL; the generic forms below
+// are tested on the path such a prefix holds. A path may follow
 // an escape (\n, \r or \t in a string, %XX in a URL). A match runs on through
 // the space in "Program Files" and "Program Files (x86)", and otherwise ends
 // at whitespace or a delimiter; its last segment also ends at its first
@@ -167,8 +167,9 @@ const body = String.raw`(?:Program Files(?: \(x86\))?|[^\s"'` + "`" + String.raw
 // variation selector) as the character it is on. A drive letter or a UNC
 // share goes on from a word: a letter or digit of a script written with
 // spaces between words (Latin, Greek, Cyrillic, Arabic, Hangul and the
-// rest), or an underscore that is not emphasis (one or two after no word, as
-// Markdown writes italics). A root slash goes on from that and from . ~ / \ -,
+// rest), or an underscore that is not emphasis (one or two after no word,
+// with as many later on the line that can close them, as Markdown writes
+// italics). A root slash goes on from that and from . ~ / \ -,
 // so a segment of a URL or of a relative path (example.com/cafe/p/123,
 // assets/menu/media/x) is no path. Han, Kana, Thai and the other scripts
 // written without spaces run straight into what follows: a letter of one
@@ -193,8 +194,12 @@ const userRoots = ["Users", "home", "usr/home", "root", "Volumes", "media", "run
 // The name of a WSL distribution or of an editor's remote (wsl+ubuntu), raw
 // or URL-encoded, which a path on that system follows.
 const remoteName = String.raw`(?:[^\s"'<>\\/%]|%(?!2[Ff])[0-9A-Fa-f]{2})+`;
-const wslShare = String.raw`(?:${ci("file")}${colon})?${slash}{2}(?:${ci("wsl")}[.]${ci("localhost")}|${ci("wsl")}\$)${slash}${remoteName}`;
-const editorRemote = String.raw`${ci("vscode")}-${ci("remote")}${colon}${slash}{2}${remoteName}`;
+// A file URL names a share after two to five slashes.
+const wslShare = String.raw`(?:${ci("file")}${colon}${slash}{2,5}|${slash}{2})(?:${ci("wsl")}[.]${ci("localhost")}|${ci("wsl")}\$)${slash}${remoteName}`;
+// An editor's remote is the scheme of its URI (vscode-remote://wsl+ubuntu),
+// or the authority of an editor's link (vscode://vscode-remote/wsl+ubuntu).
+const editorScheme = `(?:${ci("vscode")}(?:-${ci("insiders")})?|${ci("vscodium")}|${ci("cursor")}|${ci("windsurf")})`;
+const editorRemote = String.raw`(?:${ci("vscode")}-${ci("remote")}${colon}${slash}{2}|${editorScheme}${colon}${slash}{2}${ci("vscode")}-${ci("remote")}${slash})${remoteName}`;
 // One group per form, so a match says which it is: the two drive forms, the
 // UNC share, the two root forms, a share behind a long-path prefix
 // (\\?\UNC\host\), and a WSL share (//wsl.localhost/Ubuntu, also in a file
@@ -271,17 +276,23 @@ const fileUrlBefore = (line, i) => {
   for (let p = charBefore(line, i), k = 0; p && k < 24; p = charBefore(line, p.at), k++) text = p.c + text;
   return /file:\/\/(?:localhost)?$|:\/\/file$/i.test(text);
 };
+// Whether a match goes on from what is right before it (true) or is a path of
+// its own (false). After one or two underscores of emphasis that follow no
+// word, it gives their count: a path in italics, if as many close them later
+// on the line (emphasisEnds, below).
 const goesOn = (line, i, form) => {
   let p = charBefore(line, i);
   while (p && markChar.test(p.c)) p = charBefore(line, p.at);
   if (!p) return false;
   const root = rootForms.has(form);
-  // One or two underscores of emphasis after no word (a path in italics) are
-  // no word.
   if (p.c === "_") {
     let q = charBefore(line, p.at);
-    if (q && q.c === "_") q = charBefore(line, q.at);
-    if (!q || !(letterOrDigit.test(q.c) || q.c === "_" || (root && pathChar.test(q.c)))) return false;
+    let under = 1;
+    if (q && q.c === "_") {
+      q = charBefore(line, q.at);
+      under = 2;
+    }
+    if (!q || !(letterOrDigit.test(q.c) || q.c === "_" || (root && pathChar.test(q.c)))) return under;
   }
   let on = wordChar.test(p.c) || (root && pathChar.test(p.c)) || (letterOrDigit.test(p.c) && !unspaced.test(p.c));
   if (!on && root && letterOrDigit.test(p.c)) {
@@ -293,16 +304,34 @@ const goesOn = (line, i, form) => {
   }
   return on && !(root && fileUrlBefore(line, i));
 };
+// The underscore runs on a line that can close emphasis, after a character
+// that is no space and before no letter or digit: where the last one starts,
+// and where the last one of two or more does.
+const emphasisEnds = (line) => {
+  const last = [-1, -1, -1];
+  for (const r of line.matchAll(/_+/g)) {
+    const a = r.index;
+    if (a === 0 || /\s/.test(line[a - 1]) || /[A-Za-z0-9]/.test(line[a + r[0].length] ?? "")) continue;
+    last[1] = a;
+    if (r[0].length >= 2) last[2] = a;
+  }
+  return last;
+};
 // The last segment of a path ends at its first letter of a script written
 // without spaces: such text right after a path is prose (a drive root and then
 // a sentence in Japanese), while a folder named in one goes on to the
-// separator after it.
+// separator after it, and a file named in one to the end of its extension.
+const fileName = /[\p{L}\p{N}\p{M}_-]*(?:\.[A-Za-z0-9]{1,10})+(?![A-Za-z0-9])/uy;
 const proseAfter = (rest) => {
   let from = 0;
   for (const s of rest.matchAll(/[\\/]|%2[Ff]|%5[Cc]/g)) from = s.index + s[0].length;
   for (let k = from; k < rest.length; ) {
     const c = String.fromCodePoint(rest.codePointAt(k));
-    if (unspaced.test(c)) return rest.slice(0, k);
+    if (unspaced.test(c)) {
+      fileName.lastIndex = k;
+      const file = fileName.exec(rest);
+      return rest.slice(0, file ? k + file[0].length : k);
+    }
     k += c.length;
   }
   return rest;
@@ -374,18 +403,21 @@ const asText = (buf) => {
 // it, at any depth and however the key is written: quoted, after a dot
 // (identity.canonical_name), in Markdown code or bold, after \n in a JSON
 // string, escaped twice in a string inside a string. A value counts when it
-// is quoted in "", '' or backticks (unless it holds a ${...} interpolation),
-// also after a YAML anchor or tag, when it is a typed field's quoted default
-// (str = '...'), in an XML element (with a namespace prefix or none), and in
-// parsed JSON at any depth, where a schema of the field gives its examples,
-// default, const and enum. An unquoted value counts as YAML reads it, in a
+// is quoted in "", '' or backticks (unless it holds a ${...} interpolation)
+// after a colon or an equals sign (:= and => too) and the marks that close a
+// bold or italic key, also after a YAML anchor or tag, when it is a typed
+// field's quoted default (str = '...'), in an XML element (with a namespace
+// prefix or none), and in parsed JSON at any depth, where a schema of the
+// field gives its examples (example and x-example too), default, const and
+// enum. An unquoted value counts as YAML reads it, in a
 // file that is not code (YAML, JSON that does not parse, plain text, a .env, a
 // style sheet): a block value with its commas and the more indented lines
 // that go on with it, a flow mapping's values and a flow list's items, and
 // when the key's line ends at the colon or at a block scalar's | or >, the
 // lines below that are indented past the key or are list items at its
-// indent. A line that sets canonical_name= counts in such a file too, after
-// dotted keys or none. Markdown reads the same way in its front matter and in
+// indent. A line that sets canonical_name= counts in such a file too, and
+// after dotted keys in a properties, .env, ini or HOCON file or fence.
+// Markdown reads the same way in its front matter and in
 // a fence with no language or a data language (yaml, json, toml, text);
 // outside a fence it is prose, and so is an HTML page outside its script,
 // style and PHP. In prose a value also ends at a comma, a semicolon, a full
@@ -394,30 +426,57 @@ const asText = (buf) => {
 // the key and its colon. Code, and a fence labelled with a programming
 // language, holds expressions: an unquoted value there is not read, but a
 // comment is read as prose, and the text of a string, a heredoc, a
-// here-string or a SQL dollar-quoted body as YAML (a kit written to a file).
+// here-string or a SQL dollar-quoted string as YAML (a kit written to a
+// file); a SQL function's body or DO block between dollar marks is SQL, and a
+// style sheet's declarations outside its comments read as YAML, one a line.
 // A batch file's rem lines are prose, and what each echo writes is YAML. A
-// type (str, string, Optional[str] = None, z.string()) is no brand, nor is a
-// placeholder ({{name}}, {name}, ${NAME}, $NAME, $1, $(command), %NAME%, a
-// printf conversion such as %s, <name>, an expression in braces), nor an
+// type (str, string, Optional[str] = None, z.string()) is no brand, nor are
+// placeholders with nothing else in the value ({{name}}, {name}, ${NAME},
+// $NAME, $1, $(command), %NAME%, a printf conversion such as %s, <name>, an
+// expression in braces), nor an
 // empty value, nor a mapping under the key that has a $ref key or a JSON
 // Schema type: that is a schema describing the field (JSON Schema, OpenAPI).
 // In prose, a comment or a string, a value that describes the field is no
 // brand either (describes, below). Punctuation and closing brackets that end
 // a value are not part of it. Only file paths are reported, never a brand.
-const quotedBrand = /canonical_name(?:\\*["']|[`*_]){0,3}\s*[:=]\s*(?:[&!][^\s"'\\]*\s+)*(\\*)(["'])([^"'\\\r\n]*)/g;
-const backtickBrand = /canonical_name(?:\\?["']|[`*_]){0,3}[ \t]*[:=][ \t]*(`+)([^`\r\n]*)\1/g;
+// After the key's colon or equals sign: the marks that close a bold or italic
+// key, then at most one YAML anchor and one tag, each up to 128 characters,
+// so a line of many keys costs time in step with its length.
+const quotedBrand = /canonical_name(?:\\*["']|[`*_]){0,3}\s*(?::=|=>|[:=])[\s*_]*(?:[&!][^\s"'\\]{0,128}\s+){0,2}(\\*)(["'])([^"'\\\r\n]*)/g;
+const backtickBrand = /canonical_name(?:\\?["']|[`*_]){0,3}[ \t]*(?::=|=>|[:=])[ \t*_]*(`+)([^`\r\n]*)\1/g;
 const typeName = "(?:str|string|String|None|null|Null|NULL|undefined)";
 const typeExpr = String.raw`(?:(?:Optional|Union)\[)?${typeName}(?:[\s\[\]|!?,]*${typeName})*[\s\[\]|!?]*`;
 const typeWord = new RegExp(String.raw`^(?:~|${typeExpr}(?:=.*)?|z\.string\(\)\S*)\s*[;,]?$`);
+// A quoted or parsed value is a type only as a whole: a default after it is a
+// type too (Optional[str] = None).
+const typeOnly = new RegExp(String.raw`^(?:~|${typeExpr}(?:=[ \t]*${typeExpr})?|z\.string\(\)\S*)\s*[;,]?$`);
 const typedDefault = new RegExp(String.raw`canonical_name(?:\\?["']|[\x60*_]){0,3}[ \t]*:[ \t]*${typeExpr}=[ \t]*(["'\x60])([^"'\x60\\\r\n]*)\1`, "g");
 const xmlBrand = /<(?:[A-Za-z_][\w.-]*:)?canonical_name(?:\s[^<>]*)?>([^<]*)</g;
-const placeholder = /^(?:\{\{.*|\{[A-Za-z_][\w.]*\}?|\$\{[^{}]*\}?|\$\(?[A-Za-z_][\w:]*\)?|\$(?:\d+|[@*#?])|\$\((?:[^()]|\([^()]*\))*\)|%(?:\([A-Za-z_]\w*\))?[-+ #0]*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh?|ll?|[Lqjzt])?[A-Za-z]|%[A-Za-z_]\w*%|<[^<>]*>?)$/;
+// A placeholder's forms, the longer ones first so each is taken whole. A
+// value is a placeholder when one or more of them, and nothing with a letter
+// or a digit, make it up; one cut short (a prose value cut at punctuation) may
+// end in one still open, and one read whole may not.
+const placeholderForm = /\{\{(?:[^{}]|\{[^{}]*\})*\}\}|\$\{[^{}]*\}|\{[A-Za-z_][\w.]*\}|\$\((?:[^()]|\([^()]*\))*\)|\$\(?[A-Za-z_][\w:]*\)?|\$(?:\d+|[@*#?])|%[A-Za-z_]\w*%|%(?:\([A-Za-z_]\w*\))?[-+ #0]*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh?|ll?|[Lqjzt])?[A-Za-z]|<[^<>]*>/g;
+const stillOpen = /(?:\{\{[^{}]*|\$\{[^{}]*|\{[A-Za-z_][\w.]*|<[^<>]*)$/;
+const placeholder = (s, cut) => {
+  let rest = s.replace(placeholderForm, "");
+  if (cut) rest = rest.replace(stillOpen, "");
+  return rest !== s && !/[\p{L}\p{N}]/u.test(rest);
+};
 // In prose, a comment or a code string, a value can describe the field rather
 // than give it: an article and a lower-case word ("the brand name, exactly as
 // printed"), or a word for a value that is not there.
 const describes = (name) => /^(?:[Tt]he|[Aa]n?)\s+\p{Ll}/u.test(name) || /^(?:missing|required|optional|empty|unset|not set|none|n\/a|tbd|todo|unknown|invalid)$/i.test(name);
 const plainKey = /(?:(?<![A-Za-z0-9_])|(?<=\\[nrt])|(?<=(?:^|[^A-Za-z0-9_])_{1,2}))(["']?)canonical_name\1[`*_]{0,3}[ \t]*:/g;
-const envKey = /^[ \t]*(?:export[ \t]+)?(?:[A-Za-z_][\w-]*\.)*canonical_name[ \t]*=(.*)$/;
+const envKey = /^[ \t]*(?:export[ \t]+)?canonical_name[ \t]*=(.*)$/;
+// A properties, .env, ini or HOCON file, or a fence in one of those
+// languages, also writes the key after dotted ones; elsewhere such a line is
+// code or pseudo-code.
+const dottedKey = /^[ \t]*(?:export[ \t]+)?(?:[A-Za-z_][\w-]*\.)*canonical_name[ \t]*=(.*)$/;
+const propertiesLang = /^(?:properties|env|dotenv|ini|cfg|conf|hocon)$/i;
+// A YAML anchor or tag before a value: a token of up to 128 characters, then
+// a space or the end of the line.
+const anchorOrTag = /[&!]\S{0,128}(?:[ \t]+|$)/y;
 const itemStart = /^[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+)*/;
 // A schema's own keys, which a brand map does not have.
 const schemaKey = /(?:^|[{,\s])(["']?)(?:type\1[ \t]*:[ \t]*(?:\[[ \t]*)?["']?(?:string|number|integer|boolean|object|array|null)(?![\w-])|\$ref\1[ \t]*:)/;
@@ -432,9 +491,9 @@ const pushAll = (into, items) => {
 };
 // Every canonical_name string in a parsed JSON value, walked with a list of
 // its own rather than by recursion, so a deeply nested file cannot overflow.
-// A schema of the field gives values of it too: its examples, default, const
-// and enum.
-const schemaValues = ["examples", "default", "const", "enum"];
+// A schema of the field gives values of it too: its examples (OpenAPI's
+// example and x-example too), default, const and enum.
+const schemaValues = ["examples", "example", "x-example", "default", "const", "enum"];
 const jsonBrands = (root) => {
   const out = [];
   for (const stack = [root]; stack.length; ) {
@@ -463,20 +522,23 @@ const lexerFor = (lang) => {
   const js = /^(?:[cm]?[jt]sx?|javascript|typescript)$/.test(l);
   const sql = l === "sql";
   return {
-    line: hash ? ["#"] : sql || l === "lua" ? ["--"] : l === "php" ? ["//", "#"] : ["//"],
+    line: hash ? ["#"] : l === "css" ? [] : sql || l === "lua" ? ["--"] : l === "php" ? ["//", "#"] : ["//"],
     blocks: ps ? [["<#", "#>"]] : /^(?:rb|ruby)$/.test(l) ? [["=begin", "=end"]] : hash ? [] : l === "lua" ? [["--[[", "]]"]] : [["/*", "*/"]],
     quotes: js || l === "go" ? "\"'`" : "\"'",
     triple: /^(?:py|python|pyi|graphql|gql|kts?|kotlin|swift|java|cs|csharp)$/.test(l),
     heredoc: sh ? /^<<-?[ \t]*\\?(["']?)([A-Za-z_]\w*)\1/ : /^(?:rb|ruby)$/.test(l) ? /^<<[-~]?(["']?)([A-Za-z_]\w*)\1/ : l === "php" ? /^<<<[ \t]*(["']?)([A-Za-z_]\w*)\1/ : null,
     hereString: ps,
-    spans: sh || ps,
+    // A SQL string may run over lines, as a shell's and PowerShell's do.
+    spans: sh || ps || sql,
     // PowerShell escapes with a backtick, and neither it nor a shell escapes
     // in single quotes.
     escape: ps ? "`" : "\\",
     rawSingle: sh || ps,
-    // A SQL body between $$ or $tag$ marks.
+    // SQL text between $$ or $tag$ marks, and a body of code between them.
     dollar: sql,
     regex: js,
+    // A style sheet's declarations are keys and values.
+    declarations: /^(?:css|scss)$/.test(l),
   };
 };
 const unescapeText = (s) => s.replace(/\\(r\\n|[nrt]|[\s\S])/g, (all, c) => (c === "t" ? "\t" : c === "n" || c === "r" || c === "r\\n" ? "\n" : c));
@@ -486,11 +548,10 @@ const lineEnd = (text, k) => {
 };
 // The parts of code that a person writes text in: a comment, read as prose,
 // and the text of a string, a heredoc or a here-string, read as YAML. In a
-// batch file those are a rem or :: line and what an echo writes.
+// batch file those are a rem or :: line and what an echo writes, and in a
+// style sheet its declarations outside comments are read as YAML too.
 const codePieces = (text, lang) => {
   const pieces = [];
-  // A style sheet's declarations are keys and values: it reads as YAML does.
-  if (/^(?:css|scss)$/i.test(lang)) return [{ prose: false, lines: text.split(/\r?\n/) }];
   if (/^(?:cmd|bat|batch)$/i.test(lang)) {
     const notes = [];
     const echoes = [];
@@ -514,6 +575,11 @@ const codePieces = (text, lang) => {
   let before = "";
   let word = "";
   let regexMiss = -1;
+  // The tags of the SQL bodies open at this point, the innermost last.
+  const bodies = [];
+  const bodyTags = new Set();
+  // Where a style sheet's comments sit, which its declarations leave out.
+  const comments = [];
   for (let i = 0; i < n; ) {
     const c = text[i];
     if (c === "\n" && heredocs.length) {
@@ -538,7 +604,9 @@ const codePieces = (text, lang) => {
       let e = text.indexOf(block[1], i + block[0].length);
       if (e < 0) e = n;
       pieces.push({ prose: true, lines: text.slice(i + block[0].length, e).split(/\r?\n/).map((l) => l.replace(/^[ \t]*\*(?!\/)[ \t]?/, "")) });
-      i = Math.min(n, e + block[1].length);
+      const end = Math.min(n, e + block[1].length);
+      if (o.declarations) comments.push([i, end]);
+      i = end;
       continue;
     }
     const mark = o.line.find((open) => text.startsWith(open, i) && (open !== "#" || i === 0 || /\s/.test(text[i - 1])));
@@ -548,6 +616,7 @@ const codePieces = (text, lang) => {
       // Line comments one after another read as one passage.
       if (notes && /^\r?\n[ \t]*$/.test(text.slice(notesEnd, i))) notes.push(note);
       else pieces.push({ prose: true, lines: (notes = [note]) });
+      if (o.declarations) comments.push([i, e]);
       notesEnd = e;
       i = e;
       continue;
@@ -591,12 +660,31 @@ const codePieces = (text, lang) => {
     }
     if (c === "$" && o.dollar) {
       const t = text.slice(i, i + 66).match(/^\$(?:[A-Za-z_]\w{0,63})?\$/);
-      if (t) {
-        let e = text.indexOf(t[0], i + t[0].length);
-        if (e < 0) e = n;
-        say(text.slice(i + t[0].length, e));
-        i = Math.min(n, e + t[0].length);
+      if (t && bodyTags.has(t[0])) {
+        // A body's tag ends it wherever it stands, and every body opened
+        // inside it.
+        for (let b = bodies.pop(); b !== t[0]; b = bodies.pop()) bodyTags.delete(b);
+        bodyTags.delete(t[0]);
+        i += t[0].length;
         last = "'";
+        word = "";
+        continue;
+      }
+      // A $ right after a letter or a digit is part of a name.
+      if (t && !/[A-Za-z0-9_$]/.test(text[i - 1] ?? "")) {
+        if (/^(?:as|do)$/i.test(word) || (word && /\bdo\s+language\s+\S+\s*$/i.test(text.slice(Math.max(0, i - 100), i)))) {
+          // A function's body or a DO block is code, read as SQL.
+          bodies.push(t[0]);
+          bodyTags.add(t[0]);
+          i += t[0].length;
+        } else {
+          let e = text.indexOf(t[0], i + t[0].length);
+          if (e < 0) e = n;
+          say(text.slice(i + t[0].length, e));
+          i = Math.min(n, e + t[0].length);
+        }
+        last = "'";
+        word = "";
         continue;
       }
     }
@@ -647,6 +735,18 @@ const codePieces = (text, lang) => {
       last = c;
     }
     i += 1;
+  }
+  if (o.declarations) {
+    let rest = "";
+    let at = 0;
+    for (const [a, b] of comments) {
+      rest += text.slice(at, a) + blankOut(text.slice(a, b));
+      at = b;
+    }
+    // One declaration a line: a value ends at its semicolon or brace, so a
+    // blank line follows each, and the declaration after it on the line, more
+    // indented or not, is no part of the value.
+    pieces.push({ prose: false, lines: (rest + text.slice(at)).replace(/[;{}]/g, "\n\n").split(/\r?\n/) });
   }
   return pieces;
 };
@@ -702,7 +802,7 @@ const markdownPieces = (text) => {
     }
     if (htmlLang.test(f[2])) pushAll(pieces, htmlPieces(body.join("\n"), f[2]));
     else if (codeLang.test(f[2])) pushAll(pieces, codePieces(body.join("\n"), f[2]));
-    else pieces.push({ prose: false, lines: body });
+    else pieces.push({ prose: false, dotted: propertiesLang.test(f[2]), lines: body });
     pieces.push({ prose: true, lines: (prose = []) });
     i = j;
   }
@@ -713,7 +813,7 @@ const piecesOf = (text, rel) => {
   if (/^(?:md|markdown|mdx)$/i.test(ext)) return markdownPieces(text);
   if (htmlLang.test(ext)) return htmlPieces(text, ext);
   if (codeLang.test(ext)) return codePieces(text, ext);
-  return [{ prose: false, lines: text.split(/\r?\n/) }];
+  return [{ prose: false, dotted: propertiesLang.test(ext), lines: text.split(/\r?\n/) }];
 };
 // What a reading gives for a value too long to read in full. No name runs
 // that long, so the file fails rather than pass on the part that was read.
@@ -814,20 +914,20 @@ const brandName = (piece) => {
   let name = trimWith(piece.replace(/(?:^|[ \t])#.*$/, ""), leadMark, tailMark);
   if (!name.includes("(")) name = trimWith(name, null, tailMarkParen);
   if (name.length > 256) return name;
-  return name && !typeWord.test(name) && !placeholder.test(name) ? name : "";
+  return name && !typeWord.test(name) && !placeholder(name, true) ? name : "";
 };
 // A quoted or parsed value names a brand unless it is empty, the engine's
-// own, a type or a placeholder.
+// own, or as a whole a type or placeholders.
 const named = (raw) => {
   const s = raw.trim();
   if (!s || s === "Metrix") return false;
-  return s.length > 256 || (!typeWord.test(s) && !placeholder.test(s));
+  return s.length > 256 || (!typeOnly.test(s) && !placeholder(s, false));
 };
 // A line that starts a block of its own (a list item, a heading, a fence, a
 // quote, a rule, a YAML document marker), and a line that is a YAML key.
 const blockStart = /^[ \t]*(?:(?:[-*+]|\d+[.)])(?:[ \t]|$)|#|```|~~~|>|(?:[-*_=][ \t]*){3,}$|\.\.\.[ \t]*$)/;
 const yamlKey = /^[ \t]*(?:\?(?:[ \t]|$)|(?:(?:"[^"]*"|'[^']*')[ \t]*|[^\s"'#][^:#]*):(?:[ \t]|$))/;
-const plainBrands = (raw, prose, flow, lenient) => {
+const plainBrands = (raw, prose, flow, lenient, dotted) => {
   const names = [];
   const lines = raw.flatMap((line) => (line.includes("canonical_name") && /\\[nr]/.test(line) ? line.split(/\\r\\n|\\[nr]/) : [line]));
   if (!lines.some((line) => line.includes("canonical_name"))) return names;
@@ -859,7 +959,7 @@ const plainBrands = (raw, prose, flow, lenient) => {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (!line.includes("canonical_name")) continue;
-    const env = prose ? null : line.match(envKey);
+    const env = prose ? null : line.match(dotted ? dottedKey : envKey);
     if (env) names.push(nameOf(env[1].split(/[ \t]#/)[0]));
     // Brackets still open before a key say it sits in a flow mapping or list.
     let at = 0;
@@ -873,11 +973,16 @@ const plainBrands = (raw, prose, flow, lenient) => {
         if (line[at] === "{" || line[at] === "[") open += 1;
         else if (line[at] === "}" || line[at] === "]") open -= 1;
       }
-      // After the colon: the closing marks of a bold or italic key, then any
-      // YAML anchor or tag.
+      // After the colon: the closing marks of a bold or italic key, then at
+      // most one YAML anchor and one tag (anchorOrTag).
       let v = m.index + m[0].length;
       while (v < line.length && /[ \t*_]/.test(line[v])) v += 1;
-      for (let t; (t = line.slice(v, v + 200).match(/^[&!]\S*(?:[ \t]+|$)/)); ) v += t[0].length;
+      for (let k = 0; k < 2; k++) {
+        anchorOrTag.lastIndex = v;
+        const t = anchorOrTag.exec(line);
+        if (!t) break;
+        v += t[0].length;
+      }
       const value = line.slice(v, v + 4096);
       if (/^["'`]/.test(value)) continue;
       // A value in braces that holds an expression, with no colon, comma or
@@ -980,7 +1085,7 @@ const otherBrand = (text, rel) => {
     // million characters at most; past that it fails, so no shape of nested
     // values costs more than that.
     const flow = { left: 1000000 + 4 * text.length };
-    for (const { prose, said, lines } of piecesOf(text, rel)) if (plainBrands(lines, prose, flow, prose || said === true).some(other)) return true;
+    for (const { prose, said, dotted, lines } of piecesOf(text, rel)) if (plainBrands(lines, prose, flow, prose || said === true, dotted === true).some(other)) return true;
   }
   if (!/\.json$/i.test(rel)) return false;
   let parsed;
@@ -1008,9 +1113,15 @@ for (const rel of tracked) {
     // A match that goes on from a word or a path before it is part of that:
     // skip it and look again from the next character.
     pathStart.lastIndex = 0;
+    let ends = null;
     for (let m; (m = pathStart.exec(line)); ) {
       const form = m.slice(1).findIndex((g) => g !== undefined);
-      if (goesOn(line, m.index, form)) {
+      const on = goesOn(line, m.index, form);
+      // Underscores before a path are emphasis only when as many later on the
+      // line can close them; otherwise the path goes on from them, as from a
+      // word.
+      if (on !== true && on !== false) ends ??= emphasisEnds(line);
+      if (on === true || (on !== false && ends[on] < m.index)) {
         pathStart.lastIndex = m.index + 1;
         continue;
       }
