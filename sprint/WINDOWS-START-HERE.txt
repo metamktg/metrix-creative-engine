@@ -63,4 +63,5 @@ Every failure on 2026-09-16 was a shell or a folder, never the work:
         Double-clicking a file pastes nothing, so this cannot happen.
 
   Explorer opened Documents instead of the folder asked for
-        $HOME does not expand in cmd.exe. GO.cmd uses no variables.
+        $HOME does not expand in cmd.exe. GO.cmd builds every path from
+        its own folder, never from $HOME.

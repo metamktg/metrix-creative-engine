@@ -127,6 +127,7 @@ silently drifted is worse than one that failed: say which is which.
   the repository root. From this skill's folder they are
   `../metrix-ad-creative/scripts/kie.mjs`,
   `../metrix-ad-creative/references/model-routing.md`,
+  `../ugc-creator-edit/references/lip-sync-routing.md`,
   `../../prompts/formats/<asset_type>.md` and `../../docs/MODEL_CATALOG.md`,
   which exist when this skill came with the plugin or a checkout of the
   repository.

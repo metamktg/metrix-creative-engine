@@ -21,6 +21,10 @@
       "why": "test fixtures: made-up Windows install paths, and a regex that matches one",
       "paths": ["241d68c07e6a", "88171ac84c42", "0e47644dc178", "724dfeebab65", "724dfeebab65"]
     },
+    "src/__tests__/eye-state.test.ts": {
+      "why": "test fixtures: made-up media paths, which read as Git Bash drive paths",
+      "paths": ["7121a11bc9de", "e5fe96a940cd", "7121a11bc9de", "7121a11bc9de"]
+    },
     "src/__tests__/timeline-schema.test.ts": {
       "why": "test fixture: a made-up absolute file path",
       "paths": ["0f31afe27b3d", "0f31afe27b3d"]

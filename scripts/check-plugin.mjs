@@ -75,11 +75,31 @@ const bundle = read("server/index.js");
 check("server/index.js is the bundle and starts with its shebang", bundle.startsWith("#!/usr/bin/env node\n"));
 
 console.log("\n== Options ==");
+// An option reaches two readers, each by a name that must match on both sides.
+// plugin.json maps it into an environment variable that the server reads in
+// src/config.ts, and Claude Code hands it to the session hook as
+// CLAUDE_PLUGIN_OPTION_<KEY>, which the hook reads through option("<key>") and
+// passes to the bundled scripts. Both must see it, so the MCP tools and the
+// scripts never run on two different keys or write to two different folders.
+const configTs = read("src/config.ts");
+const serverReads = new Set([...configTs.matchAll(/\bread\(([^)]*)\)/g)]
+  .flatMap((m) => [...m[1].matchAll(/"([A-Z][A-Z0-9_]*)"/g)].map((x) => x[1])));
 const hookScript = read("hooks/session-start.mjs");
+const hookOptions = [...hookScript.matchAll(/\boption\("([A-Za-z0-9_]+)"\)/g)].map((m) => m[1]);
+const carriers = {};
+for (const [name, server] of Object.entries(servers)) {
+  for (const [envName, value] of Object.entries(server.env ?? {})) {
+    check(`${name}: env ${envName} is read by the server (src/config.ts)`, serverReads.has(envName));
+    for (const m of String(value).matchAll(/\$\{user_config\.([A-Za-z0-9_]+)\}/g)) (carriers[m[1]] ??= []).push(envName);
+  }
+}
+const undeclared = hookOptions.filter((k) => !declared.includes(k));
+check("the session hook reads only declared options", undeclared.length === 0, undeclared.join(", "));
 for (const key of declared) {
   const cfg = plugin.userConfig[key];
-  const used = JSON.stringify(servers).includes(`\${user_config.${key}}`) || hookScript.includes(`"${key}"`);
-  check(`option ${key} is read by the MCP server or the session hook`, used);
+  check(`option ${key} reaches the MCP server through an env name src/config.ts reads`,
+    (carriers[key] ?? []).some((envName) => serverReads.has(envName)), (carriers[key] ?? []).join(", ") || "no env carries it");
+  check(`option ${key} is read by the session hook, so the bundled scripts see it too`, hookOptions.includes(key));
   check(`option ${key} has a title and a description`, Boolean(cfg.title && cfg.description));
 }
 check("the API key option is sensitive", plugin.userConfig?.kie_api_key?.sensitive === true);
@@ -109,7 +129,9 @@ check("the entry skill metrix-produce is present", skillDirs.includes("metrix-pr
 
 console.log("\n== Nothing private ships ==");
 // A plugin install copies every tracked file to every user (the install proof
-// counts them), so every tracked file is scanned, not only the plugin's own.
+// counts them), so every tracked file is scanned, not only the plugin's own:
+// a text file for any absolute path, a binary file (one with a NUL byte) for a
+// home folder path in its ASCII or UTF-16 strings.
 let tracked = [];
 try {
   tracked = execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8" }).split("\0").filter(Boolean);
@@ -117,18 +139,41 @@ try {
   check("git ls-files ran", false, error instanceof Error ? error.message : String(error));
 }
 // A path on one machine means nothing on another, and it can say whose
-// machine it was. Any absolute path counts, however it is quoted: Markdown
-// puts paths in backticks. A match ends at whitespace or a delimiter.
-const absolutePath = /(?:^|[^A-Za-z0-9_])((?:[A-Za-z]:[\\/]|\/Users\/|\/home\/)[^\s"'`()<>|,;]*)/g;
-// Forms that name no machine: a standard Windows folder, a placeholder, a bare root.
+// machine it was. Any absolute path counts, however it is quoted or escaped
+// (Markdown puts paths in backticks, JSON doubles backslashes, a URL encodes
+// them): a drive path (C:\ or C:/, also C%3A%5C, also straight after an
+// escaped \n, \r or \t), a UNC share (\\host\share), a Git Bash or WSL drive
+// mount (/c/..., /mnt/c/...), and the home, root, volume and temp roots of
+// macOS and Linux. A match runs on through the space in "Program Files" and
+// "Program Files (x86)", and otherwise ends at whitespace or a delimiter. A
+// UNC host has two characters at least, so escaped regex text such as \\d\\
+// is not taken for one.
+const body = String.raw`(?:Program Files(?: \(x86\))?|[^\s"'` + "`" + String.raw`()<>|,;])*`;
+const notAfterWord = String.raw`(?:(?<![A-Za-z0-9_])|(?<=\\[nrt]))`;
+const notAfterPath = String.raw`(?<![A-Za-z0-9_.~/\\-])`;
+const absolutePath = new RegExp([
+  String.raw`${notAfterWord}[A-Za-z]:[\\/]${body}`,
+  String.raw`${notAfterWord}[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff])${body}`,
+  String.raw`(?<![A-Za-z0-9_])\\\\[A-Za-z0-9_.$-]{2,}\\${body}`,
+  String.raw`${notAfterPath}\/(?:Users|home|root|Volumes|private|var\/folders|mnt\/[A-Za-z])\/${body}`,
+  String.raw`${notAfterPath}\/[A-Za-z]\/(?=[A-Za-z0-9_.~-])${body}`,
+].map((form) => `(${form})`).join("|"), "g");
+// A home folder in a binary file's strings: the one form worth the cost there.
+const homePath = /(?:[A-Za-z]:[\\/]Users[\\/]|\/Users\/|\/home\/|\/root\/)[^\s"'`()<>|,;\\/]+/g;
+// Forms that name no machine: a standard install folder, a placeholder in the
+// case the docs write it, a bare root, and macOS's real path for /tmp.
 const sep = String.raw`(?:\\\\|[\\/])`;
 const generic = [
-  new RegExp(String.raw`^[A-Za-z]:${sep}Program$`),
-  new RegExp(String.raw`^[A-Za-z]:${sep}(?:path|some)${sep}`, "i"),
+  new RegExp(String.raw`^[A-Za-z]:${sep}Program Files(?: \(x86\))?(?:${sep}(?:nodejs|Git|Google${sep}Chrome|Microsoft${sep}Edge)(?:${sep}|$)|${sep}?$)`),
+  new RegExp(String.raw`^[A-Za-z]:${sep}(?:path|some)${sep}`),
   new RegExp(String.raw`^[A-Za-z]:${sep}\.\.\.${sep}`),
   new RegExp(String.raw`^[A-Za-z]:${sep}Users${sep}You${sep}`),
+  new RegExp(String.raw`^\\\\host${sep}`),
+  /^\/(?:mnt\/)?[A-Za-z]\/\.\.\.$/,
   new RegExp(String.raw`^[A-Za-z]:${sep}?$`),
-  /^\/(?:Users|home)\/$/,
+  /^[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff])$/,
+  /^\/(?:Users|home|root|Volumes|private|var\/folders|mnt\/[A-Za-z])\/$/,
+  /^\/private\/tmp\/?$/,
 ];
 // Every other absolute path is listed, by file and with the reason it is
 // there, in scripts/known-absolute-paths.json, as a hash of its text so the
@@ -140,11 +185,27 @@ const found = {};
 for (const rel of tracked) {
   let buf;
   try { buf = readFileSync(path.join(root, rel)); } catch { continue; }
-  if (buf.includes(0)) continue;
+  if (buf.includes(0)) {
+    // Printable runs of six or more: as single bytes, and as UTF-16LE at
+    // both byte alignments. Each UTF-16 slice is cut to an even length, which
+    // decodes the same characters: Node 24.16 on Windows corrupts its heap
+    // decoding an odd-length slice at an odd offset as UTF-16.
+    const even = (b) => b.subarray(0, b.length - (b.length % 2));
+    const strings = [buf.toString("latin1"), even(buf).toString("utf16le"), even(buf.subarray(1)).toString("utf16le")]
+      .flatMap((text) => text.match(/[ -~]{6,}/g) ?? []);
+    for (const run of strings) {
+      for (const m of run.matchAll(homePath)) {
+        if (generic.some((g) => g.test(m[0]))) continue;
+        (found[rel] ??= []).push({ line: "binary", text: m[0], hash: hash(m[0]) });
+      }
+    }
+    continue;
+  }
   buf.toString("utf8").split(/\r?\n/).forEach((line, i) => {
     for (const m of line.matchAll(absolutePath)) {
-      if (generic.some((g) => g.test(m[1]))) continue;
-      (found[rel] ??= []).push({ line: i + 1, text: m[1], hash: hash(m[1]) });
+      const text = m.slice(1).find(Boolean);
+      if (generic.some((g) => g.test(text))) continue;
+      (found[rel] ??= []).push({ line: i + 1, text, hash: hash(text) });
     }
   });
 }
@@ -168,18 +229,38 @@ check("every listed absolute path is still there (remove the ones that are gone)
 check("every file in known-absolute-paths.json says why", reasonless.length === 0, reasonless.join(", "));
 // Brand kits are client material. A kit belongs in the user's assets folder,
 // never in the public repository a plugin install copies, wherever in the tree
-// it sits. The engine's evaluation fixtures carry its own brand, and only
-// those are allowed.
+// it sits and whatever it is called. The engine's evaluation fixtures carry
+// its own brand, and only those are allowed. A kit is caught by its name (a
+// file name with "brand kit" or "master execution prompt" in it, however it is
+// spelled or separated, or any file in a brand-kits folder at any depth) and
+// by its content: a renamed kit still names its brand in
+// identity.canonical_name. Only file paths are reported, never a brand.
 const fixtureKits = [
   "skills/metrix-video-assembly/evals/metrix-feed-4x5-product-journey/files/brand-kit.json",
   "skills/metrix-video-assembly/evals/metrix-mst-hook-row/files/brand-kit.json",
   "skills/metrix-video-assembly/evals/metrix-reels-from-app-recordings/files/brand-kit.json",
   "skills/metrix-video-assembly/evals/metrix-reels-refuses-unsourced-proof/files/brand-kit.json",
 ];
-const kitFiles = tracked.filter((f) =>
-  /(?:^|\/)brand[-_]kit\.json$/i.test(f) || /(?:^|\/)MASTER_EXECUTION_PROMPT\.md$/i.test(f) || (f.startsWith("brand-kits/") && f !== "brand-kits/README.md"));
+const kitFiles = tracked.filter((f) => {
+  const base = f.split("/").pop();
+  return /brand[-_ .]?kit/i.test(base) || /master[-_ .]?execution[-_ .]?prompt/i.test(base) ||
+    (/(?:^|\/)brand[-_ .]?kits\//i.test(f) && f !== "brand-kits/README.md");
+});
 const strays = kitFiles.filter((f) => !fixtureKits.includes(f));
 check("no brand kit is tracked outside the engine's own evaluation fixtures", strays.length === 0, strays.join(", "));
+const branded = new Set();
+for (const f of tracked.filter((t) => /\.json$/i.test(t))) {
+  let parsed;
+  try {
+    const raw = readFileSync(path.join(root, f), "utf8");
+    parsed = JSON.parse(raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw);
+  } catch { continue; }
+  for (const item of Array.isArray(parsed) ? parsed : [parsed]) {
+    const name = item?.identity?.canonical_name;
+    if (typeof name === "string" && name !== "Metrix") branded.add(f);
+  }
+}
+check("no tracked JSON names a brand other than the engine's own (identity.canonical_name)", branded.size === 0, [...branded].join(", "));
 for (const f of fixtureKits) {
   let name;
   try { name = JSON.parse(read(f)).identity?.canonical_name; } catch { name = undefined; }
@@ -189,17 +270,39 @@ for (const f of fixtureKits) {
 console.log("\n== GO.cmd updates itself safely ==");
 // cmd.exe reads a batch file a line at a time from a byte offset, so a pull
 // that replaces GO.cmd mid-run leaves cmd.exe reading the new file from the old
-// offset. GO.cmd up to 0.1.x pulled at a plain line ending at byte 1558 of its
-// CRLF checkout. That byte must start a line that reruns the file from the top,
-// and the pull itself must sit in a block, which cmd.exe reads whole first.
-const go = readFileSync(path.join(root, "GO.cmd")).toString("latin1");
-const guard = 'if not defined MCE_GO_TOP (set "MCE_GO_PULLED=1" & call "%~f0" %* & exit /b)\r\n';
-check("GO.cmd has CRLF line endings only", go.includes("\r\n") && !/[^\r]\n/.test(go));
-check("GO.cmd starts a line at byte 1558 that reruns it from the top", go.slice(1556, 1558) === "\r\n" && go.startsWith(guard, 1558), JSON.stringify(go.slice(1558, 1640)));
+// offset. The GO.cmd main shipped first (0.1.x) pulls on a plain line, and the
+// next line of its CRLF checkout starts at byte 1558. That byte must start the
+// guard: one line that jumps to the new file's top (a jump without call never
+// returns) unless the run began in the new file, which sets MCE_GO_TOP. Its
+// setlocal turns off the delayed expansion that the old file turned on, so a
+// ! in an argument survives the jump. This file's own pull shares one line
+// with the same jump. No line that carries %* sits in or holds brackets,
+// because cmd.exe expands %* before it matches brackets and a ) in a path
+// would close the block. Nothing calls "%~f0", since call expands % twice.
+const go =readFileSync(path.join(root, "GO.cmd")).toString("latin1");
+const goLines = go.split("\r\n");
+const goCode = goLines.filter((l) => !/^\s*(?:rem\b|::)/i.test(l));
+const guard = 'if not defined MCE_GO_TOP setlocal DisableDelayedExpansion & set "MCE_GO_PULLED=1" & "%~f0" %*';
+const pullLine = 'if not defined MCE_GO_PULLED set "MCE_GO_PULLED=1" & git pull --ff-only --quiet 2>nul & "%~f0" %*';
+check("GO.cmd has CRLF line endings only", go.includes("\r\n") && !/[^\r]\n/.test(go) && !/\r(?!\n)/.test(go));
+check("GO.cmd starts the guard line at byte 1558", go.slice(1556, 1558) === "\r\n" && go.startsWith(`${guard}\r\n`, 1558), JSON.stringify(go.slice(1558, 1660)));
 check("GO.cmd sets MCE_GO_TOP before byte 1558", go.slice(0, 1558).includes('\r\nset "MCE_GO_TOP=1"\r\n'));
-check("GO.cmd pulls only inside a block that reruns the updated file, then exits",
-  /\r\nif not defined MCE_GO_PULLED \(\r\n {2}set "MCE_GO_PULLED=1"\r\n {2}git pull --ff-only --quiet 2>nul\r\n {2}call "%~f0" %\*\r\n {2}exit \/b\r\n\)\r\n/.test(go) &&
-    (go.match(/^\s*git pull/gm) ?? []).length === 1);
+check("GO.cmd turns delayed expansion off on its second line, and never on",
+  goLines[1] === "setlocal DisableDelayedExpansion" && !/EnableDelayedExpansion/i.test(go));
+check("GO.cmd pulls once, on the line that jumps to the updated file",
+  goCode.filter((l) => /\bgit\s+pull\b/i.test(l)).length === 1 && goCode.includes(pullLine));
+// A line ending in "(" opens a block and one starting with ")" closes it.
+let depth = 0;
+const bracketed = [];
+goLines.forEach((l, i) => {
+  const t = l.trim();
+  if (/^(?:rem\b|::)/i.test(t)) return;
+  if (t.startsWith(")")) depth = Math.max(0, depth - 1);
+  if (l.includes("%*") && (depth > 0 || /[()]/.test(l.replace(/"[^"]*"/g, "")))) bracketed.push(i + 1);
+  if (t.endsWith("(")) depth += 1;
+});
+check("GO.cmd keeps %* off every line inside or holding brackets", bracketed.length === 0, `lines ${bracketed.join(", ")}`);
+check("GO.cmd never calls itself (call expands % a second time)", !goCode.some((l) => /\bcall\s+"%~f0"/i.test(l)));
 
 const reportAt = process.argv.indexOf("--validator-report");
 if (reportAt > 0) {

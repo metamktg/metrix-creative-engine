@@ -114,16 +114,20 @@ fi
 # prints.
 bash "$here/load.sh" "$@" || true
 
-# The same start GO.cmd makes on Windows: downloads land in sprint/out, and the
-# settings file stops this checkout's own .mcp.json server, which the plugin
-# already brings. Both last for that session only.
+# The command to copy sits alone on its line: a note after it on the same line
+# would be pasted with it and break it.
 if [ "$key_from_setup" = "1" ]; then
   printf 'The key you pasted reached this setup run only. Before the start line, give\n'
-  printf 'it to the terminal you start Claude Code in, without it landing in history:\n\n'
-  printf '  read -rs KIE_AI_API_KEY && export KIE_AI_API_KEY     (then paste the key)\n\n'
+  printf 'it to the terminal you start Claude Code in, without it landing in history.\n'
+  printf 'Run this, then paste the key and press Enter:\n\n'
+  printf '  read -rs KIE_AI_API_KEY && export KIE_AI_API_KEY\n\n'
   printf 'or add an export line to ~/.zshrc or ~/.bashrc, or set the key inside\n'
   printf 'Claude Code with /plugin configure.\n\n'
 fi
+# The same start GO.cmd makes on Windows: downloads land in sprint/out unless
+# the plugin's runs folder option names another folder, and the settings file
+# stops this checkout's own .mcp.json server, which the plugin already brings.
+# Both last for that session only.
 printf 'Ready. Start Claude Code with:\n\n'
 printf '  cd %q && KIE_AI_DOWNLOAD_DIR="$PWD/sprint/out" claude --settings sprint/session-settings.json\n\n' "$repo"
 printf 'then paste:  Read sprint/GO.txt and do exactly what it says.\n\n'

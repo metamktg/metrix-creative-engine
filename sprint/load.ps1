@@ -190,7 +190,7 @@ if ($copied.Count -eq 0) {
   if ($kits.Count -gt 1) {
     Write-Host ("  refs:   " + $kits.Count + " brand kits in " + $kitDir + ", so none was used.") -ForegroundColor Yellow
     Write-Host "          Put the product images in a folder of their own and run"
-    Write-Host "          GO.cmd -Source C:\path\to\that\folder"
+    Write-Host '          GO.cmd -Source "C:\path\to\that folder"'
   }
   if ($kits.Count -eq 1) {
     $kit = Get-Content -Raw -LiteralPath $kits[0].FullName | ConvertFrom-Json
