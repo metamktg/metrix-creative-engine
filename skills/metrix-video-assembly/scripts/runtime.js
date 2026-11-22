@@ -234,21 +234,33 @@
   // seeking, health and shown(), and paints nothing (clip-path: inset(50%) changes no box, no
   // visibility and no opacity). The canvas is added at the first seek, after __authored has read
   // the DOM, so parity sees the page as written.
+  //
+  // The video's own mask can move: applyText animates clip-path on a clip with data-in (a wipe
+  // entrance), and a Motion hook may too, each by writing the inline style, which also replaces
+  // the hiding mask. So every seek reads the mask the clip should show now (an inline value apply
+  // or a hook wrote, else the stylesheet's, read before the first hide), gives it to the canvas,
+  // then hides the video again.
   const FRAME_ATTR = "data-clip-frame";
+  const HIDE = "inset(50%)";
   function paintFrame(v, visible) {
     let c = v.__frame;
     if (!c) {
-      v.__clipPath = getComputedStyle(v).clipPath;
+      v.__sheetClip = getComputedStyle(v).clipPath;
       c = document.createElement("canvas");
       c.setAttribute(FRAME_ATTR, v.getAttribute("src") || "");
       c.setAttribute("aria-hidden", "true");
       v.after(c);
-      v.style.setProperty("clip-path", "inset(50%)", "important");
       v.__frame = c;
     }
+    const inline = v.style.getPropertyValue("clip-path");
+    const ours = inline === HIDE && v.style.getPropertyPriority("clip-path") === "important";
+    const mask = inline && !ours ? inline : v.__sheetClip || "none";
+    v.style.removeProperty("clip-path");
+    if (inline && !ours) v.style.setProperty("clip-path", inline);
     const cs = getComputedStyle(v);
     for (const p of cs) c.style.setProperty(p, cs.getPropertyValue(p));
-    c.style.setProperty("clip-path", v.__clipPath || "none");
+    c.style.setProperty("clip-path", mask);
+    v.style.setProperty("clip-path", HIDE, "important");
     c.style.setProperty("pointer-events", "none");
     if (!visible || !v.videoWidth || !v.videoHeight) return;
     if (c.width !== v.videoWidth) c.width = v.videoWidth;

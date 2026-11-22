@@ -317,6 +317,26 @@ describe.runIf(browser && ffmpeg)("render.mjs in a real browser", { concurrent: 
     expect(r.report.backend).toBe("mce-cdp");
   }, BROWSER_TIMEOUT);
 
+  it("keeps a clip that animates its own mask (wipe entrance) hidden, and its canvas on the current mask, across seeks", async () => {
+    const c = makeCase("clip-wipe", [[
+      '<video class="clip" data-clip src="clip.webm" data-start="0.5" data-offset="0.3" muted preload="auto"></video>',
+      '<video class="clip" data-clip src="clip.webm" data-start="0.5" data-offset="0.3" data-in="1" data-dur="1" data-enter="wipe" muted preload="auto"></video>',
+    ]]);
+    const expr = `(async () => {
+      const v = document.querySelector("video[data-clip]");
+      const at = async (t) => { await window.__seek(t); const c = v.nextElementSibling;
+        return { video: getComputedStyle(v).clipPath, canvas: c && c.style.clipPath, inline: v.style.clipPath }; };
+      return { done: await at(2.5), entering: await at(1.25), again: await at(2.5) };
+    })()`;
+    const r = await run([c.comp, "--storyboard", c.sb, "--mode", "eval", "--t", "0", "--expr", expr]);
+    expect(r.status, r.stderr).toBe(0);
+    const out = JSON.parse(r.stdout);
+    for (const k of ["done", "entering", "again"]) expect(out[k].video, k).toBe("inset(50%)");
+    expect(out.done.canvas).toMatch(/^(none|inset\(0(px)? 0% 0(px)? 0(px)?\))$/);
+    expect(out.entering.canvas).toMatch(/^inset\(0(px)? [1-9][\d.]*% 0(px)? 0(px)?\)$/);
+    expect(out.again.canvas).toBe(out.done.canvas);
+  }, BROWSER_TIMEOUT);
+
   it("holds a declared placement to its zone row and refuses a placement the ratio cannot run", async () => {
     const feed = await check(makeCase("zone-feed", [], (sb) => { sb.format.placement = "Instagram Feed"; }));
     expect(feed.status, feed.stderr).toBe(0);

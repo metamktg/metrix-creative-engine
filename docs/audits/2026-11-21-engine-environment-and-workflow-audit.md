@@ -94,7 +94,7 @@ names its host; add it then.
 
 ## 2. Gate status
 
-- `npm run verify` here: 645 passed, 2 failed, 1 skipped, 24.9 s (proven).
+- `npm run verify` here: red, two tests failing in the real-browser render suite (proven).
 - The failures are in `src/__tests__/render-health.test.ts`: a still shows
   source frame 0 where frame 1 was asked (30 fps WebM), and a seek returns
   frame 5 for 37. Reruns: 2 of 2 failed, 1 of 2 failed (flaky, not fixed).
