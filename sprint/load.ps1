@@ -36,9 +36,17 @@ Get-ChildItem -LiteralPath $briefsDir -File -ErrorAction SilentlyContinue | Remo
 
 # -Source is looked in first, then the usual folders, so a folder that holds
 # only the product images, which is what the start note advises, still finds
-# the briefs file in Downloads.
+# the briefs file in Downloads. A folder named twice (-Source is Downloads) is
+# looked in once, so no file is listed as another beside itself.
 $roots = @("Downloads", "Desktop", "Documents") | ForEach-Object { Join-Path $env:USERPROFILE $_ }
 if ($Source) { $roots = @($Source) + $roots }
+$seen = @{}
+$roots = @($roots | Where-Object {
+  $p = $_
+  try { $key = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($p) } catch { $key = $p }
+  $key = $key.TrimEnd('\')
+  if ($seen.ContainsKey($key)) { $false } else { $seen[$key] = $true; $true }
+})
 
 function Test-IsBriefs($path) {
   try {
@@ -62,7 +70,8 @@ if ($Briefs) {
 } else {
 $found = @()
 foreach ($root in $roots) {
-  if (-not (Test-Path $root)) { continue }
+  # -LiteralPath: to Test-Path, [ ] in a folder name are wildcards.
+  if (-not (Test-Path -LiteralPath $root)) { continue }
   Get-ChildItem -LiteralPath $root -Filter *.json -File -ErrorAction SilentlyContinue |
     Sort-Object LastWriteTime -Descending | ForEach-Object {
       if (Test-IsBriefs $_.FullName) { $found += $_ }
@@ -82,7 +91,7 @@ $brief = $found[0]
 Copy-Item -LiteralPath $brief.FullName -Destination $briefsDir -Force
 Write-Host ("  briefs: " + $brief.Name + "  (from " + $brief.DirectoryName + ")") -ForegroundColor Green
 if ($found.Count -gt 1) {
-  Write-Host ("  note: " + ($found.Count - 1) + " other briefs file(s) found. Took the newest. Others:") -ForegroundColor Yellow
+  Write-Host ("  note: " + ($found.Count - 1) + " other briefs file(s) found. Took the newest in the first folder looked in that had one. Others:") -ForegroundColor Yellow
   $found | Select-Object -Skip 1 | ForEach-Object { Write-Host ("        " + $_.FullName) }
   Write-Host '  To use a different one:  .\sprint\load.ps1 -Briefs "C:\path\to\that.json"' -ForegroundColor Yellow
 }
@@ -185,7 +194,7 @@ if ($copied.Count -eq 0) {
   $kitDirs += (Join-Path (Split-Path -Parent $PSScriptRoot) "brand-kits")
   $kits = @()
   foreach ($kitDir in $kitDirs) {
-    $kits = @(Get-ChildItem -Path $kitDir -Filter "brand-kit.json" -Recurse -ErrorAction SilentlyContinue)
+    $kits = @(Get-ChildItem -LiteralPath $kitDir -Filter "brand-kit.json" -Recurse -ErrorAction SilentlyContinue)
     if ($kits.Count -gt 0) { break }
   }
   if ($kits.Count -gt 1) {
@@ -209,11 +218,19 @@ if ($copied.Count -eq 0) {
         $j++
         $ext = [IO.Path]::GetExtension(($a.url -split '\?')[0]); if (-not $ext) { $ext = ".jpg" }
         $dest = Join-Path $refsDir ("ref-{0:d2}-{1}{2}" -f $j, ($a.role -replace '[^A-Za-z0-9_-]', ''), $ext)
+        # -OutFile reads [ ] in a path as wildcards, so a checkout in a folder
+        # named with brackets could not save here. The fetch goes to a temp
+        # file, which is then moved in by its literal name.
+        $tmp = $null
         try {
-          Invoke-WebRequest -Uri $a.url -OutFile $dest -UseBasicParsing -ErrorAction Stop
+          $tmp = [IO.Path]::GetTempFileName()
+          Invoke-WebRequest -Uri $a.url -OutFile $tmp -UseBasicParsing -ErrorAction Stop
+          Move-Item -LiteralPath $tmp -Destination $dest -Force -ErrorAction Stop
           Write-Host ("        " + (Split-Path -Leaf $dest) + "   " + $a.role)
         } catch {
-          Write-Host ("        COULD NOT FETCH " + $a.url + " (" + $_.Exception.Message + ")") -ForegroundColor Yellow
+          $why = $_.Exception.Message
+          if ($tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
+          Write-Host ("        COULD NOT FETCH " + $a.url + " (" + $why + ")") -ForegroundColor Yellow
         }
       }
     }

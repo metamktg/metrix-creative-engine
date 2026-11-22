@@ -155,13 +155,27 @@ try {
 // between its backslashes is, and is listed like any other path.
 const body = String.raw`(?:Program Files(?: \(x86\))?|[^\s"'` + "`" + String.raw`()<>|,;])*`;
 // Before a drive letter: no letter, digit or underscore. Before a root slash:
-// nothing that continues a path, unless it is a file URL's own slashes. A
-// closing angle bracket exempts nothing: a placeholder and an HTML tag end the
-// same way, so a root folder name right after a placeholder is listed in
-// known-absolute-paths.json like any other path.
-const afterEscape = String.raw`(?<=\\[nrt])|(?<=%[0-9A-Fa-f]{2})`;
+// nothing that continues a path, unless it is a file URL's own slashes, in
+// either case and JSON-escaped too (file:///Users, FILE:///Users,
+// file:\/\/\/Users), or an editor link's (vscode://file/Users). An escape
+// ends a word: \n, \r or \t, a \uXXXX or \xXX escape (JSON may write a
+// curly quote as \u201c), or a URL's %XX. Before a Git Bash drive path, which
+// reads like a one-letter URL segment (example.com/p/123), only an escape of
+// an ASCII character or of punctuation does: U+00A0 to U+00BF (a no-break
+// space, guillemets) or U+2000 to U+206F (curly quotes, dashes), whether as
+// \uXXXX, as \xXX or as UTF-8 in %XX. So an encoded letter that ends a
+// segment (caf%C3%A9/p/1) stays part of the word, and an encoded curly quote
+// right before a drive path does not. A closing angle bracket exempts
+// nothing: a placeholder and an HTML tag end the same way, so a root folder
+// name right after a placeholder is listed in known-absolute-paths.json like
+// any other path.
+const ci = (word) => [...word].map((c) => `[${c.toUpperCase()}${c}]`).join("");
+const afterEscape = String.raw`(?<=\\[nrt])|(?<=\\u[0-9A-Fa-f]{4})|(?<=\\x[0-9A-Fa-f]{2})|(?<=%[0-9A-Fa-f]{2})`;
+const afterAsciiOrPunctEscape = String.raw`(?<=\\[nrt])|(?<=\\u00[0-7ABab][0-9A-Fa-f])|(?<=\\u20[0-6][0-9A-Fa-f])|(?<=\\x[0-7ABab][0-9A-Fa-f])|(?<=%[0-7][0-9A-Fa-f])|(?<=%[Cc]2%[ABab][0-9A-Fa-f])|(?<=%[Ee]2%80%[89ABab][0-9A-Fa-f])|(?<=%[Ee]2%81%[89Aa][0-9A-Fa-f])`;
+const fileUrl = String.raw`(?<=${ci("file")}:(?:\\?\/){2}(?:${ci("localhost")})?)|(?<=:(?:\\?\/){2}${ci("file")})`;
 const notAfterWord = String.raw`(?:(?<![A-Za-z0-9_])|${afterEscape})`;
-const notAfterPath = String.raw`(?:(?<![A-Za-z0-9_.~/\\-])|${afterEscape}|(?<=file:\/\/(?:localhost)?))`;
+const notAfterPath = String.raw`(?:(?<![A-Za-z0-9_.~/\\-])|${afterEscape}|${fileUrl})`;
+const notAfterPathAsciiOrPunct = String.raw`(?:(?<![A-Za-z0-9_.~/\\-])|${afterAsciiOrPunctEscape}|${fileUrl})`;
 const slash = String.raw`(?:\\?\/|%2[Ff])`;
 const userRoots = ["Users", "home", "usr/home", "root", "Volumes", "media", "run/media", "private", "var/folders", "mnt/[A-Za-z]"]
   .map((root) => root.split("/").join(slash)).join("|");
@@ -170,7 +184,7 @@ const absolutePath = new RegExp([
   String.raw`${notAfterWord}[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff]|[\\/])${body}`,
   String.raw`(?<![A-Za-z0-9_])\\\\[A-Za-z0-9_.$-]{2,}\\${body}`,
   String.raw`${notAfterPath}${slash}(?:${userRoots})${slash}${body}`,
-  String.raw`${notAfterPath}\\?\/(?:cygdrive\\?\/)?[A-Za-z]\\?\/(?=[A-Za-z0-9_.~-])${body}`,
+  String.raw`${notAfterPathAsciiOrPunct}\\?\/(?:cygdrive\\?\/)?[A-Za-z]\\?\/(?=[A-Za-z0-9_.~-])${body}`,
 ].map((form) => `(${form})`).join("|"), "g");
 // A home folder in a binary file's strings: the one form worth the cost
 // there, in any case (a .pdb may record the path in capitals) and with
@@ -238,9 +252,15 @@ const asText = (buf) => {
 // A kit names its brand in identity.canonical_name. Any quoted value of that
 // key counts, in any file and at any depth (a renamed kit, a kit inside
 // another object, JSON that does not parse, a kit escaped into a string), and
-// so does an unquoted one in YAML. Only file paths are reported, never a brand.
+// so does an unquoted one on the key's line in any file that is not code:
+// YAML as a block, a list item or a flow mapping, in a .yml file, a copy of
+// one, a Markdown fence or a text file. In code an unquoted value is an
+// expression, and a type (canonical_name: string) is no brand. Only file paths
+// are reported, never a brand.
 const quotedBrand = /canonical_name\\?["']?\s*[:=]\s*\\?["']([^"'\\\r\n]*)/g;
-const yamlBrand = /^\s*canonical_name\s*:\s*([^"'\s#][^#\r\n]*)$/gm;
+const plainBrand = /(?:^|[\s{,])canonical_name[ \t]*:[ \t]*([^"'\s#,{}[\]][^#,{}\r\n]*)/gm;
+const typeWord = /^(?:(?:string|str|String)(?:\s*\|\s*(?:null|undefined|None))?|Optional\[str\]|null|Null|NULL|None|undefined|~)\s*;?$/;
+const codeFile = /\.(?:[cm]?[jt]sx?|py|pyi|ps1|psm1|sh|bash|cmd|bat)$/i;
 const jsonBrands = (value, out = []) => {
   if (Array.isArray(value)) value.forEach((item) => jsonBrands(item, out));
   else if (value && typeof value === "object") {
@@ -253,7 +273,7 @@ const jsonBrands = (value, out = []) => {
 };
 const otherBrand = (text, rel) => {
   const names = [...text.matchAll(quotedBrand)].map((m) => m[1]);
-  if (/\.ya?ml$/i.test(rel)) names.push(...[...text.matchAll(yamlBrand)].map((m) => m[1].trim()));
+  if (!codeFile.test(rel)) names.push(...[...text.matchAll(plainBrand)].map((m) => m[1].trim()).filter((v) => !typeWord.test(v)));
   if (/\.json$/i.test(rel)) { try { names.push(...jsonBrands(JSON.parse(text))); } catch {} }
   return names.some((name) => name !== "Metrix");
 };
@@ -308,30 +328,32 @@ check("every file in known-absolute-paths.json says why", reasonless.length === 
 // (above: a renamed kit still names its brand) and by its name: a file whose
 // name says "brand kit" or "master execution prompt", spelled with any
 // separators or none, or a file in a folder whose name does, at any depth. A
-// name may run on past the last word into a capital or a non-letter
-// (BrandKitFinal, brand-kit-v2), never into a lower-case letter (kitchen).
-// Engine code named like a kit fails too, by design: rename it. The one
-// exception is the folder of the engine's own brand-kit-builder skill, which
-// builds kits and holds none.
+// name may run on past the last word (BrandKitFinal, brand-kit-v2,
+// brandkitv2), except into the rest of a common word: kitchen, kite, kitten,
+// kitty, and promptly, prompter, prompting, prompted. Engine code named like a
+// kit fails too, by design: rename it. The one exception is the name of the
+// engine's own brand-kit-builder skill folder: what sits below it is checked
+// like anything else.
 const fixtureKits = [
   "skills/metrix-video-assembly/evals/metrix-feed-4x5-product-journey/files/brand-kit.json",
   "skills/metrix-video-assembly/evals/metrix-mst-hook-row/files/brand-kit.json",
   "skills/metrix-video-assembly/evals/metrix-reels-from-app-recordings/files/brand-kit.json",
   "skills/metrix-video-assembly/evals/metrix-reels-refuses-unsourced-proof/files/brand-kit.json",
 ];
-const ci = (word) => [...word].map((c) => `[${c.toUpperCase()}${c}]`).join("");
 const gap = String.raw`(?:[^A-Za-z0-9]|%[0-9A-Fa-f]{2})*`;
+const notWord = (...rests) => `(?!(?:${rests.map(ci).join("|")})(?![A-Za-z]))`;
 const kitNames = [
-  new RegExp(`${ci("brand")}${gap}${ci("kit")}[Ss]?(?![a-z])`),
-  new RegExp(`${ci("master")}${gap}${ci("execution")}${gap}${ci("prompt")}[Ss]?(?![a-z])`),
+  new RegExp(`${ci("brand")}${gap}${ci("kit")}[Ss]?${notWord("chen", "chens", "e", "es", "ten", "tens", "ty")}`),
+  new RegExp(`${ci("master")}${gap}${ci("execution")}${gap}${ci("prompt")}[Ss]?${notWord("ly", "er", "ers", "ing", "ings", "ed")}`),
 ];
 const kitNamed = (name) => kitNames.some((re) => re.test(name));
 const kitFiles = tracked.filter((f) => {
   const dirs = f.split("/");
   const base = dirs.pop();
   if (kitNamed(base)) return true;
-  if (f === "brand-kits/README.md" || f.startsWith("skills/brand-kit-builder/")) return false;
-  return dirs.some(kitNamed);
+  if (f === "brand-kits/README.md") return false;
+  const own = dirs[0] === "skills" && dirs[1] === "brand-kit-builder" ? 2 : 0;
+  return dirs.slice(own).some(kitNamed);
 });
 const strays = kitFiles.filter((f) => !fixtureKits.includes(f));
 check("no brand kit is tracked outside the engine's own evaluation fixtures", strays.length === 0, strays.join(", "));

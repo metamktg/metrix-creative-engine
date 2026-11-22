@@ -24,8 +24,9 @@ $skills = Join-Path $env:USERPROFILE ".claude\skills"
 # Run from the repo, whatever directory the window opened in. Every failure of
 # this setup so far has been the same one: a fresh terminal starts in the user
 # profile, and a command written as "sprint\setup.ps1" or "git pull" only works
-# from inside the repo. The script knows where it lives, so it goes there.
-Set-Location $repo
+# from inside the repo. The script knows where it lives, so it goes there, by
+# its literal name: to Set-Location, [ ] in a folder name are wildcards.
+Set-Location -LiteralPath $repo
 
 Write-Host ""
 Write-Host "Metrix Creative Engine setup" -ForegroundColor Cyan
@@ -147,14 +148,19 @@ Write-Host "  plugin: $plugin installed and current" -ForegroundColor Green
 # The old setup copied each skill into ~/.claude/skills. Those copies load
 # beside the plugin's, so every skill would be listed twice. They are not
 # moved here, because one may be someone's edited copy: this names them and
-# prints the command that moves them aside.
-$old = @(Get-ChildItem -Path (Join-Path $repo "skills") -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $skills $_.Name) } | ForEach-Object { $_.Name })
+# prints the command that moves them aside. -LiteralPath: to Get-ChildItem
+# -Path, [ ] in a folder name are wildcards, so a checkout under one would
+# list no skills here.
+$old = @(Get-ChildItem -LiteralPath (Join-Path $repo "skills") -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $skills $_.Name) } | ForEach-Object { $_.Name })
 if ($old.Count -gt 0) {
   $backup = Join-Path $env:USERPROFILE (".claude\skills-before-plugin-" + (Get-Date -Format "yyyyMMdd"))
   Write-Host ("  skills: " + $old.Count + " standalone copies in " + $skills + " load beside the plugin's:") -ForegroundColor Yellow
   Write-Host ("          " + ($old -join ", "))
   Write-Host "          To load only the plugin's, move them aside with:"
-  Write-Host ("          `$to = '" + $backup + "'; New-Item -ItemType Directory -Force `$to | Out-Null; foreach (`$n in '" + ($old -join "','") + "') { Move-Item -LiteralPath (Join-Path '" + $skills + "' `$n) -Destination `$to }")
+  # The command is PowerShell, so each path in it is quoted for PowerShell: a '
+  # in a folder name (a user named O'Brien) is doubled.
+  $quote = { param($s) "'" + ($s -replace "'", "''") + "'" }
+  Write-Host ("          `$to = " + (& $quote $backup) + "; New-Item -ItemType Directory -Force `$to | Out-Null; foreach (`$n in " + (($old | ForEach-Object { & $quote $_ }) -join ",") + ") { Move-Item -LiteralPath (Join-Path " + (& $quote $skills) + " `$n) -Destination `$to }")
 }
 
 # Brand kits live in the assets folder: the plugin's assets folder option when
