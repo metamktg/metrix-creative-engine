@@ -597,6 +597,17 @@ it does not validate the timeline itself, which is `timeline.mjs check`'s job.
 `scripts/timeline.mjs` is the one writer of `timeline.json` and every file emitted
 from it (step 2).
 
+## Run manifest (`scripts/run.mjs`)
+
+One `run.json` (`mce.run/1`) per run directory records what each stage read and wrote, by
+path and sha256: `init <run> --brief brief.json`, then `record <run> --stage <stage>` with
+`--in role=path` (a file an earlier stage wrote, or the brief), `--out role=path` (what this
+stage wrote) and, on `generate` and `ingest` only, `--source role=path` (a Kie download, a
+direct Gemini or Veo result, a desktop edit). A changed or unknown `--in` is refused (exit 2),
+so no stage runs on a stale file. A stage already passed with the same inputs is skipped
+(exit 0), so a resumed run does not spend twice. `handoff` needs a PASS `review` record
+earlier in the run (exit 3). `status` prints the chain; `verify` re-hashes every recorded file.
+
 ## What this skill will not do
 
 - Invent a claim, a number, a testimonial or a rating. Connective framing is
