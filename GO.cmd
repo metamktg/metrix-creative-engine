@@ -96,11 +96,14 @@ REM names another folder. Either way the session start names the folder,
 REM and GO.txt sends everything there. The settings file stops this
 REM checkout's own .mcp.json server, which the plugin already brings, so the
 REM session neither asks about it nor runs it twice. Both last for this
-REM session only; nothing is saved.
+REM session only; nothing is saved. call expands percent signs twice, so
+REM its line leaves both paths to call's own expansion (the doubled percent
+REM signs): a percent sign or a caret in a folder name survives.
 set "KIE_AI_DOWNLOAD_DIR=%~dp0sprint\out"
+set "MCE_SETTINGS=%~dp0sprint\session-settings.json"
 echo.
 echo   Starting Claude Code. When it is ready, paste this one line:
 echo.
 echo       Read sprint/GO.txt and do exactly what it says.
 echo.
-call "%CLAUDE%" --settings "%~dp0sprint\session-settings.json"
+call "%%CLAUDE%%" --settings "%%MCE_SETTINGS%%"

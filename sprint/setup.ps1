@@ -51,26 +51,45 @@ Write-Host ("  node: " + (node --version)) -ForegroundColor Green
 # a directory that has to be right, which is the thing this script exists to
 # remove. A failed pull (offline, local edits) is a note, never a stop: the
 # checked-out version still works.
+# Under GO.cmd (MCE_GO_PULLED is set) GO.cmd has pulled already. A second pull
+# here could replace GO.cmd while cmd.exe waits on the line that started this
+# script, and cmd.exe would read on in the new file at the old byte offset.
+# So there this only checks, with a fetch, which changes no file.
 try {
-  $before = git -C $repo rev-parse HEAD
-  git -C $repo pull --ff-only --quiet 2>&1 | Out-Null
-  $after = git -C $repo rev-parse HEAD
-  if ($before -ne $after) {
-    Write-Host ("  repo: updated to " + $after.Substring(0, 7)) -ForegroundColor Green
-    if (-not $Restarted) {
-      # PowerShell parsed THIS file before the pull replaced it, so the code now
-      # running is the old version and cannot use what was just fetched. That is
-      # how a fix lands on disk and still does not take effect, which looks from
-      # the outside like the fix not working. Restart into the new file, once.
-      Write-Host "  repo: restarting with the updated script" -ForegroundColor Cyan
-      $again = @("-ExecutionPolicy", "Bypass", "-File", $PSCommandPath, "-Restarted")
-      if ($Briefs) { $again += @("-Briefs", $Briefs) }
-      if ($Source) { $again += @("-Source", $Source) }
-      & powershell @again
-      exit $LASTEXITCODE
+  if ($env:MCE_GO_PULLED) {
+    $ErrorActionPreference = "Continue"
+    git -C $repo fetch --quiet 2>&1 | Out-Null
+    $fetched = $LASTEXITCODE -eq 0
+    $behind = git -C $repo rev-list --count 'HEAD..@{u}' 2>&1
+    $counted = $LASTEXITCODE -eq 0
+    $ErrorActionPreference = "Stop"
+    $now = git -C $repo rev-parse HEAD
+    if ($fetched -and $counted -and "$behind" -eq "0") {
+      Write-Host ("  repo: up to date (" + $now.Substring(0, 7) + ")") -ForegroundColor Green
+    } else {
+      Write-Host "  repo: could not update, carrying on with what is checked out" -ForegroundColor Yellow
     }
   } else {
-    Write-Host ("  repo: up to date (" + $after.Substring(0, 7) + ")") -ForegroundColor Green
+    $before = git -C $repo rev-parse HEAD
+    git -C $repo pull --ff-only --quiet 2>&1 | Out-Null
+    $after = git -C $repo rev-parse HEAD
+    if ($before -ne $after) {
+      Write-Host ("  repo: updated to " + $after.Substring(0, 7)) -ForegroundColor Green
+      if (-not $Restarted) {
+        # PowerShell parsed THIS file before the pull replaced it, so the code now
+        # running is the old version and cannot use what was just fetched. That is
+        # how a fix lands on disk and still does not take effect, which looks from
+        # the outside like the fix not working. Restart into the new file, once.
+        Write-Host "  repo: restarting with the updated script" -ForegroundColor Cyan
+        $again = @("-ExecutionPolicy", "Bypass", "-File", $PSCommandPath, "-Restarted")
+        if ($Briefs) { $again += @("-Briefs", $Briefs) }
+        if ($Source) { $again += @("-Source", $Source) }
+        & powershell @again
+        exit $LASTEXITCODE
+      }
+    } else {
+      Write-Host ("  repo: up to date (" + $after.Substring(0, 7) + ")") -ForegroundColor Green
+    }
   }
 } catch {
   Write-Host "  repo: could not update, carrying on with what is checked out" -ForegroundColor Yellow

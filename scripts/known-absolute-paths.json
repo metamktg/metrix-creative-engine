@@ -37,6 +37,10 @@
       "why": "regex text, not a path: the pattern that refuses a C: drive root",
       "paths": ["fbf2c801b8ac"]
     },
+    "skills/metrix-video-assembly/SKILL.md": {
+      "why": "not a machine path: the media folder inside a run, after the run placeholder",
+      "paths": ["954d864d2898"]
+    },
     "skills/metrix-video-assembly/scripts/media/eye-sheet.mjs": {
       "why": "regex text, not a path: it parses ffmpeg's showinfo output",
       "paths": ["06d1de2d75bd"]

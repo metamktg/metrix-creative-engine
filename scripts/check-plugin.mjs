@@ -140,26 +140,42 @@ try {
 }
 // A path on one machine means nothing on another, and it can say whose
 // machine it was. Any absolute path counts, however it is quoted or escaped
-// (Markdown puts paths in backticks, JSON doubles backslashes, a URL encodes
-// them): a drive path (C:\ or C:/, also C%3A%5C, also straight after an
-// escaped \n, \r or \t), a UNC share (\\host\share), a Git Bash or WSL drive
-// mount (/c/..., /mnt/c/...), and the home, root, volume and temp roots of
-// macOS and Linux. A match runs on through the space in "Program Files" and
-// "Program Files (x86)", and otherwise ends at whitespace or a delimiter. A
-// UNC host has two characters at least, so escaped regex text such as \\d\\
-// is not taken for one.
+// (Markdown puts paths in backticks, JSON doubles backslashes and may write a
+// slash as \/, a URL encodes them): a drive path (C:\ or C:/, also with the
+// colon or both URL-encoded), a UNC share (\\host\share), a Git Bash, WSL or
+// Cygwin drive mount (/c/..., /mnt/c/..., /cygdrive/c/...), and the roots
+// that hold a user's files on macOS, Linux and FreeBSD: home (/Users, /home,
+// /usr/home, /root), volume (/Volumes, /media, /run/media) and the macOS temp
+// roots (/private, /var/folders), written raw, JSON-escaped or URL-encoded,
+// also inside a file URL. A path may follow an escape (\n, \r or \t in a
+// string, %XX in a URL). A match runs on through the space in "Program
+// Files" and "Program Files (x86)", and otherwise ends at whitespace or a
+// delimiter. A UNC host has two characters at least, so a one-letter escape
+// such as \\d\\ is not taken for one; escaped regex text with a longer word
+// between its backslashes is, and is listed like any other path.
 const body = String.raw`(?:Program Files(?: \(x86\))?|[^\s"'` + "`" + String.raw`()<>|,;])*`;
-const notAfterWord = String.raw`(?:(?<![A-Za-z0-9_])|(?<=\\[nrt]))`;
-const notAfterPath = String.raw`(?<![A-Za-z0-9_.~/\\-])`;
+// Before a drive letter: no letter, digit or underscore. Before a root slash:
+// nothing that continues a path, unless it is a file URL's own slashes. A
+// closing angle bracket exempts nothing: a placeholder and an HTML tag end the
+// same way, so a root folder name right after a placeholder is listed in
+// known-absolute-paths.json like any other path.
+const afterEscape = String.raw`(?<=\\[nrt])|(?<=%[0-9A-Fa-f]{2})`;
+const notAfterWord = String.raw`(?:(?<![A-Za-z0-9_])|${afterEscape})`;
+const notAfterPath = String.raw`(?:(?<![A-Za-z0-9_.~/\\-])|${afterEscape}|(?<=file:\/\/(?:localhost)?))`;
+const slash = String.raw`(?:\\?\/|%2[Ff])`;
+const userRoots = ["Users", "home", "usr/home", "root", "Volumes", "media", "run/media", "private", "var/folders", "mnt/[A-Za-z]"]
+  .map((root) => root.split("/").join(slash)).join("|");
 const absolutePath = new RegExp([
   String.raw`${notAfterWord}[A-Za-z]:[\\/]${body}`,
-  String.raw`${notAfterWord}[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff])${body}`,
+  String.raw`${notAfterWord}[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff]|[\\/])${body}`,
   String.raw`(?<![A-Za-z0-9_])\\\\[A-Za-z0-9_.$-]{2,}\\${body}`,
-  String.raw`${notAfterPath}\/(?:Users|home|root|Volumes|private|var\/folders|mnt\/[A-Za-z])\/${body}`,
-  String.raw`${notAfterPath}\/[A-Za-z]\/(?=[A-Za-z0-9_.~-])${body}`,
+  String.raw`${notAfterPath}${slash}(?:${userRoots})${slash}${body}`,
+  String.raw`${notAfterPath}\\?\/(?:cygdrive\\?\/)?[A-Za-z]\\?\/(?=[A-Za-z0-9_.~-])${body}`,
 ].map((form) => `(${form})`).join("|"), "g");
-// A home folder in a binary file's strings: the one form worth the cost there.
-const homePath = /(?:[A-Za-z]:[\\/]Users[\\/]|\/Users\/|\/home\/|\/root\/)[^\s"'`()<>|,;\\/]+/g;
+// A home folder in a binary file's strings: the one form worth the cost
+// there, in any case (a .pdb may record the path in capitals) and with
+// doubled backslashes.
+const homePath = /(?:[A-Za-z]:(?:\\\\|[\\/])Users(?:\\\\|[\\/])|\/(?:Users|home|root)\/)[^\s"'`()<>|,;\\/]+/gi;
 // Forms that name no machine: a standard install folder, a placeholder in the
 // case the docs write it, a bare root, and macOS's real path for /tmp.
 const sep = String.raw`(?:\\\\|[\\/])`;
@@ -169,11 +185,11 @@ const generic = [
   new RegExp(String.raw`^[A-Za-z]:${sep}\.\.\.${sep}`),
   new RegExp(String.raw`^[A-Za-z]:${sep}Users${sep}You${sep}`),
   new RegExp(String.raw`^\\\\host${sep}`),
-  /^\/(?:mnt\/)?[A-Za-z]\/\.\.\.$/,
+  /^\/(?:mnt\/|cygdrive\/)?[A-Za-z]\/\.\.\.$/,
   new RegExp(String.raw`^[A-Za-z]:${sep}?$`),
-  /^[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff])$/,
-  /^\/(?:Users|home|root|Volumes|private|var\/folders|mnt\/[A-Za-z])\/$/,
-  /^\/private\/tmp\/?$/,
+  /^[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff]|[\\/])$/,
+  /^\/(?:Users|home|usr\/home|root|Volumes|media|run\/media|private|var\/folders|mnt\/[A-Za-z])\/$/,
+  /^\/(?:private\/tmp)\/?$/,
 ];
 // Every other absolute path is listed, by file and with the reason it is
 // there, in scripts/known-absolute-paths.json, as a hash of its text so the
@@ -181,33 +197,91 @@ const generic = [
 // gone, so the list only ever shrinks to what is really there.
 const known = json("scripts/known-absolute-paths.json").files ?? {};
 const hash = (text) => createHash("sha256").update(text).digest("hex").slice(0, 12);
+// A tracked symlink is read as git stores it, as its target's path, which is
+// what a clone gets. Read as a file, it would be followed, or skipped when
+// its target is missing.
+const linkTargets = new Map();
+for (const entry of execFileSync("git", ["ls-files", "-s", "-z"], { cwd: root, encoding: "utf8" }).split("\0").filter(Boolean)) {
+  const [meta, rel] = entry.split("\t");
+  const [mode, object] = meta.split(" ");
+  if (mode === "120000") linkTargets.set(rel, execFileSync("git", ["cat-file", "blob", object], { cwd: root }));
+}
+// Text as it was saved: UTF-8 (a BOM is dropped), or UTF-16 in either byte
+// order, with or without a BOM, which Windows PowerShell 5.1 writes for > and
+// Out-File. Anything else holding a NUL is binary, read for its printable
+// runs of six or more: as single bytes, and as UTF-16LE at both byte
+// alignments. Each UTF-16 slice is cut to an even length, which decodes the
+// same characters: Node 24.16 on Windows corrupts its heap decoding an
+// odd-length slice at an odd offset as UTF-16.
+const even = (b) => b.subarray(0, b.length - (b.length % 2));
+const utf16 = (b, bigEndian = false) => {
+  const copy = Buffer.from(even(b));
+  if (bigEndian) copy.swap16();
+  return copy.toString("utf16le");
+};
+const asText = (buf) => {
+  if (buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) return buf.subarray(3).toString("utf8");
+  if (buf[0] === 0xff && buf[1] === 0xfe) return utf16(buf.subarray(2));
+  if (buf[0] === 0xfe && buf[1] === 0xff) return utf16(buf.subarray(2), true);
+  if (!buf.includes(0)) return buf.toString("utf8");
+  // No BOM: UTF-16 text in the ASCII range has a NUL in every other byte.
+  let lowNul = 0, highNul = 0;
+  for (let i = 0; i + 1 < buf.length; i += 2) {
+    if (buf[i] === 0) lowNul += 1;
+    if (buf[i + 1] === 0) highNul += 1;
+  }
+  const pairs = Math.floor(buf.length / 2);
+  if (highNul >= pairs * 0.9 && lowNul <= pairs * 0.01) return utf16(buf);
+  if (lowNul >= pairs * 0.9 && highNul <= pairs * 0.01) return utf16(buf, true);
+  return null;
+};
+// A kit names its brand in identity.canonical_name. Any quoted value of that
+// key counts, in any file and at any depth (a renamed kit, a kit inside
+// another object, JSON that does not parse, a kit escaped into a string), and
+// so does an unquoted one in YAML. Only file paths are reported, never a brand.
+const quotedBrand = /canonical_name\\?["']?\s*[:=]\s*\\?["']([^"'\\\r\n]*)/g;
+const yamlBrand = /^\s*canonical_name\s*:\s*([^"'\s#][^#\r\n]*)$/gm;
+const jsonBrands = (value, out = []) => {
+  if (Array.isArray(value)) value.forEach((item) => jsonBrands(item, out));
+  else if (value && typeof value === "object") {
+    for (const [key, item] of Object.entries(value)) {
+      if (key === "canonical_name" && typeof item === "string") out.push(item);
+      jsonBrands(item, out);
+    }
+  }
+  return out;
+};
+const otherBrand = (text, rel) => {
+  const names = [...text.matchAll(quotedBrand)].map((m) => m[1]);
+  if (/\.ya?ml$/i.test(rel)) names.push(...[...text.matchAll(yamlBrand)].map((m) => m[1].trim()));
+  if (/\.json$/i.test(rel)) { try { names.push(...jsonBrands(JSON.parse(text))); } catch {} }
+  return names.some((name) => name !== "Metrix");
+};
 const found = {};
+const branded = new Set();
 for (const rel of tracked) {
-  let buf;
-  try { buf = readFileSync(path.join(root, rel)); } catch { continue; }
-  if (buf.includes(0)) {
-    // Printable runs of six or more: as single bytes, and as UTF-16LE at
-    // both byte alignments. Each UTF-16 slice is cut to an even length, which
-    // decodes the same characters: Node 24.16 on Windows corrupts its heap
-    // decoding an odd-length slice at an odd offset as UTF-16.
-    const even = (b) => b.subarray(0, b.length - (b.length % 2));
-    const strings = [buf.toString("latin1"), even(buf).toString("utf16le"), even(buf.subarray(1)).toString("utf16le")]
-      .flatMap((text) => text.match(/[ -~]{6,}/g) ?? []);
+  let buf = linkTargets.get(rel);
+  if (buf === undefined) { try { buf = readFileSync(path.join(root, rel)); } catch { continue; } }
+  const text = asText(buf);
+  if (text === null) {
+    const strings = [buf.toString("latin1"), utf16(buf), utf16(buf.subarray(1))].flatMap((t) => t.match(/[ -~]{6,}/g) ?? []);
     for (const run of strings) {
       for (const m of run.matchAll(homePath)) {
         if (generic.some((g) => g.test(m[0]))) continue;
         (found[rel] ??= []).push({ line: "binary", text: m[0], hash: hash(m[0]) });
       }
+      if (otherBrand(run, "")) branded.add(rel);
     }
     continue;
   }
-  buf.toString("utf8").split(/\r?\n/).forEach((line, i) => {
+  text.split(/\r?\n/).forEach((line, i) => {
     for (const m of line.matchAll(absolutePath)) {
-      const text = m.slice(1).find(Boolean);
-      if (generic.some((g) => g.test(text))) continue;
-      (found[rel] ??= []).push({ line: i + 1, text, hash: hash(text) });
+      const hit = m.slice(1).find(Boolean);
+      if (generic.some((g) => g.test(hit))) continue;
+      (found[rel] ??= []).push({ line: i + 1, text: hit, hash: hash(hit) });
     }
   });
+  if (otherBrand(text, rel)) branded.add(rel);
 }
 if (process.argv.includes("--print-paths")) {
   for (const [rel, hits] of Object.entries(found)) for (const h of hits) console.log(`  ${h.hash}  ${rel}:${h.line}  ${h.text}`);
@@ -230,37 +304,38 @@ check("every file in known-absolute-paths.json says why", reasonless.length === 
 // Brand kits are client material. A kit belongs in the user's assets folder,
 // never in the public repository a plugin install copies, wherever in the tree
 // it sits and whatever it is called. The engine's evaluation fixtures carry
-// its own brand, and only those are allowed. A kit is caught by its name (a
-// file name with "brand kit" or "master execution prompt" in it, however it is
-// spelled or separated, or any file in a brand-kits folder at any depth) and
-// by its content: a renamed kit still names its brand in
-// identity.canonical_name. Only file paths are reported, never a brand.
+// its own brand, and only those are allowed. A kit is caught by its content
+// (above: a renamed kit still names its brand) and by its name: a file whose
+// name says "brand kit" or "master execution prompt", spelled with any
+// separators or none, or a file in a folder whose name does, at any depth. A
+// name may run on past the last word into a capital or a non-letter
+// (BrandKitFinal, brand-kit-v2), never into a lower-case letter (kitchen).
+// Engine code named like a kit fails too, by design: rename it. The one
+// exception is the folder of the engine's own brand-kit-builder skill, which
+// builds kits and holds none.
 const fixtureKits = [
   "skills/metrix-video-assembly/evals/metrix-feed-4x5-product-journey/files/brand-kit.json",
   "skills/metrix-video-assembly/evals/metrix-mst-hook-row/files/brand-kit.json",
   "skills/metrix-video-assembly/evals/metrix-reels-from-app-recordings/files/brand-kit.json",
   "skills/metrix-video-assembly/evals/metrix-reels-refuses-unsourced-proof/files/brand-kit.json",
 ];
+const ci = (word) => [...word].map((c) => `[${c.toUpperCase()}${c}]`).join("");
+const gap = String.raw`(?:[^A-Za-z0-9]|%[0-9A-Fa-f]{2})*`;
+const kitNames = [
+  new RegExp(`${ci("brand")}${gap}${ci("kit")}[Ss]?(?![a-z])`),
+  new RegExp(`${ci("master")}${gap}${ci("execution")}${gap}${ci("prompt")}[Ss]?(?![a-z])`),
+];
+const kitNamed = (name) => kitNames.some((re) => re.test(name));
 const kitFiles = tracked.filter((f) => {
-  const base = f.split("/").pop();
-  return /brand[-_ .]?kit/i.test(base) || /master[-_ .]?execution[-_ .]?prompt/i.test(base) ||
-    (/(?:^|\/)brand[-_ .]?kits\//i.test(f) && f !== "brand-kits/README.md");
+  const dirs = f.split("/");
+  const base = dirs.pop();
+  if (kitNamed(base)) return true;
+  if (f === "brand-kits/README.md" || f.startsWith("skills/brand-kit-builder/")) return false;
+  return dirs.some(kitNamed);
 });
 const strays = kitFiles.filter((f) => !fixtureKits.includes(f));
 check("no brand kit is tracked outside the engine's own evaluation fixtures", strays.length === 0, strays.join(", "));
-const branded = new Set();
-for (const f of tracked.filter((t) => /\.json$/i.test(t))) {
-  let parsed;
-  try {
-    const raw = readFileSync(path.join(root, f), "utf8");
-    parsed = JSON.parse(raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw);
-  } catch { continue; }
-  for (const item of Array.isArray(parsed) ? parsed : [parsed]) {
-    const name = item?.identity?.canonical_name;
-    if (typeof name === "string" && name !== "Metrix") branded.add(f);
-  }
-}
-check("no tracked JSON names a brand other than the engine's own (identity.canonical_name)", branded.size === 0, [...branded].join(", "));
+check("no tracked file names a brand other than the engine's own (canonical_name)", branded.size === 0, [...branded].join(", "));
 for (const f of fixtureKits) {
   let name;
   try { name = JSON.parse(read(f)).identity?.canonical_name; } catch { name = undefined; }
@@ -279,7 +354,7 @@ console.log("\n== GO.cmd updates itself safely ==");
 // with the same jump. No line that carries %* sits in or holds brackets,
 // because cmd.exe expands %* before it matches brackets and a ) in a path
 // would close the block. Nothing calls "%~f0", since call expands % twice.
-const go =readFileSync(path.join(root, "GO.cmd")).toString("latin1");
+const go = readFileSync(path.join(root, "GO.cmd")).toString("latin1");
 const goLines = go.split("\r\n");
 const goCode = goLines.filter((l) => !/^\s*(?:rem\b|::)/i.test(l));
 const guard = 'if not defined MCE_GO_TOP setlocal DisableDelayedExpansion & set "MCE_GO_PULLED=1" & "%~f0" %*';
@@ -303,6 +378,26 @@ goLines.forEach((l, i) => {
 });
 check("GO.cmd keeps %* off every line inside or holding brackets", bracketed.length === 0, `lines ${bracketed.join(", ")}`);
 check("GO.cmd never calls itself (call expands % a second time)", !goCode.some((l) => /\bcall\s+"%~f0"/i.test(l)));
+// The same second expansion takes a % out of a value already put into a call
+// line, a folder name holding one, and doubles a quoted ^. So a call line
+// leaves each variable to call's own expansion: written %%NAME%%, the value
+// goes in once, as it is.
+const earlyCalls = goCode.filter((l) => /\bcall\s/i.test(l) && !/^\s*echo\b/i.test(l))
+  .filter((l) => l.replace(/%%[A-Za-z_][A-Za-z0-9_]*%%/g, "").includes("%"));
+check("GO.cmd's call lines leave every variable to call's own expansion (%%NAME%%)", earlyCalls.length === 0, earlyCalls.join(" | "));
+// setup.ps1 updates itself too, when it runs on its own. Under GO.cmd
+// (MCE_GO_PULLED is set) a second pull could replace GO.cmd while cmd.exe
+// waits on the line that started setup, and cmd.exe would read on in the new
+// file at the old offset. There setup.ps1 only fetches, which changes no file.
+const setupPs = read("sprint/setup.ps1").split(/\r?\n/);
+const underGo = setupPs.findIndex((l) => /^\s*if \(\$env:MCE_GO_PULLED\) \{\s*$/.test(l));
+const indent = underGo < 0 ? "" : setupPs[underGo].match(/^\s*/)[0];
+const onItsOwn = underGo < 0 ? -1 : setupPs.findIndex((l, i) => i > underGo && l.trimEnd() === `${indent}} else {`);
+const ownEnd = onItsOwn < 0 ? -1 : setupPs.findIndex((l, i) => i > onItsOwn && l.trimEnd() === `${indent}}`);
+const setupPulls = setupPs.flatMap((l, i) => (/\bgit\b.*\spull\b/.test(l) && !/^\s*#/.test(l) ? [i] : []));
+check("setup.ps1 pulls only when GO.cmd has not (MCE_GO_PULLED)",
+  ownEnd > onItsOwn && onItsOwn > underGo && setupPulls.length > 0 && setupPulls.every((i) => i > onItsOwn && i < ownEnd),
+  `if at line ${underGo + 1}, else at ${onItsOwn + 1}, its end at ${ownEnd + 1}, pulls at ${setupPulls.map((i) => i + 1).join(", ")}`);
 
 const reportAt = process.argv.indexOf("--validator-report");
 if (reportAt > 0) {

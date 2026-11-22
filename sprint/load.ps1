@@ -1,7 +1,8 @@
 # Find the sprint files and put them where they belong. No dragging.
 #
 #   .\sprint\load.ps1                 looks in Downloads, Desktop, Documents
-#   .\sprint\load.ps1 C:\some\folder  looks there instead
+#   .\sprint\load.ps1 C:\some\folder  looks there first, then in those, and
+#                                     takes the images from there
 #
 # Briefs are identified by CONTENT, not by filename: a .json is a briefs file
 # only if it actually parses and carries brief_metadata. A file named
@@ -33,11 +34,11 @@ Get-ChildItem -LiteralPath $refsDir -File -ErrorAction SilentlyContinue | Remove
 # making with a credit balance attached.
 Get-ChildItem -LiteralPath $briefsDir -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
-if ($Source) {
-  $roots = @($Source)
-} else {
-  $roots = @("Downloads", "Desktop", "Documents") | ForEach-Object { Join-Path $env:USERPROFILE $_ }
-}
+# -Source is looked in first, then the usual folders, so a folder that holds
+# only the product images, which is what the start note advises, still finds
+# the briefs file in Downloads.
+$roots = @("Downloads", "Desktop", "Documents") | ForEach-Object { Join-Path $env:USERPROFILE $_ }
+if ($Source) { $roots = @($Source) + $roots }
 
 function Test-IsBriefs($path) {
   try {
@@ -143,7 +144,7 @@ if ($images) {
       $skipped += ("        SKIPPED " + $img.Name.Substring(0, [Math]::Min(60, $img.Name.Length)) + "...  (" + $why + ")")
     }
   }
-  Write-Host ("  refs:   " + $copied.Count + " image(s) from " + $brief.DirectoryName) -ForegroundColor Green
+  Write-Host ("  refs:   " + $copied.Count + " image(s) from " + $imgSource) -ForegroundColor Green
   $copied | ForEach-Object { Write-Host ("        " + $_) }
   if ($skipped.Count -gt 0) {
     Write-Host ("  refs:   " + $skipped.Count + " skipped, named below. The rest loaded fine.") -ForegroundColor Yellow

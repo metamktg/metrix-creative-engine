@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Find the sprint files and put them where they belong. See load.ps1 for why
-# briefs are identified by content and images only come from the briefs' folder.
+# briefs are identified by content and images come only from the folder named
+# here or the briefs' own folder.
 #
 #   bash sprint/load.sh                 looks in ~/Downloads, ~/Desktop, ~/Documents
-#   bash sprint/load.sh /some/folder    looks there instead
+#   bash sprint/load.sh /some/folder    looks there first, then in those, and
+#                                       takes the images from there
 set -euo pipefail
 
 sprint="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,7 +19,11 @@ find "$sprint/briefs" -maxdepth 1 -type f -delete 2>/dev/null || true
 # --briefs <file> names one exactly, for when more than one is lying around.
 explicit=""
 if [ "${1:-}" = "--briefs" ]; then explicit="${2:-}"; shift 2 || true; fi
-if [ $# -gt 0 ]; then roots=("$1"); else roots=("$HOME/Downloads" "$HOME/Desktop" "$HOME/Documents"); fi
+# A folder named here is looked in first, then the usual ones, so a folder that
+# holds only the product images still finds the briefs file in Downloads.
+roots=("$HOME/Downloads" "$HOME/Desktop" "$HOME/Documents")
+src=""
+if [ $# -gt 0 ]; then src="$1"; roots=("$1" "${roots[@]}"); fi
 
 is_briefs() {
   node -e '
@@ -57,7 +63,7 @@ fi
 cp -f "$brief" "$sprint/briefs/"
 printf '  briefs: %s\n' "$(basename "$brief")"
 
-srcdir="${IMG_SOURCE:-$(dirname "$brief")}"
+srcdir="${IMG_SOURCE:-${src:-$(dirname "$brief")}}"
 
 # A general folder is never a reference set. Downloads held 1,381 images.
 # Skip the local sweep rather than exiting: the brand-kit fallback below is a
