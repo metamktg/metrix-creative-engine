@@ -34,12 +34,16 @@ else
   printf '  repo: could not update, carrying on with what is checked out\n'
 fi
 
+key_from_setup=0
 if [ -z "${KIE_AI_API_KEY:-}" ]; then
   echo "KIE_AI_API_KEY is not set in this terminal."
   echo "Paste your Kie key (not echoed, not logged, not stored by this script):"
   read -rs KIE_AI_API_KEY
   export KIE_AI_API_KEY
-  echo "  set for this terminal. Add it to your shell profile to persist it."
+  key_from_setup=1
+  # A script cannot change the shell that started it, so the key reaches this
+  # run and what it starts, never the terminal. The start line below says so.
+  echo "  set for this setup run only."
 else
   echo "  key: already set in this terminal"
 fi
@@ -82,12 +86,13 @@ if [ -n "$kept" ]; then
   printf '          Move them out of %s to load only the plugin'"'"'s.\n' "$skills"
 fi
 
-# Brand kits live in the assets folder: METRIX_ASSETS_DIR when the
-# environment sets it, else the plugin's assets folder option. load.sh looks
-# there before this checkout's own brand-kits folder.
-if [ -z "${METRIX_ASSETS_DIR:-}" ]; then
-  METRIX_ASSETS_DIR="$(claude plugin configure "$plugin" --json 2>/dev/null | node -e 'let s="";process.stdin.on("data",(d)=>(s+=d)).on("end",()=>{try{process.stdout.write(JSON.parse(s).inputs?.assets_dir||"")}catch{}})' || true)"
-fi
+# Brand kits live in the assets folder: the plugin's assets folder option when
+# it is set, else METRIX_ASSETS_DIR from the environment. The MCP server and
+# the session hook use the same order, so the loader and the session never
+# read two different folders. load.sh resolves it the same way and looks there
+# before this checkout's own brand-kits folder.
+configured="$(claude plugin configure "$plugin" --json 2>/dev/null | node -e 'let s="";process.stdin.on("data",(d)=>(s+=d)).on("end",()=>{try{process.stdout.write(JSON.parse(s).inputs?.assets_dir||"")}catch{}})' || true)"
+METRIX_ASSETS_DIR="${configured:-${METRIX_ASSETS_DIR:-}}"
 export METRIX_ASSETS_DIR
 if [ -n "$METRIX_ASSETS_DIR" ]; then echo "  assets: $METRIX_ASSETS_DIR"; fi
 
@@ -104,12 +109,21 @@ if ! node "$repo/skills/metrix-ad-creative/scripts/kie.mjs" credits; then
 fi
 
 # Find and load the sprint files rather than asking for them to be dragged.
-# load.sh opens the folder itself when it finds nothing.
+# When it finds no briefs, load.sh says where it looked and how to point it
+# elsewhere, then exits non-zero. Setup carries on, so the start line still
+# prints.
 bash "$here/load.sh" "$@" || true
 
 # The same start GO.cmd makes on Windows: downloads land in sprint/out, and the
 # settings file stops this checkout's own .mcp.json server, which the plugin
 # already brings. Both last for that session only.
+if [ "$key_from_setup" = "1" ]; then
+  printf 'The key you pasted reached this setup run only. Before the start line, give\n'
+  printf 'it to the terminal you start Claude Code in, without it landing in history:\n\n'
+  printf '  read -rs KIE_AI_API_KEY && export KIE_AI_API_KEY     (then paste the key)\n\n'
+  printf 'or add an export line to ~/.zshrc or ~/.bashrc, or set the key inside\n'
+  printf 'Claude Code with /plugin configure.\n\n'
+fi
 printf 'Ready. Start Claude Code with:\n\n'
 printf '  cd %q && KIE_AI_DOWNLOAD_DIR="$PWD/sprint/out" claude --settings sprint/session-settings.json\n\n' "$repo"
 printf 'then paste:  Read sprint/GO.txt and do exactly what it says.\n\n'

@@ -51,9 +51,9 @@ empty.
 
 | Option | What it is | When left empty |
 | --- | --- | --- |
-| Kie.ai API key | your key, stored as a secret | `KIE_AI_API_KEY` from the environment |
+| Kie.ai API key | your key, stored as a secret; the session hook also writes a plain copy for the session's shell (see [`docs/SETUP.md`](docs/SETUP.md)) | `KIE_AI_API_KEY` from the environment |
 | Runs folder | where generated files, receipts and the task ledger go | `KIE_AI_DOWNLOAD_DIR`, else `./out` in the folder Claude Code started in |
-| Assets folder | where your brand kits, product references, approved briefs and accepted media live | the folder you work in |
+| Assets folder | where your brand kits, product references, approved briefs and accepted media live | `METRIX_ASSETS_DIR`, else the folder you work in |
 
 Restart Claude Code, then hand it an approved brief:
 

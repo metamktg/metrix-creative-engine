@@ -34,7 +34,7 @@ function run(sb: object, args: string[] = [], files: Record<string, string> = {}
 const BRIEF = { copy_architecture: { cta: "Get it now", hook: "Learn faster" }, visual_direction: { avoid: ["Rated #1 by 10,000 users, guaranteed"] } };
 const brief = (b: object = BRIEF) => JSON.stringify(b);
 
-// The attack-1 scratch case (X:/metrix-work/scratch-understand/skeptic/sb.json), with a licensed bed
+// The attack-1 scratch case from the adversarial review, with a licensed bed
 // so the only defect left is the voiced claim. Before this change it passed with exit 0.
 function attack(extra: Record<string, unknown> = {}) {
   return {

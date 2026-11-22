@@ -10,7 +10,9 @@ INPUTS
   sprint/refs/      reference images. Upload them all, use the returned URLs
                     as the model's image input. Without them the model invents
                     the product.
-  sprint/out/       everything you produce goes here.
+  the runs folder   everything you produce goes here. It is the runs folder
+                    the session start names: sprint/out/, unless the plugin's
+                    runs folder option names another.
   the brand kit     the account's brand-kit.json, and its
                     MASTER_EXECUTION_PROMPT.md when it has one. Kits are kept
                     outside this repository, in the assets folder's
@@ -29,14 +31,14 @@ DO THIS, IN ORDER, WITHOUT ASKING
   3. Upload every file in sprint/refs/ and keep the URLs.
   4. Run kie_validate_brief on every brief.
   5. Check credits. Tell me the number and the estimated spend in one line.
-  6. Render TWO cells from different rows. Download them to sprint/out/.
+  6. Render TWO cells from different rows. Download them to the runs folder.
      Show them to me.
 
   --> THIS IS THE ONLY STOP. Wait for my yes.
 
   7. On yes: render the rest. One model for the whole batch, with the aspect
-     ratio set explicitly as a parameter. Download every asset to sprint/out/
-     with its MST name as you go, never at the end.
+     ratio set explicitly as a parameter. Download every asset to the runs
+     folder with its MST name as you go, never at the end.
   8. Report: one table, one row per brief. Cell, pass/fail on the five
      alignment rows, credits, filename. Then the total spent and anything you
      could not make pass.

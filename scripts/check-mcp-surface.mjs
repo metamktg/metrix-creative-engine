@@ -80,10 +80,12 @@ const child = spawn("node", [bundle], {
   env: {
     ...process.env,
     // The plugin's own variables win over KIE_AI_*, and a session started with
-    // the plugin can carry them. Blank them so the stub key and the temporary
-    // folder below are what the bundle actually reads.
-    METRIX_KIE_API_KEY: "",
-    METRIX_RUNS_DIR: "",
+    // the plugin can carry them, as can the user's own METRIX_ASSETS_DIR. Blank
+    // them so the stub key, the temporary folder and the unset assets folder
+    // below are what the bundle actually reads.
+    METRIX_OPTION_KIE_API_KEY: "",
+    METRIX_OPTION_RUNS_DIR: "",
+    METRIX_OPTION_ASSETS_DIR: "",
     METRIX_ASSETS_DIR: "",
     KIE_AI_API_KEY: "stub-key-not-a-real-credential",
     KIE_AI_BASE_URL: `http://127.0.0.1:${stubPort}`,

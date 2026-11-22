@@ -54,35 +54,40 @@ describe("loadConfig", () => {
   });
 });
 
-// The plugin passes its options as METRIX_*; a standalone install sets KIE_AI_*.
+// The plugin passes its options as METRIX_OPTION_*; the user's environment or a
+// standalone client config sets KIE_AI_* and METRIX_ASSETS_DIR.
 describe("loadConfig under the plugin", () => {
   it("prefers the plugin's options over the environment", () => {
     const config = loadConfig({
-      METRIX_KIE_API_KEY: "from-plugin",
+      METRIX_OPTION_KIE_API_KEY: "from-plugin",
       KIE_AI_API_KEY: "from-env",
-      METRIX_RUNS_DIR: "/runs/plugin",
+      METRIX_OPTION_RUNS_DIR: "/runs/plugin",
       KIE_AI_DOWNLOAD_DIR: "./out",
-      METRIX_ASSETS_DIR: "/assets",
+      METRIX_OPTION_ASSETS_DIR: "/assets/plugin",
+      METRIX_ASSETS_DIR: "/assets/env",
     });
     expect(config.apiKey).toBe("from-plugin");
     expect(config.downloadDir).toBe("/runs/plugin");
     expect(config.ledgerPath).toBe(path.resolve("/runs/plugin", "kie-ledger.jsonl"));
-    expect(config.assetsDir).toBe("/assets");
+    expect(config.assetsDir).toBe("/assets/plugin");
   });
 
-  // Claude Code passes an unset option as "", so the environment still answers.
+  // Claude Code passes an unset option as "", so the environment still answers,
+  // the assets folder included: the user's METRIX_ASSETS_DIR is not overwritten.
   it("falls back to the environment when an option is empty", () => {
     const config = loadConfig({
-      METRIX_KIE_API_KEY: "",
+      METRIX_OPTION_KIE_API_KEY: "",
       KIE_AI_API_KEY: "from-env",
-      METRIX_RUNS_DIR: "  ",
+      METRIX_OPTION_RUNS_DIR: "  ",
       KIE_AI_DOWNLOAD_DIR: "./out",
-      METRIX_ASSETS_DIR: "",
+      METRIX_OPTION_ASSETS_DIR: "",
+      METRIX_ASSETS_DIR: "/assets/env",
     });
     expect(config.apiKey).toBe("from-env");
     expect(config.downloadDir).toBe("./out");
-    expect(config.assetsDir).toBeNull();
+    expect(config.assetsDir).toBe("/assets/env");
     expect(config.ignored).toEqual([]);
+    expect(loadConfig({ KIE_AI_API_KEY: "k", METRIX_OPTION_ASSETS_DIR: "" }).assetsDir).toBeNull();
   });
 
   // Claude Code leaves `${KIE_AI_API_KEY}` literal when the variable is unset.
@@ -91,20 +96,20 @@ describe("loadConfig under the plugin", () => {
   it("reads an unexpanded reference as unset and reports it", () => {
     expect(() => loadConfig({ KIE_AI_API_KEY: "${KIE_AI_API_KEY}" })).toThrow(/KIE_AI_API_KEY is not set/);
     const config = loadConfig({
-      METRIX_KIE_API_KEY: "${user_config.kie_api_key}",
+      METRIX_OPTION_KIE_API_KEY: "${user_config.kie_api_key}",
       KIE_AI_API_KEY: "k",
-      METRIX_RUNS_DIR: "${user_config.runs_dir}",
+      METRIX_OPTION_RUNS_DIR: "${user_config.runs_dir}",
       KIE_AI_DOWNLOAD_DIR: "${CLAUDE_PLUGIN_DATA}/out",
       KIE_AI_LEDGER_PATH: "${KIE_AI_LEDGER_PATH}",
     });
     expect(config.apiKey).toBe("k");
     expect(config.downloadDir).toBeNull();
     expect(config.ledgerPath).toBe(resolveLedgerPath({}, null));
-    expect(config.ignored).toEqual(["METRIX_KIE_API_KEY", "METRIX_RUNS_DIR", "KIE_AI_DOWNLOAD_DIR", "KIE_AI_LEDGER_PATH"]);
+    expect(config.ignored).toEqual(["METRIX_OPTION_KIE_API_KEY", "METRIX_OPTION_RUNS_DIR", "KIE_AI_DOWNLOAD_DIR", "KIE_AI_LEDGER_PATH"]);
   });
 
   it("still switches the ledger off on request", () => {
-    expect(loadConfig({ KIE_AI_API_KEY: "k", METRIX_RUNS_DIR: "/runs", KIE_AI_LEDGER_PATH: "off" }).ledgerPath).toBeNull();
+    expect(loadConfig({ KIE_AI_API_KEY: "k", METRIX_OPTION_RUNS_DIR: "/runs", KIE_AI_LEDGER_PATH: "off" }).ledgerPath).toBeNull();
   });
 });
 

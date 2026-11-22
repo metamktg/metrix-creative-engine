@@ -108,20 +108,35 @@ if [ "$n" -gt 0 ]; then printf '  refs:   %d image(s) from %s\n' "$n" "$srcdir";
 # Nothing local? Pull the brand kit's recorded asset URLs. A render without
 # references invents the product.
 if [ "$n" -eq 0 ]; then
-  # Kits live in the assets folder's brand-kits (METRIX_ASSETS_DIR, which
-  # setup.sh fills from the plugin's assets folder option). A kit kept in this
-  # checkout's own git-ignored brand-kits still counts. The first place that
-  # holds kits is used, and only when it holds exactly one.
+  # Kits live in the assets folder's brand-kits. The assets folder is the
+  # plugin's assets folder option when it is set, else METRIX_ASSETS_DIR: the
+  # order the session hook and the MCP server use, so the kit read here is the
+  # one the session names, whether setup.sh started this or you did. A kit kept
+  # in this checkout's own git-ignored brand-kits still counts. The first place
+  # that holds kits is used, and only when it holds exactly one.
+  assets=""
+  if command -v claude >/dev/null 2>&1; then
+    assets="$(claude plugin configure metrix-creative-engine@metrix-creative-engine --json 2>/dev/null | node -e 'let s="";process.stdin.on("data",(d)=>(s+=d)).on("end",()=>{try{process.stdout.write(JSON.parse(s).inputs?.assets_dir||"")}catch{}})' || true)"
+  fi
+  assets="${assets:-${METRIX_ASSETS_DIR:-}}"
   kit=""
-  for kitdir in ${METRIX_ASSETS_DIR:+"$METRIX_ASSETS_DIR/brand-kits"} "$sprint/../brand-kits"; do
-    kit="$(find "$kitdir" -name brand-kit.json 2>/dev/null | head -2)"
+  for kitdir in ${assets:+"$assets/brand-kits"} "$sprint/../brand-kits"; do
+    # find exits non-zero on a folder that is not there, and under pipefail and
+    # set -e that would end this script with no message.
+    [ -d "$kitdir" ] || continue
+    kit="$(find "$kitdir" -name brand-kit.json 2>/dev/null | head -2 || true)"
     [ -n "$kit" ] && break
   done
-  if [ -n "$kit" ] && [ "$(printf '%s\n' "$kit" | wc -l)" != "1" ]; then
-    printf '  refs:   several brand kits in %s, so none was used.\n' "$kitdir"
-    printf '          Put the product images in a folder of their own and pass it.\n'
-  fi
-  if [ "$(printf '%s\n' "$kit" | wc -l)" = "1" ] && [ -n "$kit" ]; then
+  # Two lines mean two kits. Tested by the newline itself rather than wc -l,
+  # whose count macOS pads with spaces.
+  case "$kit" in
+    *$'\n'*)
+      printf '  refs:   several brand kits in %s, so none was used.\n' "$kitdir"
+      printf '          Put the product images in a folder of their own and pass it.\n'
+      kit=""
+      ;;
+  esac
+  if [ -n "$kit" ]; then
     node -e '
       const fs=require("fs"), {execFileSync}=require("child_process");
       const kit=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));

@@ -6,8 +6,12 @@ import { resolveLedgerPath } from "./ledger.js";
  *
  * Each setting has up to two sources, and the first one that holds a real value
  * wins:
- *   METRIX_*  what the Claude Code plugin passes from its own options
- *   KIE_AI_*  what a standalone install sets in its environment or client config
+ *   METRIX_OPTION_*  what the Claude Code plugin passes from its own options
+ *   KIE_AI_*, METRIX_ASSETS_DIR  what the user's environment or a standalone
+ *                    client config sets
+ * The plugin's variables have names of their own because Claude Code passes an
+ * empty option as "", and an entry named like the user's own variable would
+ * overwrite it with that "".
  */
 export interface ServerConfig {
   apiKey: string;
@@ -66,14 +70,14 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServerConfig {
   const ignored: string[] = [];
   const read = reader(env, ignored);
 
-  const apiKey = read("METRIX_KIE_API_KEY", "KIE_AI_API_KEY");
+  const apiKey = read("METRIX_OPTION_KIE_API_KEY", "KIE_AI_API_KEY");
   if (!apiKey) {
     throw new Error(
       "KIE_AI_API_KEY is not set, and neither is the plugin's Kie.ai API key option. Create a key at https://kie.ai/api-key, then set it in the plugin's options or pass KIE_AI_API_KEY in the MCP client's server config under `env`.",
     );
   }
 
-  const downloadDir = read("METRIX_RUNS_DIR", "KIE_AI_DOWNLOAD_DIR") ?? null;
+  const downloadDir = read("METRIX_OPTION_RUNS_DIR", "KIE_AI_DOWNLOAD_DIR") ?? null;
   const ledgerSetting = read("KIE_AI_LEDGER_PATH");
 
   return {
@@ -85,7 +89,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServerConfig {
       DEFAULT_WAIT_SECONDS,
     downloadDir,
     ledgerPath: resolveLedgerPath({ KIE_AI_LEDGER_PATH: ledgerSetting }, downloadDir),
-    assetsDir: read("METRIX_ASSETS_DIR") ?? null,
+    assetsDir: read("METRIX_OPTION_ASSETS_DIR", "METRIX_ASSETS_DIR") ?? null,
     ignored,
   };
 }

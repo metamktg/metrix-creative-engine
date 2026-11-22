@@ -1,5 +1,6 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
+set "MCE_GO_TOP=1"
 REM ===================================================================
 REM  Metrix Creative Engine - the whole thing, one file.
 REM
@@ -15,20 +16,41 @@ REM      every npm and claude call dies with a security error
 REM    * $HOME does not expand in cmd.exe, so a path built from it silently
 REM      points somewhere else
 REM  This file is immune to all three by construction.
+REM
+REM  It updates itself too. cmd.exe reads a batch file a line at a time
+REM  from a byte offset, so if a pull replaces this file mid-run, it reads
+REM  on in the new file at the old offset. So the pull below is a block,
+REM  read whole before any of it runs, that runs the new file from the top
+REM  and exits. A GO.cmd from before that block resumes at byte 1558, the
+REM  next line: it runs this file from the top, and does nothing in a run
+REM  that began here (MCE_GO_TOP is set). check-plugin guards its offset.
+REM  Padding: holds the next line at byte 1558. ------------
 REM ===================================================================
+if not defined MCE_GO_TOP (set "MCE_GO_PULLED=1" & call "%~f0" %* & exit /b)
 
 cd /d "%~dp0"
+
+REM --- Update first, so everything below is the newest version ---------
+REM Why the pull is a block: see the header. A failed pull (offline, local
+REM edits) is a note, never a stop: the checked-out version still works.
+where git >nul 2>&1 || (
+  echo.
+  echo   git is not installed.  https://git-scm.com/download/win
+  echo   Install it, then double-click this file again.
+  pause & exit /b 1
+)
+if not defined MCE_GO_PULLED (
+  set "MCE_GO_PULLED=1"
+  git pull --ff-only --quiet 2>nul
+  call "%~f0" %*
+  exit /b
+)
 
 echo.
 echo   Metrix Creative Engine
 echo.
 
 REM --- Prerequisites, by name, before anything depends on them ----------
-where git >nul 2>&1 || (
-  echo   git is not installed.  https://git-scm.com/download/win
-  echo   Install it, then double-click this file again.
-  pause & exit /b 1
-)
 where node >nul 2>&1 || (
   echo   Node is not installed.  https://nodejs.org
   echo   Install it, then double-click this file again.
@@ -57,8 +79,7 @@ if not defined CLAUDE (
   pause & exit /b 1
 )
 
-REM --- Update, then set up: the engine installs as a Claude Code plugin --
-git pull --ff-only --quiet 2>nul
+REM --- Set up: the engine installs as a Claude Code plugin ---------------
 powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0sprint\setup.ps1" %*
 if errorlevel 1 (
   echo.
@@ -66,9 +87,16 @@ if errorlevel 1 (
   pause & exit /b 1
 )
 
+REM --- The key ------------------------------------------------------------
+REM When setup asked for the key it saved it with setx, which changes no
+REM running process, this window included. Read it back from where setx
+REM put it, so the session below has it on the first run, not the second.
+if not defined KIE_AI_API_KEY for /f "tokens=2,*" %%A in ('reg query HKCU\Environment /v KIE_AI_API_KEY 2^>nul ^| find "REG_"') do set "KIE_AI_API_KEY=%%B"
+
 REM --- Start the session ------------------------------------------------
-REM Downloads land in sprint\out, the folder GO.txt names, for the plugin's
-REM MCP server as well as the script. The settings file stops this
+REM Downloads land in sprint\out, unless the plugin's runs folder option
+REM names another folder. Either way the session start names the folder,
+REM and GO.txt sends everything there. The settings file stops this
 REM checkout's own .mcp.json server, which the plugin already brings, so the
 REM session neither asks about it nor runs it twice. Both last for this
 REM session only; nothing is saved.

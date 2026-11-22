@@ -30,7 +30,7 @@ claude plugin install metrix-creative-engine@metrix-creative-engine --config run
 | --- | --- | --- | --- |
 | Kie.ai API key | `kie_api_key` | Your key, stored as a secret | `KIE_AI_API_KEY` from the environment |
 | Runs folder | `runs_dir` | Generated files, receipts, render specs and the task ledger | `KIE_AI_DOWNLOAD_DIR`, else `./out` in the folder Claude Code started in |
-| Assets folder | `assets_dir` | Brand kits (`brand-kits/<account>/`), product references, approved briefs and accepted media | The folder you work in |
+| Assets folder | `assets_dir` | Brand kits (`brand-kits/<account>/`), product references, approved briefs and accepted media | `METRIX_ASSETS_DIR`, else the folder you work in |
 
 Keep the key out of `--config`: a command line lands in your shell history. Use
 the `/plugin configure` dialog, or put the key in the environment (step 2).
@@ -41,8 +41,13 @@ key came from, or says it is missing. The MCP server states both folders in its
 handshake too.
 
 The session hook also hands the options to the session's shell, so the bundled
-script sees the same key and folders as the MCP tools. Commands Claude runs in
-that shell can read the key, as they can any key in your environment.
+script sees the same key and folders as the MCP tools. To do that it writes
+them, the key included, in plain text to the session's environment file under
+Claude Code's config folder (`session-env/<session id>/`), and that file can
+outlast the session. Commands Claude runs in that shell can read the key, as
+they can any key in your environment. If you would rather no copy of the key is
+written, leave the key option empty and put the key in your environment
+(step 2): the hook then writes only the folders.
 
 Client material belongs in the runs and assets folders. Never put a brief, a
 brand kit, a product photo or a receipt in this repository: it is public, and a

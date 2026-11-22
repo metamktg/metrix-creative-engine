@@ -55,7 +55,8 @@ names that folder.
 ```
 sprint/briefs/     the .json from Metrix, found automatically
 sprint/refs/       reference images
-sprint/out/        everything the run produces
+sprint/out/        everything the run produces, unless the plugin's runs
+                   folder option names another folder
 ```
 
 Both `briefs/` and `refs/` are emptied at the start of every load, so a stale
@@ -65,15 +66,27 @@ one.
 Reference images are never swept from Downloads, Desktop or Documents. Point
 `-Source` at a real folder, or let it pull the brand kit's own verified asset
 URLs, which is what happens by default. The kit is looked for in the assets
-folder's `brand-kits/` (`METRIX_ASSETS_DIR`, or the plugin's assets folder
-option), then in this checkout's git-ignored `brand-kits/`. It is used only when
-that folder holds exactly one kit.
+folder's `brand-kits/` (the plugin's assets folder option, else
+`METRIX_ASSETS_DIR`, the same folder the session start names), then in this
+checkout's git-ignored `brand-kits/`. It is used only when that folder holds
+exactly one kit.
 
 ## Afterwards
 
+The sprint's task ledger is in its runs folder. From this repository's folder,
+on Windows (PowerShell):
+
 ```
-node skills/metrix-ad-creative/scripts/kie.mjs ledger
+$env:KIE_AI_DOWNLOAD_DIR = "sprint\out"; node skills/metrix-ad-creative/scripts/kie.mjs ledger
 ```
 
-Every asset should already be in `sprint/out/`. Anything showing only a URL
-expires about 24 hours after it was made.
+On macOS or Linux:
+
+```
+KIE_AI_DOWNLOAD_DIR=sprint/out node skills/metrix-ad-creative/scripts/kie.mjs ledger
+```
+
+If the plugin's runs folder option is set, put that folder in place of
+`sprint/out`. Reading the ledger needs no key. Every asset should already be in
+the runs folder. Anything showing only a URL expires about 24 hours after it was
+made.

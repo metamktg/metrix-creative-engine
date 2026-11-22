@@ -21911,13 +21911,13 @@ function positiveInt(raw, label) {
 function loadConfig(env) {
   const ignored = [];
   const read = reader(env, ignored);
-  const apiKey = read("METRIX_KIE_API_KEY", "KIE_AI_API_KEY");
+  const apiKey = read("METRIX_OPTION_KIE_API_KEY", "KIE_AI_API_KEY");
   if (!apiKey) {
     throw new Error(
       "KIE_AI_API_KEY is not set, and neither is the plugin's Kie.ai API key option. Create a key at https://kie.ai/api-key, then set it in the plugin's options or pass KIE_AI_API_KEY in the MCP client's server config under `env`."
     );
   }
-  const downloadDir = read("METRIX_RUNS_DIR", "KIE_AI_DOWNLOAD_DIR") ?? null;
+  const downloadDir = read("METRIX_OPTION_RUNS_DIR", "KIE_AI_DOWNLOAD_DIR") ?? null;
   const ledgerSetting = read("KIE_AI_LEDGER_PATH");
   return {
     apiKey,
@@ -21926,7 +21926,7 @@ function loadConfig(env) {
     defaultWaitSeconds: positiveInt(read("KIE_AI_DEFAULT_WAIT_SECONDS"), "KIE_AI_DEFAULT_WAIT_SECONDS") ?? DEFAULT_WAIT_SECONDS,
     downloadDir,
     ledgerPath: resolveLedgerPath({ KIE_AI_LEDGER_PATH: ledgerSetting }, downloadDir),
-    assetsDir: read("METRIX_ASSETS_DIR") ?? null,
+    assetsDir: read("METRIX_OPTION_ASSETS_DIR", "METRIX_ASSETS_DIR") ?? null,
     ignored
   };
 }

@@ -79,14 +79,16 @@ try {
 # 1. The key -------------------------------------------------------------
 if ([string]::IsNullOrWhiteSpace($env:KIE_AI_API_KEY)) {
   Write-Host "KIE_AI_API_KEY is not set in this terminal." -ForegroundColor Yellow
-  Write-Host "Paste your Kie key (it is not echoed, not logged, and not stored by this script):"
+  Write-Host "Paste your Kie key. It is not echoed or logged, and it is saved to your Windows user environment:"
   $secure = Read-Host -AsSecureString
   $env:KIE_AI_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
   # Persist for future terminals. Remove this line if you would rather set it
   # per-session.
   setx KIE_AI_API_KEY $env:KIE_AI_API_KEY | Out-Null
-  Write-Host "  saved. New terminals will have it; this one already does." -ForegroundColor Green
+  # setx changes no running process. GO.cmd reads the saved key back for the
+  # session it starts; a terminal that was already open does not have it.
+  Write-Host "  saved. GO.cmd hands it to the session it starts. To start Claude Code yourself, open a new terminal first." -ForegroundColor Green
 } else {
   Write-Host "  key: already set in this terminal" -ForegroundColor Green
 }
@@ -136,16 +138,16 @@ if ($old.Count -gt 0) {
   Write-Host ("          `$to = '" + $backup + "'; New-Item -ItemType Directory -Force `$to | Out-Null; foreach (`$n in '" + ($old -join "','") + "') { Move-Item -LiteralPath (Join-Path '" + $skills + "' `$n) -Destination `$to }")
 }
 
-# Brand kits live in the assets folder: METRIX_ASSETS_DIR when the
-# environment sets it, else the plugin's assets folder option. load.ps1 looks
-# there before this checkout's own brand-kits folder.
-if (-not $env:METRIX_ASSETS_DIR) {
-  $ErrorActionPreference = "Continue"
-  $configured = (& $claude.Source plugin configure $plugin --json 2>$null) -join "`n"
-  $ErrorActionPreference = "Stop"
-  try { $assetsDir = ($configured | ConvertFrom-Json).inputs.assets_dir } catch { $assetsDir = "" }
-  if ($assetsDir) { $env:METRIX_ASSETS_DIR = $assetsDir }
-}
+# Brand kits live in the assets folder: the plugin's assets folder option when
+# it is set, else METRIX_ASSETS_DIR from the environment. The MCP server and
+# the session hook use the same order, so the loader and the session never
+# read two different folders. load.ps1 looks there before this checkout's own
+# brand-kits folder.
+$ErrorActionPreference = "Continue"
+$configured = (& $claude.Source plugin configure $plugin --json 2>$null) -join "`n"
+$ErrorActionPreference = "Stop"
+try { $assetsDir = ($configured | ConvertFrom-Json).inputs.assets_dir } catch { $assetsDir = "" }
+if ($assetsDir) { $env:METRIX_ASSETS_DIR = $assetsDir }
 if ($env:METRIX_ASSETS_DIR) { Write-Host "  assets: $env:METRIX_ASSETS_DIR" -ForegroundColor Green }
 
 # 3. Folders -------------------------------------------------------------

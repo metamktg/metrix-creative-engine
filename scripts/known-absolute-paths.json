@@ -1,0 +1,69 @@
+{
+  "note": "The absolute paths scripts/check-plugin.mjs accepts in tracked files, by file, as the first 12 hex digits of each path's sha256, one entry per occurrence, so this list repeats no path. Every file says why. A new absolute path anywhere fails the check, and so does an entry here that is no longer in its file. `node scripts/check-plugin.mjs --print-paths` lists what the scan finds, with each hash.",
+  "files": {
+    "scripts/test_retain_drafts.py": {
+      "why": "test fixture: a made-up path the test feeds in",
+      "paths": ["35a70e2c9b7d"]
+    },
+    "scripts/test_validate_review_gates.py": {
+      "why": "test fixture: a made-up path outside the review folder",
+      "paths": ["b34cc0c8bee9"]
+    },
+    "skills/ugc-creator-edit/scripts/test_validate_review_gates.py": {
+      "why": "test fixture: a made-up path outside the review folder",
+      "paths": ["b34cc0c8bee9"]
+    },
+    "skills/media-use/audio/scripts/lib/python.test.mjs": {
+      "why": "test fixture: a made-up interpreter path",
+      "paths": ["4f7ffe02979d"]
+    },
+    "skills/media-use/audio/scripts/lib/tts.spawn.test.mjs": {
+      "why": "test fixtures: made-up Windows install paths, and a regex that matches one",
+      "paths": ["241d68c07e6a", "88171ac84c42", "0e47644dc178", "724dfeebab65", "724dfeebab65"]
+    },
+    "src/__tests__/timeline-schema.test.ts": {
+      "why": "test fixture: a made-up absolute file path",
+      "paths": ["0f31afe27b3d", "0f31afe27b3d"]
+    },
+    "src/__tests__/tools-check.test.ts": {
+      "why": "test fixtures for the tools root rules; one is the default root in tools/manifest.json and goes with it",
+      "paths": ["f66247bee909", "14c3b7ef96b5", "59a0fc6d635a", "f9d19aa704d4", "f9d19aa704d4"]
+    },
+    "scripts/tools-check.mjs": {
+      "why": "regex text, not a path: the pattern that refuses a C: drive root",
+      "paths": ["fbf2c801b8ac"]
+    },
+    "skills/metrix-video-assembly/scripts/media/eye-sheet.mjs": {
+      "why": "regex text, not a path: it parses ffmpeg's showinfo output",
+      "paths": ["06d1de2d75bd"]
+    },
+    "skills/metrix-video-assembly/scripts/qa-video.mjs": {
+      "why": "regex text, not a path: it parses ffmpeg's loudnorm output",
+      "paths": ["e993681e3a80"]
+    },
+    "skills/metrix-video-assembly/scripts/render.mjs": {
+      "why": "regex text, not a path: it parses ffmpeg's loudnorm output",
+      "paths": ["e993681e3a80"]
+    },
+    "tools/manifest.json": {
+      "why": "OPEN: an author's local tool, model, cache and venv folders as the defaults. Replacing them with one configurable root is open work",
+      "paths": ["af4ea4658f9c", "59a0fc6d635a", "94d3aaa07f2b", "23043609611f", "f95f407e1ec6"]
+    },
+    "tools/yt-dlp.conf": {
+      "why": "OPEN: an author's local tool folder; goes with tools/manifest.json",
+      "paths": ["70d815074e5f"]
+    },
+    "skills/metrix-video-assembly/scripts/asr-check.mjs": {
+      "why": "OPEN: the INSTALLED.json default from tools/manifest.json; goes with it",
+      "paths": ["af4ea4658f9c", "af4ea4658f9c"]
+    },
+    "skills/metrix-video-assembly/scripts/media/eye-state.mjs": {
+      "why": "OPEN: the INSTALLED.json default from tools/manifest.json; goes with it",
+      "paths": ["af4ea4658f9c", "af4ea4658f9c"]
+    },
+    "skills/metrix-video-assembly/scripts/media/eye_state.py": {
+      "why": "OPEN: the venv and model defaults from tools/manifest.json; go with it",
+      "paths": ["f95f407e1ec6", "dfd3fd3e8381"]
+    }
+  }
+}

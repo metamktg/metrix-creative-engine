@@ -8,8 +8,10 @@
  *
  *   node scripts/check-plugin.mjs
  *   node scripts/check-plugin.mjs --validator-report validate.json
+ *   node scripts/check-plugin.mjs --print-paths    also list each absolute path found, with its hash
  */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -106,22 +108,98 @@ for (const dir of skillDirs) {
 check("the entry skill metrix-produce is present", skillDirs.includes("metrix-produce"));
 
 console.log("\n== Nothing private ships ==");
-// A path on one machine means nothing on another, and a plugin install copies
-// these files to every user.
-const machinePath = /(?:^|[\s"'(=])(?:[A-Za-z]:[\\/]|\/Users\/|\/home\/)/;
-for (const rel of [".claude-plugin/plugin.json", ".claude-plugin/marketplace.json", ".mcp.json", "hooks/hooks.json", "hooks/session-start.mjs", "skills/metrix-produce/SKILL.md"]) {
-  check(`${rel} names no absolute machine path`, !machinePath.test(read(rel)));
-}
-// Brand kits are client material. They belong in the user's assets folder,
-// never in the public repository a plugin install copies.
-let trackedKits = [];
+// A plugin install copies every tracked file to every user (the install proof
+// counts them), so every tracked file is scanned, not only the plugin's own.
+let tracked = [];
 try {
-  trackedKits = execFileSync("git", ["ls-files", "--", "brand-kits"], { cwd: root, encoding: "utf8" })
-    .split("\n").filter((f) => f && !/^brand-kits\/README\.md$/.test(f));
+  tracked = execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8" }).split("\0").filter(Boolean);
 } catch (error) {
   check("git ls-files ran", false, error instanceof Error ? error.message : String(error));
 }
-check("no brand kit is tracked in the repository", trackedKits.length === 0, trackedKits.join(", "));
+// A path on one machine means nothing on another, and it can say whose
+// machine it was. Any absolute path counts, however it is quoted: Markdown
+// puts paths in backticks. A match ends at whitespace or a delimiter.
+const absolutePath = /(?:^|[^A-Za-z0-9_])((?:[A-Za-z]:[\\/]|\/Users\/|\/home\/)[^\s"'`()<>|,;]*)/g;
+// Forms that name no machine: a standard Windows folder, a placeholder, a bare root.
+const sep = String.raw`(?:\\\\|[\\/])`;
+const generic = [
+  new RegExp(String.raw`^[A-Za-z]:${sep}Program$`),
+  new RegExp(String.raw`^[A-Za-z]:${sep}(?:path|some)${sep}`, "i"),
+  new RegExp(String.raw`^[A-Za-z]:${sep}\.\.\.${sep}`),
+  new RegExp(String.raw`^[A-Za-z]:${sep}Users${sep}You${sep}`),
+  new RegExp(String.raw`^[A-Za-z]:${sep}?$`),
+  /^\/(?:Users|home)\/$/,
+];
+// Every other absolute path is listed, by file and with the reason it is
+// there, in scripts/known-absolute-paths.json, as a hash of its text so the
+// list repeats no path. A new one anywhere fails; so does a listed one that is
+// gone, so the list only ever shrinks to what is really there.
+const known = json("scripts/known-absolute-paths.json").files ?? {};
+const hash = (text) => createHash("sha256").update(text).digest("hex").slice(0, 12);
+const found = {};
+for (const rel of tracked) {
+  let buf;
+  try { buf = readFileSync(path.join(root, rel)); } catch { continue; }
+  if (buf.includes(0)) continue;
+  buf.toString("utf8").split(/\r?\n/).forEach((line, i) => {
+    for (const m of line.matchAll(absolutePath)) {
+      if (generic.some((g) => g.test(m[1]))) continue;
+      (found[rel] ??= []).push({ line: i + 1, text: m[1], hash: hash(m[1]) });
+    }
+  });
+}
+if (process.argv.includes("--print-paths")) {
+  for (const [rel, hits] of Object.entries(found)) for (const h of hits) console.log(`  ${h.hash}  ${rel}:${h.line}  ${h.text}`);
+}
+const unlisted = [];
+const gone = [];
+for (const rel of new Set([...Object.keys(found), ...Object.keys(known)])) {
+  const want = [...(known[rel]?.paths ?? [])];
+  for (const h of found[rel] ?? []) {
+    const at = want.indexOf(h.hash);
+    if (at >= 0) want.splice(at, 1);
+    else unlisted.push(`${rel}:${h.line} ${h.text} (${h.hash})`);
+  }
+  for (const h of want) gone.push(`${rel} ${h}`);
+}
+const reasonless = Object.entries(known).filter(([, v]) => !v.why).map(([rel]) => rel);
+check("every absolute path in a tracked file is a generic form or a listed one", unlisted.length === 0, unlisted.join(" | "));
+check("every listed absolute path is still there (remove the ones that are gone)", gone.length === 0, gone.join(" | "));
+check("every file in known-absolute-paths.json says why", reasonless.length === 0, reasonless.join(", "));
+// Brand kits are client material. A kit belongs in the user's assets folder,
+// never in the public repository a plugin install copies, wherever in the tree
+// it sits. The engine's evaluation fixtures carry its own brand, and only
+// those are allowed.
+const fixtureKits = [
+  "skills/metrix-video-assembly/evals/metrix-feed-4x5-product-journey/files/brand-kit.json",
+  "skills/metrix-video-assembly/evals/metrix-mst-hook-row/files/brand-kit.json",
+  "skills/metrix-video-assembly/evals/metrix-reels-from-app-recordings/files/brand-kit.json",
+  "skills/metrix-video-assembly/evals/metrix-reels-refuses-unsourced-proof/files/brand-kit.json",
+];
+const kitFiles = tracked.filter((f) =>
+  /(?:^|\/)brand[-_]kit\.json$/i.test(f) || /(?:^|\/)MASTER_EXECUTION_PROMPT\.md$/i.test(f) || (f.startsWith("brand-kits/") && f !== "brand-kits/README.md"));
+const strays = kitFiles.filter((f) => !fixtureKits.includes(f));
+check("no brand kit is tracked outside the engine's own evaluation fixtures", strays.length === 0, strays.join(", "));
+for (const f of fixtureKits) {
+  let name;
+  try { name = JSON.parse(read(f)).identity?.canonical_name; } catch { name = undefined; }
+  check(`${f} carries the engine's own brand`, tracked.includes(f) && name === "Metrix", `tracked ${tracked.includes(f)}, brand ${name}`);
+}
+
+console.log("\n== GO.cmd updates itself safely ==");
+// cmd.exe reads a batch file a line at a time from a byte offset, so a pull
+// that replaces GO.cmd mid-run leaves cmd.exe reading the new file from the old
+// offset. GO.cmd up to 0.1.x pulled at a plain line ending at byte 1558 of its
+// CRLF checkout. That byte must start a line that reruns the file from the top,
+// and the pull itself must sit in a block, which cmd.exe reads whole first.
+const go = readFileSync(path.join(root, "GO.cmd")).toString("latin1");
+const guard = 'if not defined MCE_GO_TOP (set "MCE_GO_PULLED=1" & call "%~f0" %* & exit /b)\r\n';
+check("GO.cmd has CRLF line endings only", go.includes("\r\n") && !/[^\r]\n/.test(go));
+check("GO.cmd starts a line at byte 1558 that reruns it from the top", go.slice(1556, 1558) === "\r\n" && go.startsWith(guard, 1558), JSON.stringify(go.slice(1558, 1640)));
+check("GO.cmd sets MCE_GO_TOP before byte 1558", go.slice(0, 1558).includes('\r\nset "MCE_GO_TOP=1"\r\n'));
+check("GO.cmd pulls only inside a block that reruns the updated file, then exits",
+  /\r\nif not defined MCE_GO_PULLED \(\r\n {2}set "MCE_GO_PULLED=1"\r\n {2}git pull --ff-only --quiet 2>nul\r\n {2}call "%~f0" %\*\r\n {2}exit \/b\r\n\)\r\n/.test(go) &&
+    (go.match(/^\s*git pull/gm) ?? []).length === 1);
 
 const reportAt = process.argv.indexOf("--validator-report");
 if (reportAt > 0) {

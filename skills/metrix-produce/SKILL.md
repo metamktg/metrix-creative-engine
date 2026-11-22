@@ -123,4 +123,10 @@ silently drifted is worse than one that failed: say which is which.
 
 - `references/format-routing.md` · the brief's `asset_type` to eligible models
   and required parameters, and the unmapped-type rules. A byte copy of the file
-  in `metrix-ad-creative`.
+  in `metrix-ad-creative`, so its paths are written from that skill and from
+  the repository root. From this skill's folder they are
+  `../metrix-ad-creative/scripts/kie.mjs`,
+  `../metrix-ad-creative/references/model-routing.md`,
+  `../../prompts/formats/<asset_type>.md` and `../../docs/MODEL_CATALOG.md`,
+  which exist when this skill came with the plugin or a checkout of the
+  repository.

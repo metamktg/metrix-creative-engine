@@ -161,13 +161,26 @@ if ($images) {
 # without references invents the product, which is the most common way a batch
 # is wasted.
 if ($copied.Count -eq 0) {
-  # Kits live in the assets folder's brand-kits (METRIX_ASSETS_DIR, which
-  # setup.ps1 fills from the plugin's assets folder option). A kit kept in this
-  # checkout's own git-ignored brand-kits folder still counts. The first place
-  # that holds kits is the one used, and only when it holds exactly one: with
-  # several, which brand these briefs advertise is not this script's call.
+  # Kits live in the assets folder's brand-kits. The assets folder is the
+  # plugin's assets folder option when it is set, else METRIX_ASSETS_DIR: the
+  # order the session hook and the MCP server use, so the kit read here is the
+  # one the session names, whether setup.ps1 started this or you did. A kit
+  # kept in this checkout's own git-ignored brand-kits folder still counts. The
+  # first place that holds kits is the one used, and only when it holds exactly
+  # one: with several, which brand these briefs advertise is not this script's
+  # call.
+  $assetsDir = $env:METRIX_ASSETS_DIR
+  $claude = Get-Command claude.exe, claude.cmd -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($claude) {
+    # A native command's stderr is not a PowerShell error.
+    $ErrorActionPreference = "Continue"
+    $configured = (& $claude.Source plugin configure metrix-creative-engine@metrix-creative-engine --json 2>$null) -join "`n"
+    $ErrorActionPreference = "Stop"
+    try { $fromOption = ($configured | ConvertFrom-Json).inputs.assets_dir } catch { $fromOption = "" }
+    if ($fromOption) { $assetsDir = $fromOption }
+  }
   $kitDirs = @()
-  if ($env:METRIX_ASSETS_DIR) { $kitDirs += (Join-Path $env:METRIX_ASSETS_DIR "brand-kits") }
+  if ($assetsDir) { $kitDirs += (Join-Path $assetsDir "brand-kits") }
   $kitDirs += (Join-Path (Split-Path -Parent $PSScriptRoot) "brand-kits")
   $kits = @()
   foreach ($kitDir in $kitDirs) {
