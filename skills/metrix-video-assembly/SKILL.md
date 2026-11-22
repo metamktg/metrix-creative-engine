@@ -580,8 +580,9 @@ row that only warns; feed is a 5 % house margin. Names are matched loosely
 legacy row with a warning; an unknown placement, or one that does not run at the
 ratio, throws. `checkBoxes(items, zone, minPx)` checks normalised boxes against
 the bands and the type floor. `check-storyboard.mjs` resolves `format.placement`
-through it. At the time of writing the render check still uses its own legacy values;
-treat its zone verdict as legacy until the renderer reads this table.
+through it, and `render.mjs --mode check` takes its bands from the same row
+(`safe_zone` in its report names the row). A placement the ratio cannot run stops the
+render check with exit 2; a third-party row reports WARN, never FAIL.
 
 ## Timeline contracts
 

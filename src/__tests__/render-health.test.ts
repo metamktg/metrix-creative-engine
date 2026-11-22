@@ -317,6 +317,18 @@ describe.runIf(browser && ffmpeg)("render.mjs in a real browser", { concurrent: 
     expect(r.report.backend).toBe("mce-cdp");
   }, BROWSER_TIMEOUT);
 
+  it("holds a declared placement to its zone row and refuses a placement the ratio cannot run", async () => {
+    const feed = await check(makeCase("zone-feed", [], (sb) => { sb.format.placement = "Instagram Feed"; }));
+    expect(feed.status, feed.stderr).toBe(0);
+    expect(feed.report.safe_zone).toMatchObject({ id: "feed", source: "house", warnings: [] });
+    const none = await check(makeCase("zone-none"));
+    expect(none.report.safe_zone.id).toBe("legacy_other");
+    expect(none.report.safe_zone.warnings.join(" ")).toMatch(/no placement declared/);
+    const reels = await check(makeCase("zone-reels", [], (sb) => { sb.format.placement = "Instagram Reels"; }));
+    expect(reels.status).toBe(2);
+    expect(reels.stderr).toMatch(/safe zone: placement "Instagram Reels" \(instagram_reels\) runs at 9:16, not 1:1/);
+  }, BROWSER_TIMEOUT);
+
   it("decodes floor(t_src x 25) for seeks out of order, across and on frame boundaries", async () => {
     const c = makeCase("seek");
     // t_src = t - 0.2. 0.6, 1.68, 2.2 and 3.12 put t_src exactly on a 25 fps boundary.
