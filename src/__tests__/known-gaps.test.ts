@@ -37,12 +37,6 @@ describe("open gaps between stages (each closes with a real test)", () => {
     expect(hit).toBe(true);
   });
 
-  it.fails("one format registry: skills/metrix-ad-creative/references/formats.json exists", () => {
-    // Format lists live in brief.ts ASSET_TYPES/MOTION_TYPES, prompts.ts:71 (review routing),
-    // prompts/formats/*, check-storyboard kinds and render ratios.
-    expect(exists("skills/metrix-ad-creative/references/formats.json")).toBe(true);
-  });
-
   it.fails("format lists agree: claymation is motion wherever a duration is required", () => {
     // formats/claymation.md describes a motion style; brief.ts:36 MOTION_TYPES omits it,
     // so a motion claymation brief is never asked for a duration.
@@ -50,8 +44,10 @@ describe("open gaps between stages (each closes with a real test)", () => {
   });
 
   it.fails("production review covers every motion format, not only ugc, ai_ugc and video", () => {
-    // src/prompts.ts:71
-    expect(read("src/prompts.ts")).not.toMatch(/requiresProductionReview = assetType === "ugc" \|\| assetType === "ai_ugc" \|\| assetType === "video";/);
+    // skills/metrix-ad-creative/references/formats.json: motion_graphic is motion with
+    // production_review false, so its render prompt carries no five-gate review.
+    const rows = JSON.parse(read("skills/metrix-ad-creative/references/formats.json")).formats;
+    expect(rows.filter((f: { motion: boolean; production_review: boolean }) => f.motion && !f.production_review)).toEqual([]);
   });
 
   it.fails("transitions are data: runtime.js has no silent dip default", () => {

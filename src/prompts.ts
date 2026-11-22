@@ -24,6 +24,7 @@ import renderBridge from "../prompts/02-render-bridge.md";
 import selfValidation from "../prompts/04-self-validation.md";
 import productionReview from "../prompts/06-production-review.md";
 import ugcCreativeDirection from "../prompts/07-ugc-creative-direction.md";
+import { FORMATS } from "./formats.js";
 import mst from "../prompts/05-mst.md";
 import carousel from "../prompts/formats/carousel.md";
 import claymation from "../prompts/formats/claymation.md";
@@ -33,19 +34,23 @@ import ugc from "../prompts/formats/ugc.md";
 import video from "../prompts/formats/video.md";
 
 /** Keyed by the brief `asset_type` each one serves, so the two cannot drift. */
-const FORMAT_MODULES: Record<string, { title: string; module: string }> = {
-  static: { title: "static image", module: staticFormat },
-  carousel: { title: "carousel", module: carousel },
-  video: { title: "video", module: video },
-  ugc: { title: "UGC", module: ugc },
-  // A talking head generated end to end is its own asset type in the brief
-  // gate, and it needs the same production review as creator-led UGC. It
-  // shares the UGC format module, which carries the script, casting and
-  // lip-sync routing rules.
-  ai_ugc: { title: "AI-UGC talking head", module: ugc },
-  motion_graphic: { title: "motion graphic", module: motionGraphic },
-  claymation: { title: "claymation", module: claymation },
+// The markdown each registry row names as its prompt module, inlined by the bundler.
+const PROMPT_MODULES: Record<string, string> = {
+  "prompts/formats/static.md": staticFormat,
+  "prompts/formats/carousel.md": carousel,
+  "prompts/formats/video.md": video,
+  // ai_ugc shares the UGC module, which carries the script, casting and lip-sync routing rules.
+  "prompts/formats/ugc.md": ugc,
+  "prompts/formats/motion-graphic.md": motionGraphic,
+  "prompts/formats/claymation.md": claymation,
 };
+
+/** One render prompt per registry row: its title, module and production-review routing. */
+const FORMAT_MODULES = FORMATS.map((row) => {
+  const module = PROMPT_MODULES[row.prompt_module];
+  if (!module) throw new Error(`format registry row ${row.asset_type} names ${row.prompt_module}, which src/prompts.ts does not load`);
+  return { assetType: row.asset_type, title: row.title, module, requiresProductionReview: row.production_review };
+});
 
 const briefArg = {
   brief: z
@@ -67,8 +72,7 @@ function userMessage(text: string) {
 }
 
 export function registerKiePrompts(server: McpServer): void {
-  for (const [assetType, { title, module }] of Object.entries(FORMAT_MODULES)) {
-    const requiresProductionReview = assetType === "ugc" || assetType === "ai_ugc" || assetType === "video";
+  for (const { assetType, title, module, requiresProductionReview } of FORMAT_MODULES) {
     server.registerPrompt(
       `kie_render_${assetType}`,
       {

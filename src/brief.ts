@@ -12,28 +12,14 @@
  * brief nobody can hold the render to. Errors block. Warnings are things that
  * will produce an asset, just a worse one, and the caller is told plainly.
  */
+import { ASSET_TYPES, type AssetType } from "./asset-types.js";
+import { FORMATS } from "./formats.js";
 import { z } from "zod";
 
-/**
- * The mapped types, exactly as `references/format-routing.md` lists them.
- * The table's last row is "anything else -> stop", so this enum IS that rule:
- * a type outside it has no route, and routing it to the nearest neighbour
- * produces an asset that looks finished and tests nothing.
- */
-export const ASSET_TYPES = [
-  "static",
-  "carousel",
-  "video",
-  "ugc",
-  "ai_ugc",
-  "motion_graphic",
-  "claymation",
-] as const;
+export { ASSET_TYPES, type AssetType };
 
-export type AssetType = (typeof ASSET_TYPES)[number];
-
-/** Formats that are motion, and therefore need a duration to be renderable. */
-export const MOTION_TYPES: readonly AssetType[] = ["video", "ugc", "ai_ugc", "motion_graphic"];
+/** Formats that are motion, and therefore need a duration to be renderable. From the format registry. */
+export const MOTION_TYPES: readonly AssetType[] = FORMATS.filter((f) => f.motion).map((f) => f.asset_type);
 
 /**
  * A render mode. `standard` is the ordinary case and the default.

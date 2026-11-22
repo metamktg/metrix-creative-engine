@@ -110,6 +110,12 @@
       "targets": [
         "skills/metrix-video-assembly/references/placement-zones.json"
       ]
+    },
+    {
+      "source": "skills/metrix-ad-creative/references/formats.json",
+      "targets": [
+        "skills/metrix-video-assembly/references/formats.json"
+      ]
     }
   ]
 }
