@@ -1,0 +1,7 @@
+{
+  "name": "metrix-creative-engine",
+  "version": "0.1.0",
+  "description": "Metrix IAP briefs to finished, gated ad creative: Kie.ai generation, video assembly and post-production, UGC finishing, production review and handoff.",
+  "author": { "name": "Meta Marketing Agency" },
+  "skills": "./skills/"
+}

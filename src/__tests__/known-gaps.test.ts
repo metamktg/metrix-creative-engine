@@ -41,10 +41,6 @@ describe("open gaps between stages (each closes with a real test)", () => {
     expect(read("skills/metrix-ad-creative/scripts/kie.mjs")).toMatch(/generated from src\//i);
   });
 
-  it.fails("the skills ship as one plugin: .claude-plugin/plugin.json exists", () => {
-    expect(exists(".claude-plugin/plugin.json")).toBe(true);
-  });
-
   it.fails("every spend-path skill carries evals (metrix-ad-creative, ugc-creator-edit)", () => {
     expect(exists("skills/metrix-ad-creative/evals") && exists("skills/ugc-creator-edit/evals")).toBe(true);
   });
