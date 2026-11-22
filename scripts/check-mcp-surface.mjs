@@ -238,11 +238,15 @@ try {
 
   // Read the runtime prompt over MCP, not its source file. Installing a skill
   // without importing its review stage used to leave these checks invisible.
+  // Which formats carry the review is the format registry's call, not this script's.
+  const formatRows = JSON.parse(await readFile(path.join(repoRoot, "skills/metrix-ad-creative/references/formats.json"), "utf8")).formats;
   const productionMarker = "# Stage 6: Mandatory production review for UGC and video";
   for (const format of ["static", "carousel", "motion_graphic", "claymation", "ugc", "ai_ugc", "video"]) {
     const result = format === "static" ? rendered : await rpc("prompts/get", { name: `kie_render_${format}`, arguments: {} });
     const text = result.result?.messages?.[0]?.content?.text ?? "";
-    const requiresProductionReview = format === "ugc" || format === "ai_ugc" || format === "video";
+    const row = formatRows.find((r) => r.asset_type === format);
+    const requiresProductionReview = row.production_review;
+    const ugcDirection = row.ugc_direction;
     const description = prompts.find((prompt) => prompt.name === `kie_render_${format}`)?.description ?? "";
     check(
       `${format} advertises the additional presentation gates only when applicable`,
@@ -254,12 +258,12 @@ try {
     );
     check(
       `${format} loads the short creative-direction module only when applicable`,
-      creativeDirection.trim().length > 100 && text.includes(creativeDirection) === requiresProductionReview,
+      creativeDirection.trim().length > 100 && text.includes(creativeDirection) === ugcDirection,
     );
     check(`${format} does not inject the complete playbook`, !text.includes(expectedPlaybook));
     if (requiresProductionReview) {
       // ai_ugc shares the UGC format module; the rest of the assembly keeps its existing order.
-      const formatFile = format === "ai_ugc" ? "ugc" : format;
+      const formatFile = format === "ai_ugc" ? "ugc" : format.replace("_", "-");
       const previousSections = await Promise.all([
         "prompts/00-core.md", "prompts/02-render-bridge.md", `prompts/formats/${formatFile}.md`,
         "prompts/04-self-validation.md", "prompts/06-production-review.md",
@@ -267,10 +271,10 @@ try {
       const previousPrompt = previousSections.join("\n\n---\n\n");
       check(
         `${format} adds exactly the short module to the preserved baseline assembly`,
-        text === `${previousPrompt}\n\n---\n\n${creativeDirection}`,
+        text === (ugcDirection ? `${previousPrompt}\n\n---\n\n${creativeDirection}` : previousPrompt),
         `${previousPrompt.length} -> ${text.length} chars; delta +${text.length - previousPrompt.length}`,
       );
-      check(`${format} points to the on-demand creative playbook`, text.includes("kie://ugc-creative-playbook"));
+      if (ugcDirection) check(`${format} points to the on-demand creative playbook`, text.includes("kie://ugc-creative-playbook"));
       check(`${format} carries every mandatory gate`, productionGates.every((gate) => text.includes(gate)));
       check(`${format} requires an explicit background-music decision`, text.includes("Make an explicit background-music decision."));
       check(`${format} points to the detailed review resource`, text.includes("kie://production-review-standard"));

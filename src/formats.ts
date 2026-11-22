@@ -13,6 +13,8 @@ export interface FormatRow {
   motion: boolean;
   prompt_module: string;
   production_review: boolean;
+  /** Loads the short UGC creative-direction module (creator-led, AI talking head, video). */
+  ugc_direction: boolean;
   storyboard_kind: string | null;
 }
 

@@ -50,7 +50,7 @@ const PROMPT_MODULES: Record<string, string> = {
 const FORMAT_MODULES = FORMATS.map((row) => {
   const module = PROMPT_MODULES[row.prompt_module];
   if (!module) throw new Error(`format registry row ${row.asset_type} names ${row.prompt_module}, which src/prompts.ts does not load`);
-  return { assetType: row.asset_type, title: row.title, module, requiresProductionReview: row.production_review };
+  return { assetType: row.asset_type, title: row.title, module, requiresProductionReview: row.production_review, ugcDirection: row.ugc_direction };
 });
 
 const briefArg = {
@@ -73,7 +73,7 @@ function userMessage(text: string) {
 }
 
 export function registerKiePrompts(server: McpServer): void {
-  for (const { assetType, title, module, requiresProductionReview } of FORMAT_MODULES) {
+  for (const { assetType, title, module, requiresProductionReview, ugcDirection } of FORMAT_MODULES) {
     server.registerPrompt(
       `kie_render_${assetType}`,
       {
@@ -87,7 +87,7 @@ export function registerKiePrompts(server: McpServer): void {
         // in a discoverable skill that the caller might never read.
         // The short creative-direction module rides last; the full playbook stays an
         // on-demand resource (kie://ugc-creative-playbook), not part of every request.
-        const review = requiresProductionReview ? [productionReview, ugcCreativeDirection] : [];
+        const review = [...(requiresProductionReview ? [productionReview] : []), ...(ugcDirection ? [ugcCreativeDirection] : [])];
         return userMessage(withBrief(joined(core, renderBridge, module, selfValidation, ...review), brief));
       },
     );

@@ -46,6 +46,8 @@ describe("mce.formats/1 registry", () => {
     const src = read("src/prompts.ts");
     expect(src).toMatch(/FORMATS\.map\(/);
     expect(src).not.toMatch(/assetType === "ugc" \|\| assetType === "ai_ugc"/);
+    expect(src).toMatch(/ugcDirection: row\.ugc_direction/);
+    for (const f of FORMATS) expect(typeof f.ugc_direction, f.asset_type).toBe("boolean");
     for (const f of FORMATS) expect(src, `prompts.ts loads ${f.prompt_module}`).toContain(`"${f.prompt_module}"`);
   });
 });

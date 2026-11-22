@@ -24,13 +24,6 @@ describe("open gaps between stages (each closes with a real test)", () => {
     expect(read("src/brief.ts")).toMatch(/MOTION_TYPES[^\n]*claymation/);
   });
 
-  it.fails("production review covers every motion format, not only ugc, ai_ugc and video", () => {
-    // skills/metrix-ad-creative/references/formats.json: motion_graphic is motion with
-    // production_review false, so its render prompt carries no five-gate review.
-    const rows = JSON.parse(read("skills/metrix-ad-creative/references/formats.json")).formats;
-    expect(rows.filter((f: { motion: boolean; production_review: boolean }) => f.motion && !f.production_review)).toEqual([]);
-  });
-
   it.fails("the brief can carry missing product references the docs gate on (brand_assets.missing)", () => {
     // skills/metrix-ad-creative/SKILL.md:184 and prompts/00-core.md:142 block on
     // brand_assets.missing; brief.ts types brand_assets as an array only.

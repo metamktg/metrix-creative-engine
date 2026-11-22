@@ -1,6 +1,6 @@
 {
   "schema": "mce.formats/1",
-  "note": "The one format registry. Edit here only, then npm run sync:copies (the copy lives in skills/metrix-video-assembly/references/). Every stage that routes by asset_type reads this file or is held to it by src/__tests__/formats-registry.test.ts: the brief gate's asset types and motion list (src/brief.ts), the MCP render prompts and their production-review routing (src/prompts.ts), the prompt format modules (prompts/formats/), and the storyboard kinds check-storyboard.mjs accepts. A new format is a row here plus its prompt module and tests; a row a stage cannot serve fails the registry test.",
+  "note": "The one format registry. Edit here only, then npm run sync:copies (the copy lives in skills/metrix-video-assembly/references/). Every stage that routes by asset_type reads this file or is held to it by src/__tests__/formats-registry.test.ts: the brief gate's asset types and motion list (src/brief.ts), the MCP render prompts with their production-review and UGC creative-direction routing (src/prompts.ts), the prompt format modules (prompts/formats/), and the storyboard kinds check-storyboard.mjs accepts. A new format is a row here plus its prompt module and tests; a row a stage cannot serve fails the registry test.",
   "storyboard_kinds": ["video", "still", "carousel"],
   "formats": [
     {
@@ -9,6 +9,7 @@
       "motion": false,
       "prompt_module": "prompts/formats/static.md",
       "production_review": false,
+      "ugc_direction": false,
       "storyboard_kind": "still"
     },
     {
@@ -17,6 +18,7 @@
       "motion": false,
       "prompt_module": "prompts/formats/carousel.md",
       "production_review": false,
+      "ugc_direction": false,
       "storyboard_kind": "carousel"
     },
     {
@@ -25,6 +27,7 @@
       "motion": true,
       "prompt_module": "prompts/formats/video.md",
       "production_review": true,
+      "ugc_direction": true,
       "storyboard_kind": "video"
     },
     {
@@ -33,6 +36,7 @@
       "motion": true,
       "prompt_module": "prompts/formats/ugc.md",
       "production_review": true,
+      "ugc_direction": true,
       "storyboard_kind": "video"
     },
     {
@@ -41,6 +45,7 @@
       "motion": true,
       "prompt_module": "prompts/formats/ugc.md",
       "production_review": true,
+      "ugc_direction": true,
       "storyboard_kind": "video"
     },
     {
@@ -48,7 +53,8 @@
       "title": "motion graphic",
       "motion": true,
       "prompt_module": "prompts/formats/motion-graphic.md",
-      "production_review": false,
+      "production_review": true,
+      "ugc_direction": false,
       "storyboard_kind": "video"
     },
     {
@@ -57,6 +63,7 @@
       "motion": false,
       "prompt_module": "prompts/formats/claymation.md",
       "production_review": false,
+      "ugc_direction": false,
       "storyboard_kind": null
     }
   ]
