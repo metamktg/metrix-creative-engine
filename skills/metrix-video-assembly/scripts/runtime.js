@@ -335,10 +335,27 @@
     return { broken_images: broken, unloaded_fonts: fonts, videos };
   }
 
+  // Every scene states both transitions in the renderer's own set. applyScene still draws a
+  // missing one as dip so a preview opens, but health reports it, so a cut nobody chose (or a
+  // name the renderer cannot play) never reaches a render silently.
+  const TRANSITIONS = ["cut", "fade", "dip", "slide", "zoom"];
+  function transitionFindings() {
+    const out = [];
+    for (const sc of document.querySelectorAll("[data-scene]")) {
+      for (const k of ["data-trans-in", "data-trans-out"]) {
+        const v = sc.getAttribute(k);
+        if (v === null) out.push({ scene: sc.getAttribute("data-scene"), attr: k, problem: "undeclared" });
+        else if (!TRANSITIONS.includes(v)) out.push({ scene: sc.getAttribute("data-scene"), attr: k, problem: `unknown "${v}"` });
+      }
+    }
+    return out;
+  }
+
   function health() {
     return {
       seek_fallbacks: stats.seekFallbacks.length, seek_fallback_at: stats.seekFallbacks.slice(0, 10),
       frame_mismatches: stats.frameMismatches.length, frame_mismatch_at: stats.frameMismatches.slice(0, 10),
+      transitions: transitionFindings(),
     };
   }
 

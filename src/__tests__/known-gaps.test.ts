@@ -31,12 +31,6 @@ describe("open gaps between stages (each closes with a real test)", () => {
     expect(rows.filter((f: { motion: boolean; production_review: boolean }) => f.motion && !f.production_review)).toEqual([]);
   });
 
-  it.fails("transitions are data: runtime.js has no silent dip default", () => {
-    // skills/metrix-video-assembly/scripts/runtime.js:63-64 fall back to "dip" when a
-    // scene declares no transition, so emit never has to state one.
-    expect(read("skills/metrix-video-assembly/scripts/runtime.js")).not.toMatch(/getAttribute\("data-trans-in"\) \|\| "dip"/);
-  });
-
   it.fails("the brief can carry missing product references the docs gate on (brand_assets.missing)", () => {
     // skills/metrix-ad-creative/SKILL.md:184 and prompts/00-core.md:142 block on
     // brand_assets.missing; brief.ts types brand_assets as an array only.

@@ -55,6 +55,14 @@ describe("watchdog budgets", () => {
 describe("health verdict", () => {
   const ok = { broken_images: [], unloaded_fonts: [], videos: [{ src: "a.webm", readyState: 4, duration: 8 }], seek_fallbacks: 0, runtime: { current: true }, config: { settleDefault: SETTLE_DEFAULT } };
   it("passes a healthy page", () => expect(C.healthVerdict(ok)).toEqual({ verdict: "PASS", reasons: [] }));
+  it("fails a scene whose transition is undeclared or not in the renderer's set", () => {
+    const v = C.healthVerdict({ ...ok, transitions: [{ scene: "s2", attr: "data-trans-in", problem: "undeclared" }, { scene: "s2", attr: "data-trans-out", problem: 'unknown "whip"' }] });
+    expect(v.verdict).toBe("FAIL");
+    expect(v.reasons).toEqual([
+      "scene s2 data-trans-in: undeclared; declare one of cut, fade, dip, slide, zoom",
+      'scene s2 data-trans-out: unknown "whip"; declare one of cut, fade, dip, slide, zoom',
+    ]);
+  });
   it("fails each condition that used to be a WARN or silent", () => {
     const fail = (patch: object) => C.healthVerdict({ ...ok, ...patch });
     expect(fail({ broken_images: ["x.png"] }).reasons).toEqual(["broken images: x.png"]);
@@ -335,6 +343,17 @@ describe.runIf(browser && ffmpeg)("render.mjs in a real browser", { concurrent: 
     expect(out.done.canvas).toMatch(/^(none|inset\(0(px)? 0% 0(px)? 0(px)?\))$/);
     expect(out.entering.canvas).toMatch(/^inset\(0(px)? [1-9][\d.]*% 0(px)? 0(px)?\)$/);
     expect(out.again.canvas).toBe(out.done.canvas);
+  }, BROWSER_TIMEOUT);
+
+  it("FAILs health for a scene that leaves a transition to the runtime's dip default or names one it cannot play", async () => {
+    const c = makeCase("trans-undeclared", [['data-trans-in="cut" data-trans-out="cut"', 'data-trans-out="whip"']]);
+    const r = await check(c);
+    expect(r.status).toBe(1);
+    expect(r.report.health.transitions).toEqual([
+      { scene: "s1", attr: "data-trans-in", problem: "undeclared" },
+      { scene: "s1", attr: "data-trans-out", problem: 'unknown "whip"' },
+    ]);
+    expect(r.report.health.reasons.join(" ")).toMatch(/scene s1 data-trans-in: undeclared/);
   }, BROWSER_TIMEOUT);
 
   it("holds a declared placement to its zone row and refuses a placement the ratio cannot run", async () => {

@@ -48,6 +48,7 @@ export function healthVerdict(h, { settleDefault = SETTLE_DEFAULT } = {}) {
   }
   if (h.seek_fallbacks > 0) reasons.push(`${h.seek_fallbacks} clip seek(s) gave up after the fallback wait instead of a seeked event and a presented frame`);
   if (h.frame_mismatches > 0) reasons.push(`${h.frame_mismatches} clip seek(s) presented a different source frame from the one the timeline maps to`);
+  for (const f of h.transitions || []) reasons.push(`scene ${f.scene} ${f.attr}: ${f.problem}; declare one of cut, fade, dip, slide, zoom`);
   if (h.runtime && !h.runtime.current) reasons.push(h.runtime.reason || "the page does not run the skill's current runtime.js");
   if (h.config && h.config.settleDefault !== settleDefault) reasons.push(`page settle default ${h.config.settleDefault} differs from timeline/rules.mjs SETTLE_DEFAULT ${settleDefault}`);
   return { verdict: reasons.length ? "FAIL" : "PASS", reasons };
