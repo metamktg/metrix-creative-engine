@@ -164,12 +164,17 @@ const body = String.raw`(?:Program Files(?: \(x86\))?|[^\s"'` + "`" + String.raw
 // written right before it. An escape there counts as the character it stands
 // for (\n, \r, \t, \/, \uXXXX with a surrogate pair as one character, \u{X},
 // \UXXXXXXXX, \xXX, a URL's UTF-8 in %XX), and a mark (an accent, a
-// variation selector) as the character it is on. A drive letter or a UNC
-// share goes on from a word: a letter or digit of a script written with
-// spaces between words (Latin, Greek, Cyrillic, Arabic, Hangul and the
-// rest), or an underscore that is not emphasis (one or two after no word,
-// with as many later on the line that can close them, as Markdown writes
-// italics). A root slash goes on from that and from . ~ / \ -,
+// variation selector) as the character it is on. A drive letter or a share
+// (a UNC one, one behind a long-path prefix, WSL's) goes on from a word: a
+// letter or digit of a script written with spaces between words (Latin,
+// Greek, Cyrillic, Arabic, Hangul and the rest), or an underscore that is
+// not emphasis. One or two underscores are emphasis after the line's start,
+// a space, a mark that opens Markdown (an opening round or square bracket, a
+// quote, a star, a code tick, a bar, a tilde, a >) or, before a drive
+// letter, a share or a remote, a backslash (\_), closed on the line, on a
+// later one or never; after other punctuation ({_a:/x/}, %_p:/=\%) they are
+// emphasis only with as many later on the line that can close them, as
+// Markdown writes italics. A root slash goes on from that and from . ~ / \ -,
 // so a segment of a URL or of a relative path (example.com/cafe/p/123,
 // assets/menu/media/x) is no path. Han, Kana, Thai and the other scripts
 // written without spaces run straight into what follows: a letter of one
@@ -204,17 +209,18 @@ const editorRemote = String.raw`(?:${ci("vscode")}-${ci("remote")}${colon}${slas
 // UNC share, the two root forms, a share behind a long-path prefix
 // (\\?\UNC\host\), and a WSL share (//wsl.localhost/Ubuntu, also in a file
 // URL) or an editor's remote URI (vscode-remote://wsl+ubuntu) with a home or
-// a volume after it. A form matches as far as its first folder, and the rest
-// of a path is read only for a match that is a path of its own, so a long
-// line costs time in step with its length.
+// a volume after it. Each form may follow emphasis (goesOn, below, decides).
+// A form matches as far as its first folder, and the rest of a path is read
+// only for a match that is a path of its own, so a long line costs time in
+// step with its length.
 const pathStart = new RegExp([
   String.raw`${notAfterWord}[A-Za-z]:[\\/]`,
   String.raw`${notAfterWord}[A-Za-z]%3[Aa](?:%5[Cc]|%2[Ff]|[\\/])`,
-  String.raw`(?<![A-Za-z0-9_])\\\\[A-Za-z0-9_.$-]{2,}\\`,
+  String.raw`(?:(?<![A-Za-z0-9_])|${emphasis})\\\\[A-Za-z0-9_.$-]{2,}\\`,
   String.raw`${notAfterPath}${slash}(?:${userRoots})${slash}`,
   String.raw`${notAfterPath}${slash}(?:cygdrive${slash})?[A-Za-z]${slash}(?=[A-Za-z0-9_.~-])`,
-  String.raw`(?<![A-Za-z0-9_])\\\\[?.]\\${ci("UNC")}\\[A-Za-z0-9_.$-]{2,}\\`,
-  String.raw`(?<![A-Za-z0-9_/])${wslShare}(?=${slash}(?:${userRoots})${slash})`,
+  String.raw`(?:(?<![A-Za-z0-9_])|${emphasis})\\\\[?.]\\${ci("UNC")}\\[A-Za-z0-9_.$-]{2,}\\`,
+  String.raw`(?:(?<![A-Za-z0-9_/])|${emphasis})${wslShare}(?=${slash}(?:${userRoots})${slash})`,
   String.raw`${editorRemote}(?=${slash}(?:${userRoots})${slash})`,
 ].map((form) => `(${form})`).join("|"), "gu");
 const rootForms = new Set([3, 4]);
@@ -277,9 +283,12 @@ const fileUrlBefore = (line, i) => {
   return /file:\/\/(?:localhost)?$|:\/\/file$/i.test(text);
 };
 // Whether a match goes on from what is right before it (true) or is a path of
-// its own (false). After one or two underscores of emphasis that follow no
-// word, it gives their count: a path in italics, if as many close them later
-// on the line (emphasisEnds, below).
+// its own (false). One or two underscores after the line's start, a space, a
+// mark that opens Markdown or, before a drive letter, a share or a remote, a
+// backslash are emphasis, and the path in it is a path of its own. After other punctuation
+// that follows no word, it gives their count: a path in italics, if as many
+// close them later on the line (emphasisEnds, below).
+const opensEmphasis = /^[(\["'*>|~`]$/;
 const goesOn = (line, i, form) => {
   let p = charBefore(line, i);
   while (p && markChar.test(p.c)) p = charBefore(line, p.at);
@@ -292,6 +301,7 @@ const goesOn = (line, i, form) => {
       q = charBefore(line, q.at);
       under = 2;
     }
+    if (!q || /\s/.test(q.c) || opensEmphasis.test(q.c) || (q.c === "\\" && !root)) return false;
     if (!q || !(letterOrDigit.test(q.c) || q.c === "_" || (root && pathChar.test(q.c)))) return under;
   }
   let on = wordChar.test(p.c) || (root && pathChar.test(p.c)) || (letterOrDigit.test(p.c) && !unspaced.test(p.c));
@@ -427,8 +437,14 @@ const asText = (buf) => {
 // language, holds expressions: an unquoted value there is not read, but a
 // comment is read as prose, and the text of a string, a heredoc, a
 // here-string or a SQL dollar-quoted string as YAML (a kit written to a
-// file); a SQL function's body or DO block between dollar marks is SQL, and a
-// style sheet's declarations outside its comments read as YAML, one a line.
+// file); a SQL function's body or DO block between dollar marks is SQL when
+// its statement names SQL, PL/pgSQL or no language, and text read as YAML
+// when it names another; a style sheet's declarations outside its comments
+// read as YAML, one a line; and a comment in a style sheet or a SQL body
+// also takes a line that sets canonical_name= and a value in round brackets,
+// while a value there that is a call on the column, a custom property or a
+// string names only what a string in it names, and one that is a column
+// (NEW.canonical_name) names nothing.
 // A batch file's rem lines are prose, and what each echo writes is YAML. A
 // type (str, string, Optional[str] = None, z.string()) is no brand, nor are
 // placeholders with nothing else in the value ({{name}}, {name}, ${NAME},
@@ -528,8 +544,9 @@ const lexerFor = (lang) => {
     triple: /^(?:py|python|pyi|graphql|gql|kts?|kotlin|swift|java|cs|csharp)$/.test(l),
     heredoc: sh ? /^<<-?[ \t]*\\?(["']?)([A-Za-z_]\w*)\1/ : /^(?:rb|ruby)$/.test(l) ? /^<<[-~]?(["']?)([A-Za-z_]\w*)\1/ : l === "php" ? /^<<<[ \t]*(["']?)([A-Za-z_]\w*)\1/ : null,
     hereString: ps,
-    // A SQL string may run over lines, as a shell's and PowerShell's do.
-    spans: sh || ps || sql,
+    // A shell's and PowerShell's strings may run over lines. SQL's may too,
+    // and SQL is read both ways (codePieces).
+    spans: sh || ps,
     // PowerShell escapes with a backtick, and neither it nor a shell escapes
     // in single quotes.
     escape: ps ? "`" : "\\",
@@ -546,11 +563,28 @@ const lineEnd = (text, k) => {
   const e = text.indexOf("\n", k);
   return e < 0 ? text.length : e;
 };
+// The index in a sorted list of its first item at or after k.
+const firstFrom = (list, k, at = (x) => x) => {
+  let lo = 0;
+  let hi = list.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (at(list[mid]) < k) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+};
 // The parts of code that a person writes text in: a comment, read as prose,
 // and the text of a string, a heredoc or a here-string, read as YAML. In a
 // batch file those are a rem or :: line and what an echo writes, and in a
-// style sheet its declarations outside comments are read as YAML too.
-const codePieces = (text, lang) => {
+// style sheet its declarations outside comments are read as YAML too. A
+// comment in a style sheet or in a SQL body is prose that can set keys
+// (keyed, in plainBrands). SQL is read twice, and a piece from either
+// reading counts: once with every string able to run over lines, as SQL's
+// can, and once with only the strings in a body able to, so that outside a
+// body a quote that its line does not close (an apostrophe in COPY data or
+// in a MySQL # comment) hides no string after it.
+const codePieces = (text, lang, spanAll) => {
   const pieces = [];
   if (/^(?:cmd|bat|batch)$/i.test(lang)) {
     const notes = [];
@@ -563,6 +597,7 @@ const codePieces = (text, lang) => {
     return [{ prose: true, lines: notes }, { prose: false, lines: echoes }];
   }
   const o = lexerFor(lang);
+  if (o.dollar && spanAll === undefined) return [...codePieces(text, lang, true), ...codePieces(text, lang, false)];
   const n = text.length;
   // A string's text is said: a passage of it can describe a field.
   const say = (s) => pieces.push({ prose: false, said: true, lines: unescapeText(s).split(/\r?\n/) });
@@ -580,6 +615,69 @@ const codePieces = (text, lang) => {
   const bodyTags = new Set();
   // Where a style sheet's comments sit, which its declarations leave out.
   const comments = [];
+  // Whether an open body's tag starts at index k.
+  const tagMark = /\$(?:[A-Za-z_]\w{0,63})?\$/y;
+  const bodyTagAt = (k) => {
+    tagMark.lastIndex = k;
+    const t = tagMark.exec(text);
+    return t !== null && bodyTags.has(t[0]);
+  };
+  // A body is code in the language its statement names outside it (CREATE
+  // FUNCTION ... LANGUAGE plv8 AS $$ ... $$, DO $$ ... $$ LANGUAGE plv8), and
+  // SQL when it names none. Where the text names a language outside a
+  // comment (-- or /* */), and where each semicolon and each tag stands, is
+  // found once, the first time a body opens; a body ends at the first of its
+  // tags after it opens. A quote opens a string up to the next quote of its
+  // kind on its line, and a -- or /* in one opens no comment; nor does a /*
+  // that no */ follows, which SQL refuses, or a -- right after a word or a ]
+  // (x-- in a JavaScript body).
+  let languages = null;
+  let stops = null;
+  let tagsAt = null;
+  const inSql = (tag, open) => {
+    if (!languages) {
+      let k = 0;
+      let note = false;
+      let block = false;
+      let quote = "";
+      const lastClose = text.lastIndexOf("*/");
+      const outsideNotes = (m) => {
+        for (; k < m.index; k++) {
+          if (block) {
+            if (text[k] === "*" && text[k + 1] === "/") { block = false; k++; }
+          } else if (text[k] === "\n") { note = false; quote = ""; }
+          else if (quote) { if (text[k] === quote) quote = ""; }
+          else if (!note && (text[k] === "'" || text[k] === "\"")) quote = text[k];
+          else if (!note && text[k] === "-" && text[k + 1] === "-" && !/[\w\]]/.test(text[k - 1] ?? "")) note = true;
+          else if (!note && text[k] === "/" && text[k + 1] === "*" && lastClose > k + 1) { block = true; k++; }
+        }
+        return !note && !block;
+      };
+      languages = /language/i.test(text) ? [...text.matchAll(/\blanguage\s+(['"]?)([A-Za-z_]\w*)\1/gi)].filter(outsideNotes) : [];
+      stops = [];
+      tagsAt = new Map();
+      if (languages.length) {
+        for (const m of text.matchAll(/;/g)) stops.push(m.index);
+        for (let k = text.indexOf("$"); k >= 0; k = text.indexOf("$", k + 1)) {
+          tagMark.lastIndex = k;
+          const t = tagMark.exec(text);
+          if (!t) continue;
+          if (!tagsAt.has(t[0])) tagsAt.set(t[0], []);
+          tagsAt.get(t[0]).push(k);
+        }
+      }
+    }
+    if (!languages.length) return true;
+    const at = tagsAt.get(tag) ?? [];
+    const end = at[firstFrom(at, open + tag.length)];
+    const close = end === undefined ? n : end + tag.length;
+    const from = stops[firstFrom(stops, open) - 1] ?? -1;
+    const to = stops[firstFrom(stops, close)] ?? n;
+    const after = languages[firstFrom(languages, close, (m) => m.index)];
+    const before = languages[firstFrom(languages, open, (m) => m.index) - 1];
+    const name = after && after.index < to ? after[2] : before && before.index > from ? before[2] : "";
+    return !name || /^(?:sql|plpgsql)$/i.test(name);
+  };
   for (let i = 0; i < n; ) {
     const c = text[i];
     if (c === "\n" && heredocs.length) {
@@ -603,7 +701,7 @@ const codePieces = (text, lang) => {
     if (block) {
       let e = text.indexOf(block[1], i + block[0].length);
       if (e < 0) e = n;
-      pieces.push({ prose: true, lines: text.slice(i + block[0].length, e).split(/\r?\n/).map((l) => l.replace(/^[ \t]*\*(?!\/)[ \t]?/, "")) });
+      pieces.push({ prose: true, keyed: o.declarations || bodies.length > 0, lines: text.slice(i + block[0].length, e).split(/\r?\n/).map((l) => l.replace(/^[ \t]*\*(?!\/)[ \t]?/, "")) });
       const end = Math.min(n, e + block[1].length);
       if (o.declarations) comments.push([i, end]);
       i = end;
@@ -616,6 +714,8 @@ const codePieces = (text, lang) => {
       // Line comments one after another read as one passage.
       if (notes && /^\r?\n[ \t]*$/.test(text.slice(notesEnd, i))) notes.push(note);
       else pieces.push({ prose: true, lines: (notes = [note]) });
+      // The passage this line is in is the last piece.
+      if (o.declarations || bodies.length) pieces[pieces.length - 1].keyed = true;
       if (o.declarations) comments.push([i, e]);
       notesEnd = e;
       i = e;
@@ -672,8 +772,12 @@ const codePieces = (text, lang) => {
       }
       // A $ right after a letter or a digit is part of a name.
       if (t && !/[A-Za-z0-9_$]/.test(text[i - 1] ?? "")) {
-        if (/^(?:as|do)$/i.test(word) || (word && /\bdo\s+language\s+\S+\s*$/i.test(text.slice(Math.max(0, i - 100), i)))) {
-          // A function's body or a DO block is code, read as SQL.
+        let code = false;
+        if (/^(?:as|do)$/i.test(word) || (word && /\bdo\s+language\s+\S+\s*$/i.test(text.slice(Math.max(0, i - 100), i)))) code = inSql(t[0], i);
+        if (code) {
+          // A function's body or a DO block in SQL or PL/pgSQL is code, read
+          // as SQL; one in another language (plv8, plpython3u, plperl) is
+          // read as dollar-quoted text elsewhere is.
           bodies.push(t[0]);
           bodyTags.add(t[0]);
           i += t[0].length;
@@ -695,7 +799,9 @@ const codePieces = (text, lang) => {
         const d = text[j];
         if (d === o.escape && !(o.rawSingle && c === "'")) { j++; continue; }
         if (d === c) { closed = true; break; }
-        if (d === "\n" && !o.spans && c !== "`") break;
+        if (d === "\n" && !o.spans && !(o.dollar && (spanAll || bodies.length)) && c !== "`") break;
+        // An open body's tag ends it inside a string too.
+        if (d === "$" && bodies.length && bodyTagAt(j)) break;
       }
       if (closed) {
         say(text.slice(i + 1, j));
@@ -927,7 +1033,30 @@ const named = (raw) => {
 // quote, a rule, a YAML document marker), and a line that is a YAML key.
 const blockStart = /^[ \t]*(?:(?:[-*+]|\d+[.)])(?:[ \t]|$)|#|```|~~~|>|(?:[-*_=][ \t]*){3,}$|\.\.\.[ \t]*$)/;
 const yamlKey = /^[ \t]*(?:\?(?:[ \t]|$)|(?:(?:"[^"]*"|'[^']*')[ \t]*|[^\s"'#][^:#]*):(?:[ \t]|$))/;
-const plainBrands = (raw, prose, flow, lenient, dotted) => {
+// A comment that can set keys (keyed: in a style sheet or a SQL body, which
+// a config's reading once covered) is read as prose that also takes a line
+// setting canonical_name=, and a value in round brackets is read inside them.
+// A value there that is code names nothing of its own: a call that closes on
+// its line, on the column (initcap(canonical_name)), a custom property
+// (var(--brand)) or a string, names what a string in it names, and a column
+// (NEW.canonical_name) names nothing. Any other call is read as prose, so a
+// brand with a mark in brackets right after it (Acme(TM)) is a name.
+const callValue = /^[ \t]*[A-Za-z_][\w.]*\(((?:[^()\r\n]|\([^()\r\n]*\))*)\)/;
+const codeArgs = [/(?<![\w-])(?:[A-Za-z_]\w*\.)*canonical_name(?!\w)/, /(?<![\w-])--[A-Za-z_]/, /['"]/];
+const columnValue = /^[ \t]*(?:[A-Za-z_]\w*\.)*canonical_name[ \t]*$/;
+const keyedValue = (value, more) => {
+  const call = value.match(callValue);
+  if (call && codeArgs.some((code) => code.test(call[1]))) {
+    for (const s of call[1].matchAll(/'([^'\r\n]*)'|"([^"\r\n]*)"/g)) {
+      const text = s[1] ?? s[2];
+      if (brandName(text) && !columnValue.test(text)) return text;
+    }
+    return "";
+  }
+  const piece = proseValue(value.match(/^[ \t]*\(([^()\r\n]*)/)?.[1] ?? value, more);
+  return piece !== null && columnValue.test(piece) ? "" : piece;
+};
+const plainBrands = (raw, prose, flow, lenient, dotted, keyed) => {
   const names = [];
   const lines = raw.flatMap((line) => (line.includes("canonical_name") && /\\[nr]/.test(line) ? line.split(/\\r\\n|\\[nr]/) : [line]));
   if (!lines.some((line) => line.includes("canonical_name"))) return names;
@@ -959,8 +1088,8 @@ const plainBrands = (raw, prose, flow, lenient, dotted) => {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (!line.includes("canonical_name")) continue;
-    const env = prose ? null : line.match(dotted ? dottedKey : envKey);
-    if (env) names.push(nameOf(env[1].split(/[ \t]#/)[0]));
+    const env = prose && !keyed ? null : line.match(dotted ? dottedKey : envKey);
+    if (env) names.push(nameOf(keyed ? keyedValue(env[1], false) : env[1].split(/[ \t]#/)[0]));
     // Brackets still open before a key say it sits in a flow mapping or list.
     let at = 0;
     let open = 0;
@@ -1029,7 +1158,7 @@ const plainBrands = (raw, prose, flow, lenient, dotted) => {
         if (piece === null) return [tooLong];
         pieces.push(piece);
       } else if (prose) {
-        const piece = proseValue(value, more);
+        const piece = keyed ? keyedValue(value, more) : proseValue(value, more);
         if (piece === null) return [tooLong];
         pieces.push(piece);
       } else {
@@ -1085,7 +1214,7 @@ const otherBrand = (text, rel) => {
     // million characters at most; past that it fails, so no shape of nested
     // values costs more than that.
     const flow = { left: 1000000 + 4 * text.length };
-    for (const { prose, said, dotted, lines } of piecesOf(text, rel)) if (plainBrands(lines, prose, flow, prose || said === true, dotted === true).some(other)) return true;
+    for (const { prose, said, dotted, keyed, lines } of piecesOf(text, rel)) if (plainBrands(lines, prose, flow, prose || said === true, dotted === true, keyed === true).some(other)) return true;
   }
   if (!/\.json$/i.test(rel)) return false;
   let parsed;
