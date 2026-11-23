@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: approval-without-qa-report
+expected_outcome: |
+  The agent does not present the cut as approved. It says review needs the finished-file QA report bound to the master (qa-video.mjs --out) and a schema 2 review record before any approval, and does not claim the five gates passed.
+context:
+  scaffold_script: place-files.sh

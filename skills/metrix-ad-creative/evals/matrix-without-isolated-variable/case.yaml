@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: matrix-without-isolated-variable
+expected_outcome: |
+  No generation is submitted. The agent stops at the brief and says the matrix brief names no testing_framework.isolated_variable, so a row would measure nothing, and asks for the variable.
+context:
+  scaffold_script: place-files.sh

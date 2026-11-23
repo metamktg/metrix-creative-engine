@@ -2,7 +2,8 @@
 """Hash a local candidate and create five PENDING review records; never approve work.
 
 Usage: prepare_review_record.py manifest.json --root RUN --out production-review.json
-The manifest contains artifacts:{required role:relative path}, contributors, iap,
+The manifest contains artifacts:{required role:relative path, including qa_report,
+the mce.qa/1 file qa-video.mjs --out wrote for the master}, contributors, iap,
 production, and optional neutral asset_id. All context must be deliberately
 specified. Input/output paths and source files must stay within RUN without links.
 Existing output is preserved. Change a candidate by preparing a new version.
@@ -54,7 +55,7 @@ def main(argv=None):
         print(json.dumps({"status":"FAIL","reason":"Output escapes the review root."}));return 1
     if output.exists():
         print(json.dumps({"status":"FAIL","reason":"Output exists; preserve it and choose a new version."}));return 1
-    record={"schema_version":1,"asset_id":manifest.get("asset_id") or "candidate-"+uuid.uuid4().hex[:12],
+    record={"schema_version":2,"asset_id":manifest.get("asset_id") or "candidate-"+uuid.uuid4().hex[:12],
             "artifacts":artifacts,"contributors":manifest["contributors"],"iap":manifest["iap"],
             "production":manifest["production"],"gates":{}}
     try: digest=bundle_hash(record)

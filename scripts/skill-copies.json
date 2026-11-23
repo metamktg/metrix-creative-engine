@@ -110,6 +110,24 @@
       "targets": [
         "skills/metrix-video-assembly/references/placement-zones.json"
       ]
+    },
+    {
+      "source": "skills/metrix-ad-creative/references/formats.json",
+      "targets": [
+        "skills/metrix-video-assembly/references/formats.json"
+      ]
+    },
+    {
+      "source": "skills/ugc-creator-edit/scripts/write_receipt.py",
+      "targets": [
+        "scripts/write_receipt.py"
+      ]
+    },
+    {
+      "source": "skills/ugc-creator-edit/scripts/test_receipt_review.py",
+      "targets": [
+        "scripts/test_receipt_review.py"
+      ]
     }
   ]
 }

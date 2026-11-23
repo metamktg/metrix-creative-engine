@@ -163,8 +163,10 @@ Humour comes from the product's own truth, never from trying to be funny.
 
 ## 8. Transitions
 
-`data-trans-in` / `data-trans-out` on each scene: `cut`, `dip` (default), `fade`,
-`slide`, `zoom`. Entrances: 0.2 to 0.45s. A plain crossfade between two busy
+`data-trans-in` / `data-trans-out` on each scene, both declared: `cut`, `dip`, `fade`,
+`slide`, `zoom`. The runtime still draws a missing one as `dip` so a preview opens,
+but render health FAILs a scene that leaves either undeclared or names anything
+outside that set. Entrances: 0.2 to 0.45s. A plain crossfade between two busy
 layouts makes a muddy double exposure; `dip` takes the old scene out before the
 new one arrives. Check every cut in the stills (the renderer captures both
 sides of each one).

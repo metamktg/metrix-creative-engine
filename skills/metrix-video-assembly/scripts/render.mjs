@@ -39,6 +39,7 @@ import { audioGraph } from "./audio-graph.mjs";
 import { norm, settled, SETTLE_DEFAULT } from "./timeline/rules.mjs";
 import { craft, healthVerdict, parity, parseTimeouts, sampleTimes, typeFloorPx } from "./render-checks.mjs";
 import { probe } from "./media/probe.mjs";
+import { checkBoxes, zoneFor } from "./placement-zones.mjs";
 
 const args = process.argv.slice(2);
 const flag = (k, d) => {
@@ -539,8 +540,11 @@ async function check() {
   armBudget(items.length + Math.ceil(times.length / CHUNK), "check");
   const { cdp, health, parity: par, load_ms } = await openComposition();
   const ratio = `${sb.format.ratio}`;
-  // Meta overlays profile, caption and CTA rows on Stories and Reels.
-  const zone = ratio === "9:16" ? { top: 0.14, bottom: 0.2, side: 0.06 } : { top: 0.05, bottom: 0.05, side: 0.05 };
+  // Meta overlays profile, caption and CTA rows on Stories and Reels. One table decides the
+  // bands for this check and for check-storyboard: references/placement-zones.json, through
+  // format.placement. No placement falls back to the legacy row for the ratio, with a WARN.
+  let zone;
+  try { zone = zoneFor({ ratio, placement: sb.format.placement }); } catch (e) { die(`safe zone: ${e.message}`, 2); }
   const minPx = Math.round(W * 0.03);
   const results = [];
   const started = Date.now();
@@ -558,16 +562,18 @@ async function check() {
       continue;
     }
     const b = found.box;
-    const reasons = [];
-    if (b.y < zone.top - 0.002) reasons.push(`top ${(b.y * 100).toFixed(1)}% inside the ${Math.round(zone.top * 100)}% overlay band`);
-    if (b.y + b.h > 1 - zone.bottom + 0.002) reasons.push(`bottom ${((b.y + b.h) * 100).toFixed(1)}% inside the ${Math.round(zone.bottom * 100)}% overlay band`);
-    if (b.x < zone.side - 0.002 || b.x + b.w > 1 - zone.side + 0.002) reasons.push("outside the side margin");
-    if (found.overflow) reasons.push("text overflows its box");
+    // Band reasons come from the zone table's check; a third_party row only WARNs.
+    const band = checkBoxes([{ id: item.id, box: b }], zone, NaN)[0];
+    const reasons = [...band.reasons];
+    const fail = [];
+    if (band.verdict === "FAIL") fail.push(...band.reasons);
+    const more = (r) => { reasons.push(r); fail.push(r); };
+    if (found.overflow) more("text overflows its box");
     // The composition must show the storyboard's copy, which the storyboard
     // check has already matched to the brief. Case is left to CSS.
-    if (norm(found.text) !== norm(item.copy)) reasons.push(`on screen "${String(found.text).trim()}" differs from storyboard "${item.copy}"`);
-    if (found.font_px < minPx) reasons.push(`type ${found.font_px}px is under the ${minPx}px feed-legibility floor`);
-    results.push({ id: item.id, t: +t.toFixed(3), verdict: reasons.length ? "FAIL" : "PASS", reasons, on_screen: found.text, storyboard: item.copy, box: b, font_px: found.font_px });
+    if (norm(found.text) !== norm(item.copy)) more(`on screen "${String(found.text).trim()}" differs from storyboard "${item.copy}"`);
+    if (found.font_px < minPx) more(`type ${found.font_px}px is under the ${minPx}px feed-legibility floor`);
+    results.push({ id: item.id, t: +t.toFixed(3), verdict: fail.length ? "FAIL" : reasons.length ? "WARN" : "PASS", reasons, on_screen: found.text, storyboard: item.copy, box: b, font_px: found.font_px });
   }
   const layout_ms = Date.now() - started;
   // Craft: every frame of the ad, clips not seeked, in chunks so no single call nears its budget.

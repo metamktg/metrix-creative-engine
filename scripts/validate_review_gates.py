@@ -4,10 +4,14 @@
 This is a local, stdlib-only evidence/attestation validator. It does not listen,
 watch, recruit reviewers, run commands, contact providers, or certify perception.
 
-Record contract (schema_version=1):
+Record contract (schema_version=2):
   artifacts: master, brief, script, voice, captions, edl, sources, profile,
-             registry, blind_packet, blind_copy ->
+             registry, blind_packet, blind_copy, qa_report ->
              {path: relative local file, sha256: lowercase hex}
+  qa_report is the mce.qa/1 file qa-video.mjs --out wrote for this master: its
+  sha256 must equal the master's and its verdict must be PASS or EXEMPT, so a
+  master the finished-file QA failed, or never checked, cannot pass review.
+  Schema 1 bound no QA report and is refused: prepare the candidate again.
   contributors: {producer_ids: [id], editor_ids: [id]}
   iap: {mode: standard|matrix, codes: [exact approved code],
         applicability: {decision: applicable|not_applicable, reason, reviewer_id},
@@ -69,7 +73,7 @@ import sys
 
 ARTIFACT_ROLES = (
     "master", "brief", "script", "voice", "captions", "edl", "sources",
-    "profile", "registry", "blind_packet", "blind_copy",
+    "profile", "registry", "blind_packet", "blind_copy", "qa_report",
 )
 GATE_CHECKS = {
     "iap_variables": (
@@ -295,6 +299,26 @@ class Validator:
             self.issue("FAIL", field, "Required local JSON evidence is malformed or oversized.")
             return None
 
+    def qa_report(self, report, artifacts):
+        """The finished-file QA for exactly this master, and not a failing one."""
+        if report is None:
+            return
+        field = "artifacts.qa_report"
+        if not isinstance(report, dict) or report.get("schema") != "mce.qa/1":
+            self.issue("FAIL", field, "The QA report is not an mce.qa/1 file written by qa-video.mjs --out.")
+            return
+        master = artifacts.get("master") if isinstance(artifacts, dict) else None
+        master_sha = master.get("sha256") if isinstance(master, dict) else None
+        if not (isinstance(report.get("sha256"), str) and isinstance(master_sha, str) and
+                report["sha256"].lower() == master_sha.lower()):
+            self.issue("FAIL", field, "The QA report checked a different file than the master under review.")
+            return
+        verdict = report.get("verdict")
+        if verdict not in ("PASS", "EXEMPT"):
+            failed = [r.get("check") for r in report.get("results", []) if isinstance(r, dict) and r.get("verdict") == "FAIL"]
+            self.issue("FAIL", field, "Finished-file QA did not pass this master" +
+                       (": " + ", ".join(str(c) for c in failed) if failed else "") + ".")
+
     def truth_checks(self, data, names, field):
         if not isinstance(data, dict):
             self.issue("NOT_CHECKED", field, "Required checklist evidence is missing.")
@@ -397,8 +421,13 @@ class Validator:
         if not isinstance(record, dict):
             self.issue("FAIL", "record", "A JSON object is required.")
             return self.result()
-        self.require(type(record.get("schema_version")) is int and record["schema_version"] == 1,
-                     "schema_version", "Unsupported review schema.")
+        version = record.get("schema_version")
+        if type(version) is int and version == 1:
+            self.issue("FAIL", "schema_version",
+                       "Schema 1 binds no QA report, so a master that failed finished-file QA could pass. "
+                       "Run qa-video.mjs --out on the master and prepare the candidate again as schema 2.")
+        else:
+            self.require(type(version) is int and version == 2, "schema_version", "Unsupported review schema.")
         artifacts = record.get("artifacts")
         if not isinstance(artifacts, dict):
             self.issue("NOT_CHECKED", "artifacts", "Current candidate artifact bindings are missing.")
@@ -412,6 +441,7 @@ class Validator:
             expected_bundle = bundle_hash(record)
         except (KeyError, AttributeError, TypeError, ValueError):
             pass
+        self.qa_report(self.json_file(self.paths.get("qa_report"), "artifacts.qa_report"), artifacts)
         registry = self.json_file(self.paths.get("registry"), "artifacts.registry")
         profile = self.json_file(self.paths.get("profile"), "artifacts.profile")
         self.iap(record.get("iap"), registry)
