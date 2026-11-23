@@ -72,6 +72,22 @@
     "skills/metrix-video-assembly/scripts/media/eye_state.py": {
       "why": "OPEN: the venv and model defaults from tools/manifest.json; go with it",
       "paths": ["f95f407e1ec6", "dfd3fd3e8381"]
+    },
+    ".claude/council/sessions/mce-end-to-end-reconciliation-20261122-1558/deliberation/round1/Architect.md": {
+      "why": "council session record from PR 21, on main since 129cbe8, kept as recorded: a drive path on the machine it ran on",
+      "paths": ["0a8151bc47df", "0a8151bc47df"]
+    },
+    ".claude/council/sessions/mce-end-to-end-reconciliation-20261122-1558/render-session.py": {
+      "why": "not a path: a Python regex whose percent-s, colon and escaped s read as a drive root",
+      "paths": ["6239680f4bc1"]
+    },
+    ".claude/council/sessions/mce-end-to-end-reconciliation-20261122-1558/run-deliberation.js": {
+      "why": "council session record from PR 21, on main since 129cbe8, kept as recorded: a sandbox's home folder",
+      "paths": ["09a4090c2457", "ef9119cd0ad6", "ef9119cd0ad6", "4e6e2047a790"]
+    },
+    ".claude/council/sessions/mce-end-to-end-reconciliation-20261122-1558/session.html": {
+      "why": "council session record from PR 21, on main since 129cbe8, kept as recorded: a drive path on the machine it ran on",
+      "paths": ["0a8151bc47df", "0a8151bc47df"]
     }
   }
 }

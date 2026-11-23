@@ -224,6 +224,50 @@
 
   const twoFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
+  // What is captured is a canvas copy of each clip, not the video layer itself. Even after
+  // "seeked", requestVideoFrameCallback and the second presentation below, headless Chrome on
+  // Linux still composited the previous source frame into Page.captureScreenshot: a 30 fps WebM
+  // stepped over 60 stills showed a stale frame in 10 of 180 captures, while drawImage of the same
+  // video at the same moment returned the wanted frame in 180 of 180. So each clip gets a sibling
+  // canvas that carries the video's computed style on every seek (layout, object-fit, transforms,
+  // opacity, visibility) and the confirmed frame drawn into it; the video stays in place for
+  // seeking, health and shown(), and paints nothing (clip-path: inset(50%) changes no box, no
+  // visibility and no opacity). The canvas is added at the first seek, after __authored has read
+  // the DOM, so parity sees the page as written.
+  //
+  // The video's own mask can move: applyText animates clip-path on a clip with data-in (a wipe
+  // entrance), and a Motion hook may too, each by writing the inline style, which also replaces
+  // the hiding mask. So every seek reads the mask the clip should show now (an inline value apply
+  // or a hook wrote, else the stylesheet's, read before the first hide), gives it to the canvas,
+  // then hides the video again.
+  const FRAME_ATTR = "data-clip-frame";
+  const HIDE = "inset(50%)";
+  function paintFrame(v, visible) {
+    let c = v.__frame;
+    if (!c) {
+      v.__sheetClip = getComputedStyle(v).clipPath;
+      c = document.createElement("canvas");
+      c.setAttribute(FRAME_ATTR, v.getAttribute("src") || "");
+      c.setAttribute("aria-hidden", "true");
+      v.after(c);
+      v.__frame = c;
+    }
+    const inline = v.style.getPropertyValue("clip-path");
+    const ours = inline === HIDE && v.style.getPropertyPriority("clip-path") === "important";
+    const mask = inline && !ours ? inline : v.__sheetClip || "none";
+    v.style.removeProperty("clip-path");
+    if (inline && !ours) v.style.setProperty("clip-path", inline);
+    const cs = getComputedStyle(v);
+    for (const p of cs) c.style.setProperty(p, cs.getPropertyValue(p));
+    c.style.setProperty("clip-path", mask);
+    v.style.setProperty("clip-path", HIDE, "important");
+    c.style.setProperty("pointer-events", "none");
+    if (!visible || !v.videoWidth || !v.videoHeight) return;
+    if (c.width !== v.videoWidth) c.width = v.videoWidth;
+    if (c.height !== v.videoHeight) c.height = v.videoHeight;
+    c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+  }
+
   // Returns each clip's src and currentTime after the seek, so a caller can check the frame map.
   //
   // A clip that turns visible (v19 shows and hides its shots with visibility:hidden on a
@@ -254,6 +298,7 @@
       const again = Math.min(clipLocal(v, t) + (fps > 0 ? 0.25 / fps : 0.001), Math.max(0, (v.duration || 0) - 0.001));
       await seekTo(v, again, t, { frame: false });
     }));
+    clips.forEach((v, i) => paintFrame(v, on[i]));
     await twoFrames();
     return clips.map((v) => ({ src: v.getAttribute("src"), currentTime: v.currentTime, local: clipLocal(v, t) }));
   }
@@ -290,10 +335,27 @@
     return { broken_images: broken, unloaded_fonts: fonts, videos };
   }
 
+  // Every scene states both transitions in the renderer's own set. applyScene still draws a
+  // missing one as dip so a preview opens, but health reports it, so a cut nobody chose (or a
+  // name the renderer cannot play) never reaches a render silently.
+  const TRANSITIONS = ["cut", "fade", "dip", "slide", "zoom"];
+  function transitionFindings() {
+    const out = [];
+    for (const sc of document.querySelectorAll("[data-scene]")) {
+      for (const k of ["data-trans-in", "data-trans-out"]) {
+        const v = sc.getAttribute(k);
+        if (v === null) out.push({ scene: sc.getAttribute("data-scene"), attr: k, problem: "undeclared" });
+        else if (!TRANSITIONS.includes(v)) out.push({ scene: sc.getAttribute("data-scene"), attr: k, problem: `unknown "${v}"` });
+      }
+    }
+    return out;
+  }
+
   function health() {
     return {
       seek_fallbacks: stats.seekFallbacks.length, seek_fallback_at: stats.seekFallbacks.slice(0, 10),
       frame_mismatches: stats.frameMismatches.length, frame_mismatch_at: stats.frameMismatches.slice(0, 10),
+      transitions: transitionFindings(),
     };
   }
 

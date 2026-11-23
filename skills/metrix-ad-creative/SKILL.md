@@ -176,7 +176,10 @@ cannot.
 1. **Read the brief.** Take `creative_briefs.json`, or a single brief object.
    Identify per brief: `brief_metadata.asset_type`, `brief_metadata.mode`
    (`standard` or `matrix`; a brief that says `general` is read as `standard`), `testing_framework.matrix_position`,
-   `testing_framework.isolated_variable`, `creative_specifications`,
+   `testing_framework.isolated_variable`, and for a whole row
+   `testing_framework.cells` with `testing_framework.matrix_naming_convention`
+   (the brief gate blocks cells it cannot name, duplicate names, and cells that
+   do not differ in the isolated variable), `creative_specifications`,
    `visual_direction`, and `brand_assets` where present (product references,
    logo method, style references). A product-led brief listing product
    references under `brand_assets.missing` is blocked until they are supplied.

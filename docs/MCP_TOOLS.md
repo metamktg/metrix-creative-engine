@@ -327,6 +327,7 @@ The render workflow, assembled in the order it has to be applied.
 | `kie_render_static`, `_carousel`, `_video`, `_ugc`, `_ai_ugc`, `_motion_graphic`, `_claymation` | The core rules, the render bridge, that format's module and the final pass |
 | `kie_brand_intake` | Establishing and uploading the product references a render needs. Run it BEFORE generating |
 | `kie_mst_sprint` | Building a Matrix Sprint Test. Optional, and not a stage every run passes through |
+| `kie_handoff` | The handoff stage (`prompts/03-handoff.md`) for a READY candidate. Takes `audience` (strategist, media_buyer, client) and the `receipt` that `write_receipt.py` wrote from the review record |
 
 Each takes an optional `brief` argument, the brief as JSON, which is carried
 into the message.

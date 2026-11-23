@@ -4,7 +4,7 @@
  *
  *   node qa-video.mjs <ad.mp4> [--storyboard storyboard.json] [--timeline timeline.json]
  *                     [--exempt exemptions.json] [--poster ad.jpg] [--ratio 4:5] [--duration 12]
- *                     [--lufs -14] [--silent | --effects-only] [--min-shot 0.75]
+ *                     [--lufs -14] [--silent | --effects-only] [--min-shot 0.75] [--out qa.json]
  *
  * --storyboard supplies the ratio, duration, loudness target and silent or effects-only mode the
  * renderer used. Any explicit flag overrides it, and the output records where each value came from.
@@ -265,7 +265,7 @@ function greyFrames(file, { w, h, fps }) {
 // ---------------------------------------------------------------- CLI
 
 function main(argv) {
-  const valued = ["--storyboard", "--timeline", "--exempt", "--poster", "--ratio", "--duration", "--lufs", "--min-shot"];
+  const valued = ["--storyboard", "--timeline", "--exempt", "--poster", "--ratio", "--duration", "--lufs", "--min-shot", "--out"];
   const flag = (k, d) => (argv.includes(k) ? argv[argv.indexOf(k) + 1] : d);
   const v = argv.find((a, i) => !a.startsWith("--") && !valued.includes(argv[i - 1]));
   if (!v) { console.error("usage: qa-video.mjs <ad.mp4> [--storyboard sb.json] [--timeline timeline.json] [--exempt exemptions.json] [--poster p.jpg] ..."); return 2; }
@@ -419,13 +419,18 @@ function main(argv) {
   const verdict = summarize(results);
   const used = results.flatMap((r) => (r.exempted || []).map((e) => ({ check: r.check, start: e.start, end: e.end, ...e.by })));
   const report = {
+    schema: "mce.qa/1",
     file: v, sha256: videoSha, verdict,
     options: { ratio: opts.ratio, duration: opts.duration, mode: opts.mode, lufs: opts.lufs, sources: opts.sources, notes: opts.notes },
     ...(timeline ? { timeline: { path: timeline.path, sha256: timeline.sha256, cuts: timeline.cuts, holds: timeline.holds } } : {}),
     ...(exemptFile ? { exemptions: { ...exemptFile, used, unused: exemptions.filter((e) => !used.some((u) => u.check === e.check && u.lo === e.lo && u.hi === e.hi)) } } : {}),
     results,
   };
-  console.log(JSON.stringify(report, null, 2));
+  const text = JSON.stringify(report, null, 2);
+  // --out keeps the report as a file review binds by hash (artifacts.qa_report).
+  const outFile = flag("--out");
+  if (outFile) fs.writeFileSync(outFile, text + "\n");
+  console.log(text);
   return verdict === "FAIL" ? 1 : 0;
 }
 

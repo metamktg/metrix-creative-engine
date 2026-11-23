@@ -9,6 +9,7 @@
   "homepage": "https://github.com/metamktg/metrix-creative-engine",
   "repository": "https://github.com/metamktg/metrix-creative-engine",
   "keywords": ["kie-ai", "ad-creative", "meta-ads", "ugc", "video", "mcp"],
+  "skills": "./skills/",
   "userConfig": {
     "kie_api_key": {
       "type": "string",

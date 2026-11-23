@@ -55,6 +55,14 @@ describe("watchdog budgets", () => {
 describe("health verdict", () => {
   const ok = { broken_images: [], unloaded_fonts: [], videos: [{ src: "a.webm", readyState: 4, duration: 8 }], seek_fallbacks: 0, runtime: { current: true }, config: { settleDefault: SETTLE_DEFAULT } };
   it("passes a healthy page", () => expect(C.healthVerdict(ok)).toEqual({ verdict: "PASS", reasons: [] }));
+  it("fails a scene whose transition is undeclared or not in the renderer's set", () => {
+    const v = C.healthVerdict({ ...ok, transitions: [{ scene: "s2", attr: "data-trans-in", problem: "undeclared" }, { scene: "s2", attr: "data-trans-out", problem: 'unknown "whip"' }] });
+    expect(v.verdict).toBe("FAIL");
+    expect(v.reasons).toEqual([
+      "scene s2 data-trans-in: undeclared; declare one of cut, fade, dip, slide, zoom",
+      'scene s2 data-trans-out: unknown "whip"; declare one of cut, fade, dip, slide, zoom',
+    ]);
+  });
   it("fails each condition that used to be a WARN or silent", () => {
     const fail = (patch: object) => C.healthVerdict({ ...ok, ...patch });
     expect(fail({ broken_images: ["x.png"] }).reasons).toEqual(["broken images: x.png"]);
@@ -315,6 +323,49 @@ describe.runIf(browser && ffmpeg)("render.mjs in a real browser", { concurrent: 
     expect(r.report.craft).toMatchObject({ verdict: "PASS", samples: 180, type_floor_px: 8 });
     expect(r.report.results.map((x: any) => x.verdict)).toEqual(["PASS", "PASS"]);
     expect(r.report.backend).toBe("mce-cdp");
+  }, BROWSER_TIMEOUT);
+
+  it("keeps a clip that animates its own mask (wipe entrance) hidden, and its canvas on the current mask, across seeks", async () => {
+    const c = makeCase("clip-wipe", [[
+      '<video class="clip" data-clip src="clip.webm" data-start="0.5" data-offset="0.3" muted preload="auto"></video>',
+      '<video class="clip" data-clip src="clip.webm" data-start="0.5" data-offset="0.3" data-in="1" data-dur="1" data-enter="wipe" muted preload="auto"></video>',
+    ]]);
+    const expr = `(async () => {
+      const v = document.querySelector("video[data-clip]");
+      const at = async (t) => { await window.__seek(t); const c = v.nextElementSibling;
+        return { video: getComputedStyle(v).clipPath, canvas: c && c.style.clipPath, inline: v.style.clipPath }; };
+      return { done: await at(2.5), entering: await at(1.25), again: await at(2.5) };
+    })()`;
+    const r = await run([c.comp, "--storyboard", c.sb, "--mode", "eval", "--t", "0", "--expr", expr]);
+    expect(r.status, r.stderr).toBe(0);
+    const out = JSON.parse(r.stdout);
+    for (const k of ["done", "entering", "again"]) expect(out[k].video, k).toBe("inset(50%)");
+    expect(out.done.canvas).toMatch(/^(none|inset\(0(px)? 0% 0(px)? 0(px)?\))$/);
+    expect(out.entering.canvas).toMatch(/^inset\(0(px)? [1-9][\d.]*% 0(px)? 0(px)?\)$/);
+    expect(out.again.canvas).toBe(out.done.canvas);
+  }, BROWSER_TIMEOUT);
+
+  it("FAILs health for a scene that leaves a transition to the runtime's dip default or names one it cannot play", async () => {
+    const c = makeCase("trans-undeclared", [['data-trans-in="cut" data-trans-out="cut"', 'data-trans-out="whip"']]);
+    const r = await check(c);
+    expect(r.status).toBe(1);
+    expect(r.report.health.transitions).toEqual([
+      { scene: "s1", attr: "data-trans-in", problem: "undeclared" },
+      { scene: "s1", attr: "data-trans-out", problem: 'unknown "whip"' },
+    ]);
+    expect(r.report.health.reasons.join(" ")).toMatch(/scene s1 data-trans-in: undeclared/);
+  }, BROWSER_TIMEOUT);
+
+  it("holds a declared placement to its zone row and refuses a placement the ratio cannot run", async () => {
+    const feed = await check(makeCase("zone-feed", [], (sb) => { sb.format.placement = "Instagram Feed"; }));
+    expect(feed.status, feed.stderr).toBe(0);
+    expect(feed.report.safe_zone).toMatchObject({ id: "feed", source: "house", warnings: [] });
+    const none = await check(makeCase("zone-none"));
+    expect(none.report.safe_zone.id).toBe("legacy_other");
+    expect(none.report.safe_zone.warnings.join(" ")).toMatch(/no placement declared/);
+    const reels = await check(makeCase("zone-reels", [], (sb) => { sb.format.placement = "Instagram Reels"; }));
+    expect(reels.status).toBe(2);
+    expect(reels.stderr).toMatch(/safe zone: placement "Instagram Reels" \(instagram_reels\) runs at 9:16, not 1:1/);
   }, BROWSER_TIMEOUT);
 
   it("decodes floor(t_src x 25) for seeks out of order, across and on frame boundaries", async () => {

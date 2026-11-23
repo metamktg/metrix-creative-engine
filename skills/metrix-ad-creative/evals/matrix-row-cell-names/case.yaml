@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: matrix-row-cell-names
+expected_outcome: |
+  The agent plans the row without spending: three cell names built exactly by the brief's matrix_naming_convention (C1-hook-a, C1-hook-b, C1-hook-c), the three hooks verbatim, and a statement that only the hook clause differs between cells.
+context:
+  scaffold_script: place-files.sh

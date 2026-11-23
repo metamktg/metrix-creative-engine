@@ -56,14 +56,16 @@ describe("placement-zones table", () => {
     expect(row("feed").source).toBe("house");
   });
 
-  it("legacy rows equal the values render.mjs --mode check hard-codes", () => {
+  it("render.mjs --mode check takes its bands from this table, not from literals", () => {
     const src = read("skills/metrix-video-assembly/scripts/render.mjs");
-    const m = src.match(/const zone = ratio === "9:16" \? \{ top: ([\d.]+), bottom: ([\d.]+), side: ([\d.]+) \} : \{ top: ([\d.]+), bottom: ([\d.]+), side: ([\d.]+) \};/);
-    expect(m, "render.mjs zone line moved or changed; update the legacy rows and this test together").not.toBeNull();
-    const [, t9, b9, s9, to, bo, so] = m!.map(Number);
-    expect([row("legacy_9x16").top, row("legacy_9x16").bottom, row("legacy_9x16").side]).toEqual([t9, b9, s9]);
-    expect([row("legacy_other").top, row("legacy_other").bottom, row("legacy_other").side]).toEqual([to, bo, so]);
+    expect(src).toMatch(/import \{ checkBoxes, zoneFor \} from "\.\/placement-zones\.mjs";/);
+    expect(src).toMatch(/zoneFor\(\{ ratio, placement: sb\.format\.placement \}\)/);
+    // no zone literal left behind to drift from the table
+    expect(src).not.toMatch(/\{ top: [\d.]+, bottom: [\d.]+, side: [\d.]+ \}/);
     expect(src).toContain("Math.round(W * " + table.min_font_ratio + ")");
+    // the legacy rows keep the bands the renderer enforced before it read the table
+    expect([row("legacy_9x16").top, row("legacy_9x16").bottom, row("legacy_9x16").side]).toEqual([0.14, 0.2, 0.06]);
+    expect([row("legacy_other").top, row("legacy_other").bottom, row("legacy_other").side]).toEqual([0.05, 0.05, 0.05]);
   });
 
   it("loadTable refuses a third_party row that would fail, and a primary row without a source", () => {
