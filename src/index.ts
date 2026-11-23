@@ -10,9 +10,11 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { KieClient } from "./client.js";
 import { loadConfig } from "./config.js";
+import { serverInstructions } from "./instructions.js";
 import { registerKiePrompts } from "./prompts.js";
 import { registerKieResources } from "./resources.js";
 import { registerKieTools } from "./tools.js";
+import { ENGINE_VERSION } from "./version.js";
 
 export async function main(): Promise<void> {
   const config = loadConfig(process.env);
@@ -25,9 +27,9 @@ export async function main(): Promise<void> {
 
   const server = new McpServer({
     name: "kie-ai-mcp-server",
-    version: "0.1.0",
+    version: ENGINE_VERSION,
   }, {
-    instructions: "For finished creator-led UGC, AI-UGC, video or motion graphics, load the matching kie_render_ugc, kie_render_ai_ugc, kie_render_video or kie_render_motion_graphic prompt before creative work. Read kie://ugc-creative-playbook and kie://production-review-standard only for the needed stage; do not send full manuals to providers. Before approved-voice creator lip sync, use kie_validate_ugc_preproduction then kie_create_ugc_lipsync with the current private packet. Keep completed client profiles and media in ignored/private run directories. Raw task tools remain unguarded generation primitives, not evidence of creative approval.",
+    instructions: serverInstructions(config),
   });
 
   registerKieTools(server, {
@@ -43,8 +45,11 @@ export async function main(): Promise<void> {
   registerKiePrompts(server);
 
   await server.connect(new StdioServerTransport());
+  for (const name of config.ignored) {
+    process.stderr.write(`kie-ai-mcp-server: ${name} held an unexpanded \${...} reference and was read as unset\n`);
+  }
   process.stderr.write(
-    `kie-ai-mcp-server ready (downloads ${config.downloadDir ? `-> ${config.downloadDir}` : "disabled"}, ledger ${config.ledgerPath ? `-> ${config.ledgerPath}` : "off"})\n`,
+    `kie-ai-mcp-server ${ENGINE_VERSION} ready (downloads ${config.downloadDir ? `-> ${config.downloadDir}` : "disabled"}, ledger ${config.ledgerPath ? `-> ${config.ledgerPath}` : "off"}, assets ${config.assetsDir ? `-> ${config.assetsDir}` : "not set"})\n`,
   );
 }
 

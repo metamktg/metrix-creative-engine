@@ -17,10 +17,10 @@ renders/
 .env.*
 !.env.example
 
-# Built brand kits: the JSON and PROMPTS.md are the source of truth, and an
-# inlined kit runs past 3MB of base64 that git cannot diff. Rebuild, do not store.
-brand-kits/**/*.source.html
-brand-kits/**/*.pdf
+# Brand kits are client material and this repository is public. Kits live in
+# a folder outside the repository; nothing under brand-kits/ is committed but its README.
+brand-kits/*
+!brand-kits/README.md
 
 # Project-local open-source video editor
 .tools/kdenlive-26.08.2/

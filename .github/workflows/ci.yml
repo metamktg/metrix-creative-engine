@@ -48,18 +48,32 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # The repository gate, the same command a contributor runs locally. It
-      # runs the byte-copy check, the generated standard drift check, the type
-      # check, the vitest suite, the build, the MCP surface check, the Python
-      # review-record tests and the retention tests. Keep it one command so this
-      # file cannot fall behind package.json.
+      # runs the byte-copy check, the plugin check, the generated standard drift
+      # check, the type check, the vitest suite, the committed-bundle freshness
+      # check, the MCP surface check, the Python review-record tests and the
+      # retention tests. Keep it one command so this file cannot fall behind
+      # package.json.
       #
-      # The MCP surface leg drives the built bundle over a real stdio MCP
+      # The MCP surface leg drives the committed bundle over a real stdio MCP
       # session against a stubbed Kie. It catches what unit tests cannot see: a
       # capability never advertised, or an outputSchema that disagrees with the
       # structuredContent the tool actually returns, which the SDK rejects at
       # call time in front of a user.
       - name: Verify
         run: pnpm run verify
+
+      # The repository installs as a Claude Code plugin. Validate it with the
+      # CLI users install it with, pinned so a CLI release cannot change the
+      # verdict unseen, and fail on every warning but the one the repository's
+      # own CLAUDE.md produces (scripts/check-plugin.mjs says why it is allowed).
+      - name: Plugin manifest validates
+        run: |
+          set -euo pipefail
+          npm install -g @anthropic-ai/claude-code@2.1.289
+          export CLAUDE_CONFIG_DIR="$RUNNER_TEMP/claude-config"
+          mkdir -p "$CLAUDE_CONFIG_DIR"
+          claude plugin validate --json . > "$RUNNER_TEMP/plugin-validate.json" || true
+          node scripts/check-plugin.mjs --validator-report "$RUNNER_TEMP/plugin-validate.json"
 
       # The skills ship as zip uploads, and a SKILL.md nested deeper than the
       # top level is rejected on upload with no other signal. Cheap to check

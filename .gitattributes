@@ -15,3 +15,8 @@
 *.jpeg binary
 *.webp binary
 *.pdf binary
+
+# The committed MCP server bundle and its notices are build output
+# (`npm run build`). Collapse them in review; `npm run check:bundle` proves
+# they equal src/.
+server/** linguist-generated=true

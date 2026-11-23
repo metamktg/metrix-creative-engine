@@ -1,13 +1,16 @@
 #!/bin/bash
-# Build the MCP server so `dist/index.js` exists before the session starts.
+# Prepare a Claude Code on the web session that works in this repository.
 #
-# Why this is needed: .mcp.json points the `kie-ai` MCP server at `dist/index.js`,
-# which is gitignored because it is a build artifact. Without this hook a fresh
-# web session has no built server, the MCP connection fails, and every kie-*
-# skill is dead on arrival with a confusing "module not found".
+# The MCP server needs no build here: .mcp.json launches the committed bundle
+# at server/index.js, which `npm run check:bundle` keeps equal to src/. This
+# hook installs the dev dependencies so the gate (`npm run verify`) can run.
+#
+# When this repository is installed as a plugin, the plugin's own definition in
+# .claude-plugin/plugin.json replaces the `kie-ai` entry in .mcp.json, and the
+# plugin's hook (hooks/hooks.json) runs instead of this one.
 set -euo pipefail
 
-# Remote (Claude Code on the web) only. A local checkout builds on demand.
+# Remote (Claude Code on the web) only. A local checkout installs on demand.
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
@@ -21,12 +24,11 @@ if ! command -v pnpm >/dev/null 2>&1; then
 fi
 
 pnpm install --prefer-offline
-pnpm run build
 
 # Tell the reader why the MCP server may still not connect, since the hook
 # cannot supply a secret: the key is set on the environment, not in the repo.
 if [ -z "${KIE_AI_API_KEY:-}" ]; then
   echo "NOTE: KIE_AI_API_KEY is not set on this environment, so the kie-ai MCP" >&2
-  echo "      server will start but every tool call will fail with 401." >&2
-  echo "      Set it in the Claude Code environment's variables." >&2
+  echo "      server will not start. Set it in the Claude Code environment's" >&2
+  echo "      variables." >&2
 fi

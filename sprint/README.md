@@ -3,8 +3,9 @@
 ## Windows
 
 **Double-click `GO.cmd`** in the folder above this one. That is all of it: it
-updates itself, installs anything missing, finds your briefs and reference
-images, and starts Claude Code.
+updates itself, installs anything missing (Claude Code, then the engine as a
+Claude Code plugin), finds your briefs and reference images, and starts Claude
+Code.
 
 Then paste one line into Claude Code:
 
@@ -28,14 +29,34 @@ double-clicked file is immune to it.
 bash sprint/setup.sh
 ```
 
-Same behaviour. `--briefs <file>` and a folder argument do the same two jobs.
+Same behaviour, except that it prints the line that starts Claude Code rather
+than starting it. `--briefs <file>` and a folder argument do the same two jobs.
+
+## What gets installed
+
+The engine installs as one Claude Code plugin, from GitHub: its skills, its
+MCP server and a session hook. `claude plugin list` shows it as
+`metrix-creative-engine@metrix-creative-engine`. Each re-run picks up a new
+version and is otherwise a no-op.
+
+The setup used to copy each skill into `~/.claude/skills` instead. Copies left
+there load beside the plugin's, so each skill is listed twice. The Windows
+setup names them and prints the command that moves them aside; the macOS and
+Linux setup removes the links it made itself and names anything else.
+
+The session GO.cmd starts writes downloads to `sprint/out/` and leaves out the
+`kie-ai` server in this checkout's `.mcp.json`, which the plugin already
+brings. Neither setting outlasts the session. If you have set a runs folder in
+the plugin's options, the plugin writes there instead, and the session start
+names that folder.
 
 ## Where the files go
 
 ```
 sprint/briefs/     the .json from Metrix, found automatically
 sprint/refs/       reference images
-sprint/out/        everything the run produces
+sprint/out/        everything the run produces, unless the plugin's runs
+                   folder option names another folder
 ```
 
 Both `briefs/` and `refs/` are emptied at the start of every load, so a stale
@@ -44,13 +65,28 @@ one.
 
 Reference images are never swept from Downloads, Desktop or Documents. Point
 `-Source` at a real folder, or let it pull the brand kit's own verified asset
-URLs, which is what happens by default.
+URLs, which is what happens by default. The kit is looked for in the assets
+folder's `brand-kits/` (the plugin's assets folder option, else
+`METRIX_ASSETS_DIR`, the same folder the session start names), then in this
+checkout's git-ignored `brand-kits/`. It is used only when that folder holds
+exactly one kit.
 
 ## Afterwards
 
+The sprint's task ledger is in its runs folder. From this repository's folder,
+on Windows (PowerShell):
+
 ```
-node skills/metrix-ad-creative/scripts/kie.mjs ledger
+$env:KIE_AI_DOWNLOAD_DIR = "sprint\out"; node skills/metrix-ad-creative/scripts/kie.mjs ledger
 ```
 
-Every asset should already be in `sprint/out/`. Anything showing only a URL
-expires about 24 hours after it was made.
+On macOS or Linux:
+
+```
+KIE_AI_DOWNLOAD_DIR=sprint/out node skills/metrix-ad-creative/scripts/kie.mjs ledger
+```
+
+If the plugin's runs folder option is set, put that folder in place of
+`sprint/out`. Reading the ledger needs no key. Every asset should already be in
+the runs folder. Anything showing only a URL expires about 24 hours after it was
+made.

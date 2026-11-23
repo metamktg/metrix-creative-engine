@@ -112,6 +112,12 @@
       ]
     },
     {
+      "source": "skills/metrix-ad-creative/references/format-routing.md",
+      "targets": [
+        "skills/metrix-produce/references/format-routing.md"
+      ]
+    },
+    {
       "source": "skills/metrix-ad-creative/references/formats.json",
       "targets": [
         "skills/metrix-video-assembly/references/formats.json"
