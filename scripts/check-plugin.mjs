@@ -227,6 +227,10 @@ const rootForms = new Set([3, 4]);
 // The generic forms are tested on the path that such a prefix holds.
 const pathPrefix = new RegExp(String.raw`^(?:\\\\[?.]\\${ci("UNC")}\\|${wslShare}|${editorRemote})`, "u");
 const pathRest = new RegExp(body, "uy");
+// A path's text up to a colon or an equals sign that another absolute path
+// follows (a home folder after C:/path/to/data and a colon, or after a share
+// and an equals sign): the first of the paths such a mark joins.
+const joinRest = new RegExp(String.raw`(?:Program Files(?: \(x86\))?|[:=](?![\\/]|[A-Za-z](?::|%3[Aa])|%2[Ff]|%5[Cc])|[^\s"'` + "`" + String.raw`()<>|,;:=])*`, "uy");
 const unspaced = new RegExp(`[${["Han", "Hiragana", "Katakana", "Bopomofo", "Thai", "Lao", "Khmer", "Myanmar", "Tibetan", "Yi", "Javanese", "Balinese"]
   .map((script) => String.raw`\p{scx=${script}}`).join("")}]`, "u");
 const letterOrDigit = /^[\p{L}\p{N}]$/u;
@@ -365,6 +369,12 @@ const generic = [
   /^\/(?:Users|home|usr\/home|root|Volumes|media|run\/media|private|var\/folders|mnt\/[A-Za-z])\/$/,
   /^\/(?:private\/tmp)\/?$/,
 ];
+// Whether a path is a generic form, as it stands or as the path that a
+// long-path prefix, a WSL share or an editor's remote holds (pathPrefix).
+const isGeneric = (hit) => {
+  const held = hit.replace(pathPrefix, (p) => (/^\\{2}[?.]\\[Uu][Nn][Cc]\\$/.test(p) ? "\\\\" : ""));
+  return generic.some((g) => g.test(hit) || (held !== hit && g.test(held)));
+};
 // Every other absolute path is listed, by file and with the reason it is
 // there, in scripts/known-absolute-paths.json, as a hash of its text so the
 // list repeats no path. A new one anywhere fails; so does a listed one that is
@@ -574,6 +584,33 @@ const firstFrom = (list, k, at = (x) => x) => {
   }
   return lo;
 };
+// The language lexerFor reads a body in a procedural language as: plv8 is
+// JavaScript, plpython Python, and plperl Ruby, whose comments, strings and
+// heredocs Perl shares.
+const bodyLang = (name) => (/^plv8u?$/i.test(name) ? "js" : /^plpython[23]?u?$/i.test(name) ? "py" : /^plperlu?$/i.test(name) ? "rb" : "");
+// The rows that a COPY ... FROM stdin statement reads in a SQL dump, up to a
+// line that is \. or the end of the text, are data, said as a string's text
+// is (unescapeText reads COPY's escapes), so a field can hold YAML over lines
+// (identity:\n  canonical_name: ...). A statement inside the rows of one
+// before it is a row, and each end is looked for from where its rows start,
+// so a dump costs time in step with its length.
+const copyStatement = /^[ \t]*\\?COPY\b[^\r\n;]*?\bFROM[ \t]+STDIN\b[^\r\n;]*;?[ \t]*\r?$/gim;
+const copyEnd = /^\\\.[ \t]*\r?$/gm;
+const copyRows = (text) => {
+  const pieces = [];
+  if (!/stdin/i.test(text)) return pieces;
+  let from = 0;
+  for (const m of text.matchAll(copyStatement)) {
+    if (m.index < from) continue;
+    const start = lineEnd(text, m.index) + 1;
+    copyEnd.lastIndex = start;
+    const end = start <= text.length ? copyEnd.exec(text) : null;
+    const stop = end ? end.index : text.length;
+    if (stop > start) pieces.push({ prose: false, said: true, lines: unescapeText(text.slice(start, stop)).split(/\r?\n/) });
+    from = end ? end.index + end[0].length : text.length;
+  }
+  return pieces;
+};
 // The parts of code that a person writes text in: a comment, read as prose,
 // and the text of a string, a heredoc or a here-string, read as YAML. In a
 // batch file those are a rem or :: line and what an echo writes, and in a
@@ -597,7 +634,7 @@ const codePieces = (text, lang, spanAll) => {
     return [{ prose: true, lines: notes }, { prose: false, lines: echoes }];
   }
   const o = lexerFor(lang);
-  if (o.dollar && spanAll === undefined) return [...codePieces(text, lang, true), ...codePieces(text, lang, false)];
+  if (o.dollar && spanAll === undefined) return [...codePieces(text, lang, true), ...codePieces(text, lang, false), ...copyRows(text)];
   const n = text.length;
   // A string's text is said: a passage of it can describe a field.
   const say = (s) => pieces.push({ prose: false, said: true, lines: unescapeText(s).split(/\r?\n/) });
@@ -634,7 +671,7 @@ const codePieces = (text, lang, spanAll) => {
   let languages = null;
   let stops = null;
   let tagsAt = null;
-  const inSql = (tag, open) => {
+  const bodyLanguage = (tag, open) => {
     if (!languages) {
       let k = 0;
       let note = false;
@@ -667,7 +704,7 @@ const codePieces = (text, lang, spanAll) => {
         }
       }
     }
-    if (!languages.length) return true;
+    if (!languages.length) return "";
     const at = tagsAt.get(tag) ?? [];
     const end = at[firstFrom(at, open + tag.length)];
     const close = end === undefined ? n : end + tag.length;
@@ -675,8 +712,7 @@ const codePieces = (text, lang, spanAll) => {
     const to = stops[firstFrom(stops, close)] ?? n;
     const after = languages[firstFrom(languages, close, (m) => m.index)];
     const before = languages[firstFrom(languages, open, (m) => m.index) - 1];
-    const name = after && after.index < to ? after[2] : before && before.index > from ? before[2] : "";
-    return !name || /^(?:sql|plpgsql)$/i.test(name);
+    return after && after.index < to ? after[2] : before && before.index > from ? before[2] : "";
   };
   for (let i = 0; i < n; ) {
     const c = text[i];
@@ -773,18 +809,27 @@ const codePieces = (text, lang, spanAll) => {
       // A $ right after a letter or a digit is part of a name.
       if (t && !/[A-Za-z0-9_$]/.test(text[i - 1] ?? "")) {
         let code = false;
-        if (/^(?:as|do)$/i.test(word) || (word && /\bdo\s+language\s+\S+\s*$/i.test(text.slice(Math.max(0, i - 100), i)))) code = inSql(t[0], i);
+        let own = "";
+        if (/^(?:as|do)$/i.test(word) || (word && /\bdo\s+language\s+\S+\s*$/i.test(text.slice(Math.max(0, i - 100), i)))) {
+          const name = bodyLanguage(t[0], i);
+          code = !name || /^(?:sql|plpgsql)$/i.test(name);
+          own = code ? "" : bodyLang(name);
+        }
         if (code) {
           // A function's body or a DO block in SQL or PL/pgSQL is code, read
           // as SQL; one in another language (plv8, plpython3u, plperl) is
-          // read as dollar-quoted text elsewhere is.
+          // read as dollar-quoted text elsewhere is, and as code in its
+          // language too (bodyLang), its comments able to set keys as those
+          // in a SQL body can.
           bodies.push(t[0]);
           bodyTags.add(t[0]);
           i += t[0].length;
         } else {
           let e = text.indexOf(t[0], i + t[0].length);
           if (e < 0) e = n;
-          say(text.slice(i + t[0].length, e));
+          const inner = text.slice(i + t[0].length, e);
+          say(inner);
+          if (own) for (const p of codePieces(inner, own)) pieces.push(p.prose ? { ...p, keyed: true } : p);
           i = Math.min(n, e + t[0].length);
         }
         last = "'";
@@ -1039,19 +1084,39 @@ const yamlKey = /^[ \t]*(?:\?(?:[ \t]|$)|(?:(?:"[^"]*"|'[^']*')[ \t]*|[^\s"'#][^
 // A value there that is code names nothing of its own: a call that closes on
 // its line, on the column (initcap(canonical_name)), a custom property
 // (var(--brand)) or a string, names what a string in it names, and a column
-// (NEW.canonical_name) names nothing. Any other call is read as prose, so a
-// brand with a mark in brackets right after it (Acme(TM)) is a name.
+// (NEW.canonical_name) names nothing. A custom property's fallback is a value
+// (var(--brand, Acme Co)), and so is what the line says after the call, up
+// to a semicolon or a comment mark: a string in it (= "Acme Co"), or text
+// that starts with a letter or a digit after code (a cast, ::text, or an
+// alias, AS name), punctuation and a connector (, e.g. Acme Co). A value is
+// read through at most three calls, so a line of them costs time in step
+// with its length. Any other call is read as prose, so a brand with a mark in
+// brackets right after it (Acme(TM)) is a name.
 const callValue = /^[ \t]*[A-Za-z_][\w.]*\(((?:[^()\r\n]|\([^()\r\n]*\))*)\)/;
 const codeArgs = [/(?<![\w-])(?:[A-Za-z_]\w*\.)*canonical_name(?!\w)/, /(?<![\w-])--[A-Za-z_]/, /['"]/];
 const columnValue = /^[ \t]*(?:[A-Za-z_]\w*\.)*canonical_name[ \t]*$/;
-const keyedValue = (value, more) => {
+const stringName = (s) => {
+  for (const q of s.matchAll(/'([^'\r\n]*)'|"([^"\r\n]*)"/g)) {
+    const text = q[1] ?? q[2];
+    if (brandName(text) && !columnValue.test(text)) return text;
+  }
+  return "";
+};
+const codeAfter = /^(?:[ \t]*::[ \t]*[A-Za-z_][\w.]*(?:\([^()\r\n]*\))?(?:\[\])*|[ \t]+AS[ \t]+[A-Za-z_]\w*(?![\w.]))*/;
+const afterCall = /^[\s=:,>~-]*(?:(?:e\.g\.|i\.e\.|for example|for instance|such as|like|or|and)(?![\p{L}\p{N}])[\s,:]*)?/iu;
+const keyedValue = (value, more, depth = 0) => {
   const call = value.match(callValue);
   if (call && codeArgs.some((code) => code.test(call[1]))) {
-    for (const s of call[1].matchAll(/'([^'\r\n]*)'|"([^"\r\n]*)"/g)) {
-      const text = s[1] ?? s[2];
-      if (brandName(text) && !columnValue.test(text)) return text;
-    }
-    return "";
+    const inside = stringName(call[1]);
+    if (inside || depth >= 2) return inside;
+    const fallback = /^[ \t]*var\(/i.test(value) ? call[1].match(/^[^,]*,([\s\S]*)$/)?.[1] : undefined;
+    const back = fallback === undefined ? "" : keyedValue(fallback, false, depth + 1);
+    if (back && brandName(back)) return back;
+    const after = value.slice(call[0].length).split(/;|[ \t](?:--|\/\*|\/\/)/)[0];
+    const said = stringName(after);
+    if (said) return said;
+    const rest = after.replace(codeAfter, "").replace(afterCall, "");
+    return /^[\p{L}\p{N}]/u.test(rest) ? keyedValue(rest, more, depth + 1) : "";
   }
   const piece = proseValue(value.match(/^[ \t]*\(([^()\r\n]*)/)?.[1] ?? value, more);
   return piece !== null && columnValue.test(piece) ? "" : piece;
@@ -1254,11 +1319,21 @@ for (const rel of tracked) {
         pathStart.lastIndex = m.index + 1;
         continue;
       }
+      // The first of the paths a colon or an equals sign joins is tested on
+      // its own: when it is a generic form, the path after the mark is looked
+      // at as a path of its own (a home folder after C:/path/to/data and a
+      // colon). It is read only as far as the mark, so a line of joined paths
+      // costs time in step with its length.
+      joinRest.lastIndex = m.index + m[0].length;
+      const first = m[0] + (joinRest.exec(line)?.[0] ?? "");
+      if (/^[:=]$/.test(line[m.index + first.length] ?? "") && isGeneric(first)) {
+        pathStart.lastIndex = m.index + first.length;
+        continue;
+      }
       pathRest.lastIndex = m.index + m[0].length;
       const hit = m[0] + proseAfter(pathRest.exec(line)?.[0] ?? "");
       pathStart.lastIndex = m.index + hit.length;
-      const held = hit.replace(pathPrefix, (p) => (/^\\{2}[?.]\\[Uu][Nn][Cc]\\$/.test(p) ? "\\\\" : ""));
-      if (generic.some((g) => g.test(hit) || (held !== hit && g.test(held)))) continue;
+      if (isGeneric(hit)) continue;
       (found[rel] ??= []).push({ line: i + 1, text: hit, hash: hash(hit) });
     }
   });
