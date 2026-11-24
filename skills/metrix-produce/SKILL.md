@@ -13,8 +13,8 @@ when a step names a skill, load that skill and follow it.
 ## Before anything else
 
 **A brief is required, and it must be approved.** Approval comes from the user
-or from Metrix IAP, never from this skill. With no brief, stop: briefs come from
-`metrix-brief-builder`. Do not write one in order to have something to render.
+or the brief's owner, never from this skill. With no brief, stop and ask for
+one. Do not write one in order to have something to render.
 
 **Know the two folders.** In Bash:
 

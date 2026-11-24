@@ -225,7 +225,7 @@ try {
   );
   const productionStandard = await rpc("resources/read", { uri: "kie://production-review-standard" });
   const standardText = productionStandard.result?.contents?.[0]?.text ?? "";
-  const productionGates = ["iap_variables", "communications", "sound_check", "editorial_peer", "blind_review"];
+  const productionGates = ["variable_codes", "communications", "sound_check", "editorial_peer", "blind_review"];
   check(
     "the production standard resource serves the complete five-gate contract",
     standardText.length > 500 && productionGates.every((gate) => standardText.includes(gate)),
@@ -324,14 +324,14 @@ try {
   check("an unmapped asset_type is refused", verdict?.ok === false);
   check("the refusal names the closed set", (verdict?.errors ?? []).join(" ").includes("static, carousel, video"));
 
-  // The brief comes from IAP already validated, so its dialect is normalized
-  // rather than refused. This asserts the normalization survives the bundle and
-  // the JSON-string path, not just the unit test.
-  const dialect = await rpc("tools/call", {
+  // The two accepted spellings (a ratio suffix on the type, MST for the matrix
+  // mode) are normalized rather than refused. This asserts the normalization
+  // survives the bundle and the JSON-string path, not just the unit test.
+  const spelled = await rpc("tools/call", {
     name: "kie_validate_brief",
     arguments: {
       brief: JSON.stringify({
-        brief_metadata: { brief_id: "creative-001", asset_type: "static_4x5", mode: "MST_matrix_cell", confidence: "medium" },
+        brief_metadata: { brief_id: "creative-001", asset_type: "static_4x5", mode: "MST", confidence: "medium" },
         creative_specifications: { placement: "Feed" },
         visual_direction: { composition: "Approved subject in a neutral setting", imagery: "Accurate reference details and clear visual hierarchy" },
         testing_framework: { isolated_variable: "HK_Problem" },
@@ -339,8 +339,8 @@ try {
       }),
     },
   });
-  const dv = dialect.result?.structuredContent;
-  check("an IAP dialect brief renders instead of stopping", dv?.ok === true);
+  const dv = spelled.result?.structuredContent;
+  check("a brief in the accepted spellings renders instead of stopping", dv?.ok === true);
   check("static_4x5 is read as a static at 4:5", (dv?.warnings ?? []).join(" ").includes("4:5"));
 
   console.log("\n== Structured output and progress ==");

@@ -101,7 +101,7 @@ Use these artifacts at the mandatory gates:
 
 | Gate ID | Production evidence it needs |
 | --- | --- |
-| `iap_variables` | Brief and variable fidelity, technical delivery profile, source/crop/speed maps, sync, text fit, rights and actual-export measurements. |
+| `variable_codes` | Brief and variable fidelity, technical delivery profile, source/crop/speed maps, sync, text fit, rights and actual-export measurements. |
 | `communications` | Clear opening, concise supported message, useful evidence, coherent sequence, one intended action and accurate conditions. |
 | `sound_check` | Actual final audio comprehension, intelligible complete words and destination, plain-language understanding without production explanation, and accessible captions. |
 | `editorial_peer` | Actual encoded playback, listening and close inspection of cuts, B-roll, mix, captions and ending; specific defects resolved against the current files. |
@@ -119,7 +119,7 @@ This is a local orchestration standard. It does not add provider API fields, spe
 
 Finish the authorized edit, then create a local evidence bundle. Retain the exact master, approved brief, current spoken transcript, complete mixed voice, captions, edit decisions, source/rights map, delivery profile, approved registry snapshot, neutral blind packet and exact blind review copy. Prepare that packet/copy before reviews; the blind reviewer receives them only at the final gate.
 
-Use relative local paths inside the run. The registry is an approved JSON snapshot with `approved_codes`, pinned to its authoritative source in the source map. Do not turn a regex extraction, code template or remembered prefix into an allowed-code list. IAP identifiers and technical media variables are separate.
+Use relative local paths inside the run. The registry is an approved JSON snapshot with `approved_codes`, pinned to its authoritative source in the source map. Do not turn a regex extraction, code template or remembered prefix into an allowed-code list. Variable codes and technical media variables are separate.
 
 The profile declares expected format/timing, placement/safe regions, sound/delivery requirements, and `sound_check_required_facts` for message, benefit, action and essential conditions. These facts are declared before the lay review. Where no material condition exists, state that explicitly instead of inventing one.
 
@@ -149,7 +149,7 @@ The helper never creates a review, marks a gate PASS or overwrites an existing r
 
 | Gate | Required review |
 | --- | --- |
-| `iap_variables` | Check actual approved registry membership and brief variables; matrix isolation/locks where applicable; actual encoded format, duration, frame rate, dimensions, ratio, codec, colour, audio, word/caption/CTA fidelity, safe regions, source provenance, rights, source ranges and speed/sync map. Compare each technical value with the bound brief/profile and keep measurement evidence. |
+| `variable_codes` | Check actual approved registry membership and brief variables; matrix isolation/locks where applicable; actual encoded format, duration, frame rate, dimensions, ratio, codec, colour, audio, word/caption/CTA fidelity, safe regions, source provenance, rights, source ranges and speed/sync map. Compare each technical value with the bound brief/profile and keep measurement evidence. |
 | `communications` | Judge the actual spoken and visible message: relevant hook and payoff, supported promise, understandable mechanism or evidence, concise progression, one intended action, accurate destination and essential conditions. No invented results, testimony, urgency or prelaunch CRO/retention improvement. |
 | `sound_check` | The “12-Year-Old Sound Check”: an independent adult lay listener, or a declared audio-capable reviewer, hears the complete export once at 1x before reading the script. Capture unprompted answers: what is this, why does it matter, what should I do, and what conditions matter? Compare with the predeclared facts, then check captions and meaning muted at phone size. Do not recruit minors or equate one review with universal accessibility. |
 | `editorial_peer` | A colleague who did not produce or edit the candidate watches and hears the full actual export at 1x, reviews the phone-size muted version, checks every cut, B-roll, transitions, mix, captions, CTA and final word/tail, and closes specific timecoded defects. Identify human and agent reviewers accurately. |
@@ -179,12 +179,12 @@ Reusable procedures, templates, fixtures, shared learning and public summaries c
 
 ### Evidence contract
 
-`production-review.json` has `schema_version: 2`, a neutral asset ID, `artifacts`, `contributors`, `iap`, `production` and exactly five `gates`.
+`production-review.json` has `schema_version: 3`, a neutral asset ID, `artifacts`, `contributors`, `variables`, `production` and exactly five `gates`. A schema 2 record, the same contract with two fields under older names, still validates, so reviews already bound to it stay valid.
 
 - Required artifact roles: `master`, `brief`, `script`, `voice`, `captions`, `edl`, `sources`, `profile`, `registry`, `blind_packet`, `blind_copy`, `qa_report`. Each has a contained relative path and SHA256.
 - `qa_report` is the `mce.qa/1` file `qa-video.mjs <master> --out qa.json` writes. Its `sha256` must equal the master's and its verdict must be PASS or EXEMPT; otherwise review FAILs, and a missing report is NOT_CHECKED. Schema 1 records bound no QA report and are refused: prepare the candidate again.
-- Handoff: `write_receipt.py production-review.json --root RUN` validates the record again and, only when it is READY, writes `receipt.json` (`mce.receipt/1`) naming the review record, master, QA report and every bound file by sha256. A FAIL or NOT_CHECKED record writes nothing.
-- `contributors` declares actual producer/editor IDs. `iap` declares standard or matrix mode, exact registry codes, applicability decision/reason/reviewer and matrix-lock evidence where applicable. A standard brief with no IAP codes needs an explicit non-applicability decision; the technical and other gates still apply.
+- Handoff: `write_receipt.py production-review.json --root RUN` validates the record again and, only when it is READY, writes `receipt.json` (`mce.receipt/2`) naming the review record, master, QA report and every bound file by sha256. A FAIL or NOT_CHECKED record writes nothing.
+- `contributors` declares actual producer/editor IDs. `variables` declares standard or matrix mode, exact registry codes, applicability decision/reason/reviewer and matrix-lock evidence where applicable. A standard brief with no variable codes needs an explicit non-applicability decision; the technical and other gates still apply.
 - `production` records music selection or a specifically justified editorial dry exception, selected B-roll acceptance and a source/output speed map. Read [production-standard.md](../skills/ugc-creator-edit/references/production-standard.md). A normal-speed export is not permission to hide misleading source retiming.
 - The blind packet/copy are bound artifact roles before any review. The final gate must reference these exact hashes; swapping a newly hashed derivative cannot preserve an earlier verdict.
 - A PASS gate records reviewer, current master SHA256, context `bundle_sha256`, timezone-aware completion time, hashed evidence, required checks and no open blocking defects.
@@ -192,7 +192,7 @@ Reusable procedures, templates, fixtures, shared learning and public summaries c
 - Sound-check evidence also retains the first-exposure, unprimed listening declaration, four unprompted answers and comparison with the pinned facts.
 - Blind evidence retains the exact packet/copy hashes, exclusions, residual-cue review, freshness declaration, locked verdict and any later unblinding time.
 
-The context digest binds artifact role hashes **and** the contributors, IAP and production decisions. It excludes gate verdicts to avoid recursion. The validator exposes `bundle_hash(record)` for preparing the value; reviewers must bind their own verdict after checking the current files and context.
+The context digest binds artifact role hashes **and** the contributors, variable and production decisions. It excludes gate verdicts to avoid recursion. The validator exposes `bundle_hash(record)` for preparing the value; reviewers must bind their own verdict after checking the current files and context.
 
 All applicable technical variables must appear in the bound profile/source/measurement evidence. The validator checks local files, registry membership, record completeness, speed-map arithmetic, hashes and reviewer attestations. It does not independently probe every media property or certify what a reviewer perceived. Never describe a structured-record PASS as proof of perceptual quality.
 

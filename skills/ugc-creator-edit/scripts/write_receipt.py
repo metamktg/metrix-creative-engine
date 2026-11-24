@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the handoff receipt (mce.receipt/1) for a reviewed candidate; never approve work.
+"""Write the handoff receipt (mce.receipt/2) for a reviewed candidate; never approve work.
 
 Usage: write_receipt.py production-review.json --root RUN [--out receipt.json]
 
@@ -10,12 +10,13 @@ bound artifact by role, path and sha256, so what was handed off can be traced
 back to the exact master, QA report and review that cleared it. A FAIL or
 NOT_CHECKED record writes nothing and exits with the validator's code.
 Existing output is preserved. Paths stay inside RUN, without links.
+mce.receipt/2 carries the record's variable mode and codes under "variables".
 """
 from pathlib import Path, PurePosixPath, PureWindowsPath
 import argparse, datetime as dt, json, sys
-from validate_review_gates import ARTIFACT_ROLES, Validator, file_hash
+from validate_review_gates import ARTIFACT_ROLES, Validator, file_hash, variables_key
 
-SCHEMA = "mce.receipt/1"
+SCHEMA = "mce.receipt/2"
 
 
 def contained_output(v, out):
@@ -75,7 +76,7 @@ def main(argv=None):
         "qa_report": artifacts["qa_report"],
         "deliverables": [{"role": role, "path": artifacts[role]["path"], "sha256": artifacts[role]["sha256"].lower()}
                          for role in ARTIFACT_ROLES],
-        "iap": {"mode": record["iap"].get("mode"), "codes": record["iap"].get("codes")},
+        "variables": {"mode": record[variables_key(record)].get("mode"), "codes": record[variables_key(record)].get("codes")},
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("x", encoding="utf-8", newline="\n") as stream:

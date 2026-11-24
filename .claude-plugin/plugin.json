@@ -1,6 +1,6 @@
 {
   "name": "metrix-creative-engine",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Turn an approved Metrix creative brief into finished ad assets through Kie.ai. The brief's declared format picks the route; the engine's skills render, assemble and review in order, and an MCP server gives them typed generation tools and a free brief check.",
   "author": {
     "name": "Meta Marketing Agency",

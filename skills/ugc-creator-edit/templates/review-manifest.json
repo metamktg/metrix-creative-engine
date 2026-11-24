@@ -20,7 +20,7 @@
       "editor-001"
     ]
   },
-  "iap": {
+  "variables": {
     "mode": "standard",
     "codes": [],
     "applicability": {

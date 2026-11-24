@@ -1,6 +1,6 @@
 {
   "name": "metrix-creative-engine",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "description": "Claude Code plugin, MCP server and skills for generating ad creative through Kie.ai",
   "type": "module",

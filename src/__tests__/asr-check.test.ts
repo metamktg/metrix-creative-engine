@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  chainSummary, checkStage, finalSilenceStart, hygiene, isJunk, loadAliases, parseWhisperCli, parseWordsFile,
+  chainSummary, checkStage, finalSilenceStart, hygiene, installedPath, isJunk, loadAliases, parseWhisperCli, parseWordsFile, readInstalled,
   // @ts-expect-error plain ESM helper without type declarations
 } from "../../skills/metrix-video-assembly/scripts/asr-check.mjs";
 
@@ -163,5 +163,14 @@ describe.skipIf(!ffmpeg)("asr-check CLI (saved words, real ffmpeg audio)", () =>
     const r = run(["--script", p("script.txt"), "--words", `nope=${p("good.jsonl")}`, `voice=${p("voice.wav")}`]);
     expect(r.status).toBe(2);
     expect(r.stderr).toMatch(/not an input/);
+  });
+});
+
+describe("tool install record", () => {
+  it("comes from MCE_TOOLS_INSTALLED or MCE_TOOLS_DIR, with no machine default", () => {
+    expect(installedPath({})).toBeNull();
+    expect(readInstalled(installedPath({}))).toBeNull();
+    expect(installedPath({ MCE_TOOLS_DIR: "tools-root" })).toBe(path.join("tools-root", "INSTALLED.json"));
+    expect(installedPath({ MCE_TOOLS_DIR: "tools-root", MCE_TOOLS_INSTALLED: "elsewhere.json" })).toBe("elsewhere.json");
   });
 });

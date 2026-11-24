@@ -97,7 +97,7 @@ For selected effects, specify timecode, purpose, properties/transition, duration
 
 ## 7. Complete the five presentation gates
 
-Every finished creator-led UGC/video candidate must pass all five reviews: **IAP variable validation, communications effectiveness, the 12-Year-Old Sound Check, editorial peer review, and blind review**. Use the exact checks and evidence contract in [review-gates.md](references/review-gates.md). Technical media variables and IAP registry codes are separate checks; neither can substitute for the other.
+Every finished creator-led UGC/video candidate must pass all five reviews: **variable-code validation, communications effectiveness, the 12-Year-Old Sound Check, editorial peer review, and blind review**. Use the exact checks and evidence contract in [review-gates.md](references/review-gates.md). Technical media variables and registry variable codes are separate checks; neither can substitute for the other.
 
 Bind every verdict to the current export and its brief, script, voice, captions, edit decisions, source map, delivery profile and registry snapshot. Run `scripts/validate_review_gates.py` on `production-review.json` before client-ready presentation. Missing, pending, failed, unavailable or stale evidence blocks release. A successful render or technical/frame check cannot satisfy actual listening, editorial independence or a blind assessment.
 

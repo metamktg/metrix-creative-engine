@@ -40,7 +40,7 @@ export const KIE_RESOURCES: readonly KieResource[] = [
     uri: "kie://production-review-standard",
     title: "UGC and video production review standard",
     description:
-      "The evergreen production and presentation gate: audio, music rights, pacing, B-roll quality, technical and IAP variables, messaging, plain-language sound check, editorial peer review and a separate blind review. Agent-side evidence, not provider-side enforcement.",
+      "The evergreen production and presentation gate: audio, music rights, pacing, B-roll quality, technical variables and variable codes, messaging, plain-language sound check, editorial peer review and a separate blind review. Agent-side evidence, not provider-side enforcement.",
     body: productionStandard,
   },
   {

@@ -31,7 +31,7 @@ listening acceptance before dependent lip-sync spend.
 
 ## The brief-alignment check
 
-Runs after the render, never before. The brief is IAP-validated, so this stage
+Runs after the render, never before. The brief owns the strategy, so this stage
 does not ask whether the brief was right; it asks whether the asset is what the
 brief specified. Six rows, each PASS or FAIL with a one-line reason; row 6 applies to comparisons only. Do not
 average them into a score that hides which one failed.
@@ -136,8 +136,8 @@ what the creative was.
 `{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`
 
 This already contains the creative concept codes. Do not shorten it to the bare
-concept id: `metrix-mst-creative-scan` parses the full convention, and an asset
-it cannot parse cannot be scanned, which means it cannot be attributed.
+concept id: results are attributed by parsing the full convention, and an asset
+whose name does not parse cannot be attributed.
 
 Set it at download either way:
 

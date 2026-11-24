@@ -51,10 +51,10 @@ def make_valid_record(root: Path) -> dict:
                        "results": [{"check": "format", "verdict": "PASS"}]}
         artifacts[role] = write_artifact(root, "artifacts/" + role + ".bin", content)
     record = {
-        "schema_version": 2,
+        "schema_version": 3,
         "artifacts": artifacts,
         "contributors": {"producer_ids": ["producer-01"], "editor_ids": ["editor-01"]},
-        "iap": {
+        "variables": {
             "mode": "standard", "codes": ["CODE_A"],
             "applicability": {"decision": "applicable", "reason": "Use the pinned generic test stack.",
                               "reviewer_id": "technical-reviewer"},
@@ -73,7 +73,7 @@ def make_valid_record(root: Path) -> dict:
         "gates": {},
     }
     identities = {
-        "iap_variables": ("technical-reviewer", "automated"),
+        "variable_codes": ("technical-reviewer", "automated"),
         "communications": ("copy-reviewer", "human"),
         "sound_check": ("lay-reviewer", "human"),
         "editorial_peer": ("editorial-reviewer", "human"),
@@ -243,6 +243,27 @@ class ReviewGateTests(unittest.TestCase):
         self.record["schema_version"] = 1
         self.assertIn("Schema 1 binds no QA report", json.dumps(self.verdict("FAIL")))
 
+    def test_schema_2_record_still_validates_under_its_own_names(self):
+        # Reviews bound before schema 3 stay valid: the same contract, two fields under older names.
+        self.assertEqual(gate.SCHEMA_2_NAMES, {"variables": "iap", "variable_codes": "iap_variables"})
+        old = copy.deepcopy(self.record)
+        old["schema_version"] = 2
+        old[gate.SCHEMA_2_NAMES["variables"]] = old.pop("variables")
+        old["gates"][gate.SCHEMA_2_NAMES["variable_codes"]] = old["gates"].pop("variable_codes")
+        rebind(old)
+        self.verdict("READY", old)
+        self.assertNotEqual(gate.bundle_hash(old), gate.bundle_hash(self.record))
+        old[gate.SCHEMA_2_NAMES["variables"]]["codes"] = ["CODE_B"]
+        self.verdict("FAIL", old)
+
+    def test_schema_3_reads_only_the_schema_3_names(self):
+        renamed_gate = copy.deepcopy(self.record)
+        renamed_gate["gates"][gate.SCHEMA_2_NAMES["variable_codes"]] = renamed_gate["gates"].pop("variable_codes")
+        self.verdict("FAIL", renamed_gate)
+        renamed_section = copy.deepcopy(self.record)
+        renamed_section[gate.SCHEMA_2_NAMES["variables"]] = renamed_section.pop("variables")
+        self.verdict("NOT_CHECKED", renamed_section)
+
     def test_tampered_master_fails(self):
         (self.root / self.record["artifacts"]["master"]["path"]).write_bytes(b"changed")
         self.verdict("FAIL")
@@ -270,7 +291,7 @@ class ReviewGateTests(unittest.TestCase):
             lambda r: r["production"]["speed"]["map"].append(
                 {"kind": "broll", "source_in": 0, "source_out": 2,
                  "output_in": 0, "output_out": 1, "speed": 2}),
-            lambda r: r["iap"].update(codes=["CODE_B"]),
+            lambda r: r["variables"].update(codes=["CODE_B"]),
             lambda r: r["contributors"]["editor_ids"].append("editor-02"),
         ]
         for mutate in mutations:
@@ -279,22 +300,22 @@ class ReviewGateTests(unittest.TestCase):
             self.verdict("FAIL", changed)
 
     def test_registry_membership_is_exact_not_prefix_matching(self):
-        self.record["iap"]["codes"] = ["CODE_A_unknown"]
+        self.record["variables"]["codes"] = ["CODE_A_unknown"]
         rebind(self.record)
         self.verdict("FAIL")
 
     def test_empty_standard_codes_need_explicit_applicability(self):
-        self.record["iap"]["codes"] = []
-        self.record["iap"]["applicability"]["decision"] = "not_applicable"
+        self.record["variables"]["codes"] = []
+        self.record["variables"]["applicability"]["decision"] = "not_applicable"
         rebind(self.record)
         self.verdict("READY")
-        self.record["iap"]["applicability"]["reason"] = ""
+        self.record["variables"]["applicability"]["reason"] = ""
         rebind(self.record)
         self.verdict("FAIL")
 
     def test_matrix_cannot_bypass_variable_or_lock_check(self):
-        self.record["iap"]["mode"] = "matrix"
-        self.record["iap"]["matrix_locks_verified"] = False
+        self.record["variables"]["mode"] = "matrix"
+        self.record["variables"]["matrix_locks_verified"] = False
         rebind(self.record)
         self.verdict("FAIL")
 
@@ -317,12 +338,12 @@ class ReviewGateTests(unittest.TestCase):
         self.verdict("FAIL")
 
     def test_sound_reviewer_cannot_be_an_applicability_reviewer(self):
-        self.record["iap"]["applicability"]["reviewer_id"] = "lay-reviewer"
+        self.record["variables"]["applicability"]["reviewer_id"] = "lay-reviewer"
         rebind(self.record)
         self.verdict("FAIL")
 
     def test_blind_reviewer_cannot_be_an_applicability_reviewer(self):
-        self.record["iap"]["applicability"]["reviewer_id"] = "blind-reviewer"
+        self.record["variables"]["applicability"]["reviewer_id"] = "blind-reviewer"
         rebind(self.record)
         self.verdict("FAIL")
 
@@ -352,7 +373,7 @@ class ReviewGateTests(unittest.TestCase):
         self.verdict("FAIL")
 
     def test_case_and_whitespace_cannot_alias_context_reviewers(self):
-        self.record["iap"]["applicability"]["reviewer_id"] = " BLIND-REVIEWER "
+        self.record["variables"]["applicability"]["reviewer_id"] = " BLIND-REVIEWER "
         rebind(self.record)
         self.verdict("FAIL")
 

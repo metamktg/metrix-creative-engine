@@ -4,7 +4,7 @@
 This is a local, stdlib-only evidence/attestation validator. It does not listen,
 watch, recruit reviewers, run commands, contact providers, or certify perception.
 
-Record contract (schema_version=2):
+Record contract (schema_version=3):
   artifacts: master, brief, script, voice, captions, edl, sources, profile,
              registry, blind_packet, blind_copy, qa_report ->
              {path: relative local file, sha256: lowercase hex}
@@ -13,21 +13,24 @@ Record contract (schema_version=2):
   master the finished-file QA failed, or never checked, cannot pass review.
   Schema 1 bound no QA report and is refused: prepare the candidate again.
   contributors: {producer_ids: [id], editor_ids: [id]}
-  iap: {mode: standard|matrix, codes: [exact approved code],
-        applicability: {decision: applicable|not_applicable, reason, reviewer_id},
-        matrix_locks_verified: bool|null}
+  variables: {mode: standard|matrix, codes: [exact approved code],
+              applicability: {decision: applicable|not_applicable, reason, reviewer_id},
+              matrix_locks_verified: bool|null}
   production: see PRODUCTION_CONTRACT below.
-  gates: exactly iap_variables, communications, sound_check, editorial_peer,
+  gates: exactly variable_codes, communications, sound_check, editorial_peer,
          blind_review. PASS records need reviewer {id, kind, capability?},
          master_sha256, bundle_sha256, completed_at (timezone-aware ISO8601),
          evidence [{path, sha256, method}], checks {required_name: true},
          blocking_defects: []. Other states are FAIL, PENDING, UNAVAILABLE,
          NOT_CHECKED. Missing evidence is NOT_CHECKED, never a silent pass.
+  Schema 2 is this contract with two fields under older names
+  (SCHEMA_2_NAMES). It still validates under those names, so reviews already
+  bound to a schema 2 record stay valid; prepare_review_record.py writes 3.
 
 The profile artifact is JSON with sound_check_required_facts containing nonempty
 string arrays for message, benefit, action, conditions. The registry artifact is
 JSON with approved_codes, an array of exact nonempty strings. Nothing invents or
-normalizes IAP codes by regular expression.
+normalizes variable codes by regular expression.
 
 Gate sound_check additionally contains sound_check:
  {full_listen:true, playback_speed:1, script_primed:false, first_exposure:true,
@@ -76,7 +79,7 @@ ARTIFACT_ROLES = (
     "profile", "registry", "blind_packet", "blind_copy", "qa_report",
 )
 GATE_CHECKS = {
-    "iap_variables": (
+    "variable_codes": (
         "variables_validated", "technical_verified", "music_reviewed",
         "broll_reviewed", "speed_verified",
     ),
@@ -98,6 +101,8 @@ GATE_CHECKS = {
         "cta_clear", "no_blocking_defects",
     ),
 }
+# Schema 2 is schema 3 with two fields under the names it used before the rename.
+SCHEMA_2_NAMES = {"variables": "iap", "variable_codes": "iap_variables"}
 METHODS = {
     "artifact_check", "text_review", "frame_inspection", "full_audio_1x",
     "full_av_1x", "muted_phone",
@@ -127,20 +132,38 @@ PRODUCTION_CONTRACT = """production:
  never executable commands."""
 
 
+def _schema_2(record) -> bool:
+    return isinstance(record, dict) and type(record.get("schema_version")) is int and record["schema_version"] == 2
+
+
+def variables_key(record) -> str:
+    """The record's variable-code section: `variables`, or its schema 2 name."""
+    return SCHEMA_2_NAMES["variables"] if _schema_2(record) else "variables"
+
+
+def gate_checks(record) -> dict:
+    """GATE_CHECKS under the gate names of the record's own schema."""
+    if not _schema_2(record):
+        return GATE_CHECKS
+    return {SCHEMA_2_NAMES.get(name, name): checks for name, checks in GATE_CHECKS.items()}
+
+
 def bundle_hash(record: dict) -> str:
     """Hash the candidate artifact digests AND its production/review context.
 
-    Payload = {artifacts:{required role:sha256.lower()}, contributors, iap,
-    production}; JSON is sort_keys=True, separators=(',', ':'), ensure_ascii=True,
+    Payload = {artifacts:{required role:sha256.lower()}, contributors, variables
+    (under its schema 2 name in a schema 2 record), production}; JSON is
+    sort_keys=True, separators=(',', ':'), ensure_ascii=True,
     allow_nan=False, UTF8 encoded. Gates are excluded to avoid recursion.
     Moving the complete run to another root does not change the binding. Relative
     path changes within production decisions do require reaffirmed reviews.
     """
     artifacts = record["artifacts"]
+    key = variables_key(record)
     data = {
         "artifacts": {role: artifacts[role]["sha256"].lower() for role in ARTIFACT_ROLES},
         "contributors": record["contributors"],
-        "iap": record["iap"],
+        key: record[key],
         "production": record["production"],
     }
     return hashlib.sha256(
@@ -204,6 +227,7 @@ class Validator:
         self.paths = {}
         self.audio_reviewers = set()
         self.unsafe_root = False
+        self.checks_by_gate = GATE_CHECKS
         given = Path(root).absolute()
         # A junction or symlink in the ancestry of the path the caller typed
         # (for example a C:\ junction onto an X:\ checkout) describes how the
@@ -425,9 +449,9 @@ class Validator:
         if type(version) is int and version == 1:
             self.issue("FAIL", "schema_version",
                        "Schema 1 binds no QA report, so a master that failed finished-file QA could pass. "
-                       "Run qa-video.mjs --out on the master and prepare the candidate again as schema 2.")
+                       "Run qa-video.mjs --out on the master and prepare the candidate again as schema 3.")
         else:
-            self.require(type(version) is int and version == 2, "schema_version", "Unsupported review schema.")
+            self.require(type(version) is int and version in (2, 3), "schema_version", "Unsupported review schema.")
         artifacts = record.get("artifacts")
         if not isinstance(artifacts, dict):
             self.issue("NOT_CHECKED", "artifacts", "Current candidate artifact bindings are missing.")
@@ -444,7 +468,7 @@ class Validator:
         self.qa_report(self.json_file(self.paths.get("qa_report"), "artifacts.qa_report"), artifacts)
         registry = self.json_file(self.paths.get("registry"), "artifacts.registry")
         profile = self.json_file(self.paths.get("profile"), "artifacts.profile")
-        self.iap(record.get("iap"), registry)
+        self.variables(record.get(variables_key(record)), registry, variables_key(record))
         self.production(record.get("production"), profile)
         contributors = record.get("contributors")
         contributor_ids = set()
@@ -462,11 +486,12 @@ class Validator:
         if not isinstance(gates, dict):
             self.issue("NOT_CHECKED", "gates", "Mandatory review gate records are missing.")
             gates = {}
-        unknown = set(gates) - set(GATE_CHECKS)
+        self.checks_by_gate = gate_checks(record)
+        unknown = set(gates) - set(self.checks_by_gate)
         self.require(not unknown, "gates", "Unknown gate names are not allowed.")
         ids = {}
         completed = {}
-        for name in GATE_CHECKS:
+        for name in self.checks_by_gate:
             gate = gates.get(name)
             if gate is None:
                 self.issue("NOT_CHECKED", "gates." + name, "This mandatory gate has not been performed.")
@@ -480,8 +505,8 @@ class Validator:
                          "Editorial peer must not be the producer or editor.")
         production = record.get("production")
         music = production.get("music") if isinstance(production, dict) else None
-        iap = record.get("iap")
-        applicability = iap.get("applicability") if isinstance(iap, dict) else None
+        variables = record.get(variables_key(record))
+        applicability = variables.get("applicability") if isinstance(variables, dict) else None
         context_reviewers = set()
         for decision in (applicability, music):
             if isinstance(decision, dict) and _text(decision.get("reviewer_id")):
@@ -528,9 +553,9 @@ class Validator:
             self.blind(gates["blind_review"], completed, artifacts)
         return self.result()
 
-    def iap(self, data, registry):
+    def variables(self, data, registry, field="variables"):
         if not isinstance(data, dict):
-            self.issue("NOT_CHECKED", "iap", "Variable applicability and registry decisions are missing.")
+            self.issue("NOT_CHECKED", field, "Variable applicability and registry decisions are missing.")
             return
         approved = registry.get("approved_codes") if isinstance(registry, dict) else None
         if registry is None:
@@ -541,23 +566,23 @@ class Validator:
             return
         codes = data.get("codes")
         if not _strings(codes, allow_empty=True) or len(set(codes)) != len(codes):
-            self.issue("FAIL", "iap.codes", "IAP codes must be an explicit unique string list.")
+            self.issue("FAIL", field + ".codes", "Variable codes must be an explicit unique string list.")
             return
-        self.require(set(codes).issubset(set(approved)), "iap.codes",
+        self.require(set(codes).issubset(set(approved)), field + ".codes",
                      "One or more codes are not members of the pinned approved registry.")
         mode = data.get("mode")
-        self.require(mode in ("standard", "matrix"), "iap.mode", "Mode must be standard or matrix.")
+        self.require(mode in ("standard", "matrix"), field + ".mode", "Mode must be standard or matrix.")
         decision = data.get("applicability", {})
         if not isinstance(decision, dict):
             decision = {}
         self.require(_text(decision.get("reason")) and _text(decision.get("reviewer_id")),
-                     "iap.applicability", "Variable applicability needs an explicit reason and reviewer.")
+                     field + ".applicability", "Variable applicability needs an explicit reason and reviewer.")
         expected = "applicable" if codes else "not_applicable"
-        self.require(decision.get("decision") == expected, "iap.applicability.decision",
+        self.require(decision.get("decision") == expected, field + ".applicability.decision",
                      "Variable applicability contradicts the declared code list.")
         if mode == "matrix":
-            self.require(bool(codes), "iap.codes", "Matrix work cannot omit the isolated IAP variable.")
-            self.require(data.get("matrix_locks_verified") is True, "iap.matrix_locks_verified",
+            self.require(bool(codes), field + ".codes", "Matrix work cannot omit the code of the isolated variable.")
+            self.require(data.get("matrix_locks_verified") is True, field + ".matrix_locks_verified",
                          "Matrix isolation and locked variables must be verified.")
 
     def gate(self, name, gate, artifacts, bundle):
@@ -593,9 +618,9 @@ class Validator:
             self.issue("NOT_CHECKED", field + ".bundle_sha256", "Current complete artifact/context binding is unavailable.")
         checks = gate.get("checks")
         if isinstance(checks, dict):
-            self.require(not (set(checks) - set(GATE_CHECKS[name])), field + ".checks",
+            self.require(not (set(checks) - set(self.checks_by_gate[name])), field + ".checks",
                          "Unknown checklist names do not belong to this versioned gate.")
-        self.truth_checks(checks, GATE_CHECKS[name], field + ".checks")
+        self.truth_checks(checks, self.checks_by_gate[name], field + ".checks")
         defects = gate.get("blocking_defects")
         self.require(isinstance(defects, list) and not defects, field + ".blocking_defects",
                      "A passing gate must explicitly have no open blocking defects.")

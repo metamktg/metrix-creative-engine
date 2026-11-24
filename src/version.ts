@@ -4,4 +4,4 @@
  * differ. Claude Code compares the plugin version to decide whether an
  * installed copy is current, so a release that changes what users run bumps it.
  */
-export const ENGINE_VERSION = "0.2.1";
+export const ENGINE_VERSION = "0.3.0";

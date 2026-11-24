@@ -28,6 +28,12 @@ and fixtures stay anonymous; never populate the committed example with client
 records. These workflow instructions add no spend or publishing authority and do
 not change the raw generation API.
 
+The engine stands on its own. It starts at a brief in its own input format
+(`briefSchema` in `src/brief.ts`), and no tracked file names another product,
+its repository, site or skills, or a folder on one machine;
+`npm run check:plugin` fails if one does. A line that has to carry such a name
+is listed in `keptOnPurpose` in `scripts/check-plugin.mjs` with its reason.
+
 Before dependent approved-voice creator lip sync, validate the current private
 preproduction packet with `kie_validate_ugc_preproduction` and submit through
 `kie_create_ugc_lipsync`, or the bundled client's `ugc-check` / `ugc-start`.
@@ -45,7 +51,8 @@ from approved-final delivery. This is not a background watcher.
 `npm run verify` is the gate. It runs, in order: `check:copies` (every byte copy
 equals its canonical file), `check:plugin` (the plugin manifest, marketplace
 entry, MCP definitions, hook and skills agree with each other and with the files
-they name), `check:production-standard` (the generated standard equals its two
+they name, no tracked file holds an absolute path, and no tracked file names
+another product), `check:production-standard` (the generated standard equals its two
 sources), `typecheck`, `test` (vitest), `check:bundle` (the committed
 `server/` equals a fresh build of `src/`), `check:mcp-surface` (drives the
 committed bundle and checks its advertised tools, resources and prompts),

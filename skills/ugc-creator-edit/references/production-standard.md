@@ -96,7 +96,7 @@ Use these artifacts at the mandatory gates:
 
 | Gate ID | Production evidence it needs |
 | --- | --- |
-| `iap_variables` | Brief and variable fidelity, technical delivery profile, source/crop/speed maps, sync, text fit, rights and actual-export measurements. |
+| `variable_codes` | Brief and variable fidelity, technical delivery profile, source/crop/speed maps, sync, text fit, rights and actual-export measurements. |
 | `communications` | Clear opening, concise supported message, useful evidence, coherent sequence, one intended action and accurate conditions. |
 | `sound_check` | Actual final audio comprehension, intelligible complete words and destination, plain-language understanding without production explanation, and accessible captions. |
 | `editorial_peer` | Actual encoded playback, listening and close inspection of cuts, B-roll, mix, captions and ending; specific defects resolved against the current files. |

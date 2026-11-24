@@ -109,11 +109,11 @@ export function registerKiePrompts(server: McpServer): void {
     {
       title: "Hand off reviewed creative",
       description:
-        "The last stage: write the handoff for a candidate whose review record is READY. Run write_receipt.py on the review record first; it re-validates the record and writes the mce.receipt/1 receipt naming the master, its QA report and every bound file by sha256. Hand off only what a receipt covers.",
+        "The last stage: write the handoff for a candidate whose review record is READY. Run write_receipt.py on the review record first; it re-validates the record and writes the mce.receipt/2 receipt naming the master, its QA report and every bound file by sha256. Hand off only what a receipt covers.",
       argsSchema: {
         ...briefArg,
         audience: z.enum(["strategist", "media_buyer", "client"]).optional().describe("Who reads the handoff. Default: strategist, with a top section a client can read."),
-        receipt: z.string().optional().describe("The mce.receipt/1 JSON for the handoff, as text."),
+        receipt: z.string().optional().describe("The mce.receipt/2 JSON for the handoff, as text."),
       },
     },
     ({ brief, audience, receipt }) => {

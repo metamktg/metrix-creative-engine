@@ -28,7 +28,7 @@
  * and in src/__tests__/fixtures/eye-state/calibration.json.
  *
  * The scorer is Python because MediaPipe is: it runs from the interpreter in MCE_PY312, or the
- * venv312 entry of INSTALLED.json (MCE_INSTALLED, default X:/Metrix/tools/INSTALLED.json). CI has
+ * venv312 entry of INSTALLED.json (MCE_INSTALLED, else INSTALLED.json in MCE_TOOLS_DIR). CI has
  * neither; the tests read a committed scores fixture.
  *
  * CLI: node eye-state.mjs <clip> (--scores s.json | --out s.json) --range a-b [--range c-d]...
@@ -208,7 +208,8 @@ export function rangesFromShots(shots, file) {
 export function resolvePython(env = process.env) {
   const exists = (p) => p && fs.existsSync(p) ? p : null;
   if (env.MCE_PY312) return exists(env.MCE_PY312);
-  const installed = env.MCE_INSTALLED || "X:/Metrix/tools/INSTALLED.json";
+  const installed = env.MCE_INSTALLED || (env.MCE_TOOLS_DIR ? path.join(env.MCE_TOOLS_DIR, "INSTALLED.json") : null);
+  if (!installed) return null;
   try {
     const j = JSON.parse(fs.readFileSync(installed, "utf8"));
     const venv = (j.tools || []).find((t) => t.name === "venv312")?.file_path;
@@ -225,7 +226,7 @@ export function sha256File(file) {
 
 /** Spawn eye_state.py on a clip; returns the record (also written to out). */
 export function scoreClip(clip, { out, python = resolvePython(), model, width } = {}) {
-  if (!python) throw new MediaError("NOSCORES", "no Python 3.12 with MediaPipe found (set MCE_PY312 or MCE_INSTALLED); pass a scores file instead");
+  if (!python) throw new MediaError("NOSCORES", "no Python 3.12 with MediaPipe found (set MCE_PY312, MCE_INSTALLED or MCE_TOOLS_DIR); pass a scores file instead");
   if (!out) throw new MediaError("BADARG", "scoreClip needs out (a .json path)");
   const args = ["-I", SCRIPT, path.resolve(clip), "--out", path.resolve(out)];
   if (model) args.push("--model", model);

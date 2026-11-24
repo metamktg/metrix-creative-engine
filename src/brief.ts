@@ -2,7 +2,7 @@
  * The brief input contract.
  *
  * Until this existed the engine read a brief by convention: a field was
- * whatever the brief builder happened to emit, and a mismatch surfaced at
+ * whatever the brief's author happened to write, and a mismatch surfaced at
  * render time, mid-spend, as a confused prompt rather than a refusal. The first
  * real brief package this engine was pointed at broke four contracts at once
  * and every one of them would have been caught here, at the door, for free.
@@ -204,24 +204,17 @@ function crossFieldChecks(brief: Brief): { errors: string[]; warnings: string[] 
 }
 
 /**
- * The brief arrives from `metrix-brief-builder`, which passed its own QA before
- * it reached us. Its vocabulary is not always this engine's vocabulary: IAP
- * writes `static_4x5` for a 4:5 static and `MST_matrix_cell` for a matrix cell,
- * and neither is a value the enums carry.
- *
- * Rejecting those was wrong. A brief that IAP validated does not need this
- * engine's discernment; it needs rendering. So a known dialect difference is
- * NORMALIZED and reported as a note, and only a genuinely unroutable type stops.
+ * Two spellings read as the engine's own values, each reported as a note and
+ * never silently. An asset type with a ratio suffix (`static_4x5`) is that type
+ * at that ratio, because the ratio is a parameter this engine already sets.
+ * `MST` names the matrix mode by the test it runs.
  *
  * Note what is deliberately NOT here: a fuzzy nearest-match. `static_4x5` maps
- * to `static` because the suffix is a ratio this engine already sets as a
- * parameter, not because the strings look similar.
+ * to `static` because of what the suffix means, not because the strings look
+ * similar, and a mode the engine does not name is refused with the two it does.
  */
 const MODE_ALIASES: Record<string, (typeof BRIEF_MODES)[number]> = {
-  mst_matrix_cell: "matrix",
-  matrix_cell: "matrix",
   mst: "matrix",
-  general: "standard",
 };
 
 /** `4x5` / `4_5` / `4-5` all mean the same ratio. */
@@ -275,6 +268,9 @@ export function validateBrief(rawInput: unknown): BriefVerdict {
       // Name the closed set rather than just rejecting, so the fix is obvious.
       if (issue.code === "invalid_enum_value" && path.endsWith("asset_type")) {
         return `${path}: "${String((issue as { received?: unknown }).received)}" has no route. Mapped types are ${ASSET_TYPES.join(", ")}. An unmapped type stops rather than falling back to the nearest one.`;
+      }
+      if (issue.code === "invalid_enum_value" && path === "brief_metadata.mode") {
+        return `${path}: "${String((issue as { received?: unknown }).received)}" is not a mode. Modes are ${BRIEF_MODES.join(", ")}, and MST reads as matrix.`;
       }
       return `${path}: ${issue.message}`;
     });

@@ -5,10 +5,10 @@ description: Assemble finished video and motion-graphic ads from a Metrix creati
 
 # metrix-video-assembly
 
-The post-production stage of the creative engine. `metrix-brief-builder` writes
-the brief, `metrix-ad-creative` generates stills and clips through Kie.ai, and
-this skill turns them into the ad that runs: sequenced, typeset, scored, and
-rendered at the brief's ratio.
+The post-production stage of the creative engine. The brief specifies the ad,
+`metrix-ad-creative` generates stills and clips through Kie.ai, and this skill
+turns them into the ad that runs: sequenced, typeset, scored, and rendered at
+the brief's ratio.
 
 Generation and assembly have different responsibilities. Set exact copy,
 branding, captions and evidence in post rather than trusting generated type.
@@ -385,7 +385,7 @@ kit URL, client file), every check verdict, and anything you could not verify.
 
 Name for the concept: `skyline-print-gift-hook-4x5.mp4`. Inside a live Matrix
 Sprint Test only, use `testing_framework.matrix_naming_convention` exactly,
-because `metrix-mst-creative-scan` parses it.
+because results are attributed by parsing it.
 
 ## Inside a Matrix Sprint Test
 
@@ -548,7 +548,9 @@ node scripts/media/eye-state.mjs <clip> (--scores <clip>.eyes.json | --out <clip
   `eye_state.py` (MediaPipe Face Landmarker blink blendshapes on every decoded
   frame, no fps filter; `mce.eyestate/1`). It runs in the Python 3.12 venv that
   holds MediaPipe: `MCE_PY312`, else the `venv312` entry of `INSTALLED.json`
-  (its `Scripts/python.exe` on Windows, `bin/python` elsewhere). `--out` without
+  (`MCE_INSTALLED`, else `INSTALLED.json` in `MCE_TOOLS_DIR`; its
+  `Scripts/python.exe` on Windows, `bin/python` elsewhere). The face model is
+  `MCE_FACE_MODEL`, else `face_landmarker.task` in `MCE_MODELS_DIR`. `--out` without
   `--scores` scores the clip itself when that venv is found; `--scores` refuses a
   record made from a different file. Then judge the kept source ranges
   (`--range`, the timeline shot's `src_in`-`src_out`) and any cut inside them
@@ -612,8 +614,8 @@ earlier in the run (exit 3). `status` prints the chain; `verify` re-hashes every
 
 - Invent a claim, a number, a testimonial or a rating. Connective framing is
   free; assertions come from the brief or the kit, with their evidence.
-- Write the copy. The hook, CTA and headline come from the brief;
-  `copywriting-meta-ads` writes them when they are missing.
+- Write the copy. The hook, CTA and headline come from the brief; when one is
+  missing, ask the brief's owner for it.
 - Put generated type in the frame. Type is set by the composition.
 - Use music it cannot name a licence for.
 - Call a render done without looking at its stills.

@@ -14,7 +14,7 @@ increasing) with output_face_blendshapes on, one face. Each frame records
 with the two blink scores null when no face was found. Nothing here judges the scores: the gate
 lives in eye-state.mjs, which reads this file.
 
-Runs in the 3.12 venv (X:/Metrix/venv312) that holds mediapipe; it is not needed on CI, where
+Runs in the Python 3.12 venv that holds mediapipe (see eye-state.mjs); it is not needed on CI, where
 the tests read a committed scores fixture instead. ffmpeg and ffprobe come from PATH, or from
 MCE_FFMPEG and MCE_FFPROBE, as in probe.mjs.
 
@@ -176,9 +176,14 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("clip")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--model", default=os.environ.get("MCE_FACE_MODEL", "X:/Metrix/models/face_landmarker.task"))
+    models_dir = os.environ.get("MCE_MODELS_DIR")
+    ap.add_argument("--model", default=os.environ.get("MCE_FACE_MODEL") or (os.path.join(models_dir, "face_landmarker.task") if models_dir else None),
+                    help="the Face Landmarker model (default: MCE_FACE_MODEL, else face_landmarker.task in MCE_MODELS_DIR)")
     ap.add_argument("--width", type=int, default=None, help="score a downscaled copy this wide (default: source size)")
     a = ap.parse_args(argv)
+    if not a.model:
+        print("eye_state: NOMODEL no face model: pass --model, or set MCE_FACE_MODEL or MCE_MODELS_DIR", file=sys.stderr)
+        return 2
     try:
         rec = score_clip(a.clip, a.model, a.width, os.environ.get("MCE_FFMPEG", "ffmpeg"), os.environ.get("MCE_FFPROBE", "ffprobe"))
     except EyeStateError as e:

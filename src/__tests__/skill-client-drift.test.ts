@@ -4,9 +4,7 @@
  * a fix applied to one leaves the other two wrong, and nothing in a skill
  * upload would ever reveal it.
  *
- * This is the same guard `metrix-iap` puts on its duplicated ad-name matcher
- * (`scripts/src/adname-match-drift.test.ts`): the copies must be byte-identical
- * or the build fails naming them.
+ * The guard: the copies must be byte-identical or the build fails naming them.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";

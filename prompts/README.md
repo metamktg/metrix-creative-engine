@@ -91,8 +91,8 @@ than falling back.
 
 ## Brand assets in the brief
 
-From `metrix-brief-builder` v1.0.2, each brief can carry an optional
-`brand_assets` block, so the brief is self-contained. When it is present, the
+Each brief can carry an optional `brand_assets` block, so the brief is
+self-contained. When it is present, the
 intake stage reads it first and asks only for what is listed in `missing`.
 
 ```json

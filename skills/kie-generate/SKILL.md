@@ -1,6 +1,6 @@
 ---
 name: kie-generate
-description: Generate images, video, music, speech or upscales through the Kie.ai API. Use whenever asked to create, generate, make or render an image, photo, video, clip, song, music bed, voiceover or audio, or to edit, restyle, animate or upscale an existing asset, through the bundled script or a connected Kie.ai MCP server. Covers model choice, prompt construction and parameter mapping. For batches of many generations use kie-tasks; for rendering a Metrix IAP creative brief use metrix-ad-creative.
+description: Generate images, video, music, speech or upscales through the Kie.ai API. Use whenever asked to create, generate, make or render an image, photo, video, clip, song, music bed, voiceover or audio, or to edit, restyle, animate or upscale an existing asset, through the bundled script or a connected Kie.ai MCP server. Covers model choice, prompt construction and parameter mapping. For batches of many generations use kie-tasks; for rendering a creative brief use metrix-ad-creative.
 ---
 
 # kie-generate

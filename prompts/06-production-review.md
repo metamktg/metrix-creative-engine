@@ -50,8 +50,9 @@ defect or a missing shot with a bounded cost and clear acceptance criteria.
 All five are mandatory, separate verdicts bound to the current final master
 and review-context SHA256 values:
 
-1. `iap_variables`: Verify canonical IAP code membership and brief alignment,
-   plus measured technical variables and documented playback/speed mappings.
+1. `variable_codes`: Verify registry membership of the variable codes and brief
+   alignment, plus measured technical variables and documented playback/speed
+   mappings.
 2. `communications`: Check the actual spoken and visible message, supported
    claims, hook, useful progression, offer and one clear action.
 3. `sound_check`: Run the "12-Year-Old Sound Check" as a plain-language

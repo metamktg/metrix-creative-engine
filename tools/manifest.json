@@ -1,6 +1,6 @@
 {
   "schema": "mce.tools/1",
-  "generated_from": "X:/Metrix/tools/INSTALLED.json (installed_at 2026-11-06); local_sha256 values computed with sha256sum on this machine on 2026-11-06",
+  "generated_from": "INSTALLED.json of the reference install (installed_at 2026-11-06); local_sha256 values computed with sha256sum on that install on 2026-11-06",
   "verify_note": "npm run tools:check verifies presence and sha256 of every pinned file on the machine it runs on. It is NOT part of npm run verify: CI has none of these tools, so it would always exit 2 there. Run it locally where the tools are installed. It never downloads and never executes a tool.",
   "exit_codes": {
     "0": "every required file present and every hash matched",
@@ -9,12 +9,12 @@
     "3": "usage error, unreadable config or invalid manifest"
   },
   "roots": {
-    "tools": { "env": "MCE_TOOLS_DIR", "default": "X:/Metrix/tools" },
-    "models": { "env": "MCE_MODELS_DIR", "default": "X:/Metrix/models" },
-    "cache": { "env": "MCE_CACHE_DIR", "default": "X:/Metrix/cache" },
-    "venv": { "env": "MCE_VENV_DIR", "default": "X:/Metrix/venv312" }
+    "tools": { "env": "MCE_TOOLS_DIR" },
+    "models": { "env": "MCE_MODELS_DIR" },
+    "cache": { "env": "MCE_CACHE_DIR" },
+    "venv": { "env": "MCE_VENV_DIR" }
   },
-  "roots_note": "Root resolution, highest first: the root's env var, then roots{} in the JSON file named by --config or MCE_TOOLS_CONFIG, then the default above. Every file path below is relative to its root; absolute paths are refused by the checker.",
+  "roots_note": "Root resolution, highest first: the root's env var, then roots{} in the JSON file named by --config or MCE_TOOLS_CONFIG, then a default when the root names one. This manifest names none: each machine declares where its tools live, and a root it leaves unset reports every file under it missing. Every file path below is relative to its root; absolute paths are refused by the checker.",
   "file_roles": {
     "binary": "the file that runs or is loaded; required",
     "published": "the exact artefact whose sha256 the upstream project publishes; required",
@@ -61,7 +61,7 @@
           "root": "tools",
           "path": "yt-dlp/yt-dlp.conf",
           "role": "config",
-          "sha256": "2d3aa382b01f798b4cb4cab94d6c60dc8dbc258a554ffd52fabf3d8f6f334e86",
+          "sha256": "ebfe4cb495cca37a44da39bcb8feab5ec52ff35ca13749af5c8dd9c2a75480a2",
           "bytes": 174,
           "basis": "local; equals sha256 of tools/yt-dlp.conf in this repo (asserted by src/__tests__/tools-check.test.ts)"
         }

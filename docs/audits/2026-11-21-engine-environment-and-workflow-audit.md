@@ -1,8 +1,11 @@
 # Engine, environment and workflow audit · 2026-11-21
 
-Lane: Metrix engineering. Subject: whether this repo can take a Metrix IAP
-`creative_briefs.json` and produce every creative type it names, end to end,
-in a cloud session, with variable integrity and clean stage handoffs.
+Subject: whether this repo can take a `creative_briefs.json` and produce every
+creative type it names, end to end, in a cloud session, with variable integrity
+and clean stage handoffs.
+
+Edited 2026-11-24: references to a separate product's skills were removed. The
+findings are unchanged.
 
 Evidence key: **proven** (seen in code or run here), **inferred** (follows
 from code, not executed), **unknown** (named slot, not yet checked).
@@ -140,7 +143,7 @@ Each entry: what exists, how the best teams run it, what to build here.
   hashing every cell so the scan can prove only the slot changed.
 - Build: add `cells` and `matrix_naming_convention` to the schema (optional
   fields); one `mst` CLI that fans a row out for any format, writes names and
-  a row manifest, and hands that manifest to `metrix-mst-creative-scan`.
+  a row manifest, and hands that manifest to the results scan.
 
 ### Static batch
 - Exists: prompt module, `kie.mjs start/poll`, manual checklist.
