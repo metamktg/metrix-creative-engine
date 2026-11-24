@@ -1,0 +1,19 @@
+{
+  "name": "metrix-creative-engine",
+  "owner": {
+    "name": "Meta Marketing Agency",
+    "url": "https://github.com/metamktg"
+  },
+  "metadata": {
+    "description": "The Metrix Creative Engine: skills, an MCP server and a session hook that turn an approved creative brief into finished ad assets through Kie.ai."
+  },
+  "plugins": [
+    {
+      "name": "metrix-creative-engine",
+      "source": "./",
+      "description": "Turn an approved Metrix creative brief into finished ad assets through Kie.ai. One entry skill reads the brief's declared format and runs the engine's skills in order.",
+      "category": "productivity",
+      "homepage": "https://github.com/metamktg/metrix-creative-engine"
+    }
+  ]
+}

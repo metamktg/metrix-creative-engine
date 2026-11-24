@@ -1,6 +1,6 @@
 {
   "schema": "mce.zones/1",
-  "note": "Canonical placement safe-zone table. Edit here only, then npm run sync:copies (the copy lives in skills/metrix-video-assembly/references/). Fractions of the frame: top, bottom and each side kept free of text, logos, products, faces and CTAs. source: meta (Meta ads guide page), house (our own rule where Meta publishes none), legacy (the values render.mjs --mode check hard-codes today). source_grade: primary (read on the Meta page named in url on the retrieved date), third_party (no Meta page states it), house, legacy. A row's enforcement decides what a box inside its bands produces: fail, or warn. A third_party row never fails.",
+  "note": "Canonical placement safe-zone table. Edit here only, then npm run sync:copies (the copy lives in skills/metrix-video-assembly/references/). Fractions of the frame: top, bottom and each side kept free of text, logos, products, faces and CTAs. source: meta (Meta ads guide page), house (our own rule where Meta publishes none), legacy (the bands render.mjs --mode check enforced before it read this table, kept for storyboards that declare no placement). source_grade: primary (read on the Meta page named in url on the retrieved date), third_party (no Meta page states it), house, legacy. A row's enforcement decides what a box inside its bands produces: fail, or warn. A third_party row never fails.",
   "tolerance": 0.002,
   "min_font_ratio": 0.03,
   "zones": [
@@ -92,7 +92,7 @@
       "enforcement": "fail",
       "url": null,
       "retrieved": null,
-      "basis": "What render.mjs --mode check enforces today for any 9:16 storyboard (render.mjs const zone). Used only when a storyboard declares no placement; zoneFor marks it with a WARN. Bottom 20% is looser than Meta's 35% for Reels and Stories."
+      "basis": "What render.mjs --mode check enforced for any 9:16 storyboard before it read this table. Used only when a storyboard declares no placement; zoneFor marks it with a WARN. Bottom 20% is looser than Meta's 35% for Reels and Stories."
     },
     {
       "id": "legacy_other",
@@ -106,7 +106,7 @@
       "enforcement": "fail",
       "url": null,
       "retrieved": null,
-      "basis": "What render.mjs --mode check enforces today for every ratio other than 9:16. Used only when a storyboard declares no placement; zoneFor marks it with a WARN."
+      "basis": "What render.mjs --mode check enforced for every ratio other than 9:16 before it read this table. Used only when a storyboard declares no placement; zoneFor marks it with a WARN."
     }
   ],
   "aliases": {

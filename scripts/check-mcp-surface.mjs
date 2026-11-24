@@ -25,7 +25,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const bundle = path.join(repoRoot, "dist", "index.js");
+// The committed bundle, the same file a plugin install launches.
+const bundle = path.join(repoRoot, "server", "index.js");
 
 // ---------------------------------------------------------------- Kie stub
 let reads = 0;
@@ -78,6 +79,14 @@ const downloadDir = await mkdtemp(path.join(tmpdir(), "kie-mcp-surface-"));
 const child = spawn("node", [bundle], {
   env: {
     ...process.env,
+    // The plugin's own variables win over KIE_AI_*, and a session started with
+    // the plugin can carry them, as can the user's own METRIX_ASSETS_DIR. Blank
+    // them so the stub key, the temporary folder and the unset assets folder
+    // below are what the bundle actually reads.
+    METRIX_OPTION_KIE_API_KEY: "",
+    METRIX_OPTION_RUNS_DIR: "",
+    METRIX_OPTION_ASSETS_DIR: "",
+    METRIX_ASSETS_DIR: "",
     KIE_AI_API_KEY: "stub-key-not-a-real-credential",
     KIE_AI_BASE_URL: `http://127.0.0.1:${stubPort}`,
     KIE_AI_DOWNLOAD_DIR: downloadDir,
@@ -148,6 +157,13 @@ try {
   check("handshake routes creator workflows to prompts and on-demand references",
     ["kie_render_ugc", "kie_render_ai_ugc", "kie_render_video", "kie://ugc-creative-playbook", "kie://production-review-standard"].every((route) => instructions.includes(route)));
   check("handshake keeps workflow routing concise", instructions.length > 0 && instructions.length < 1000);
+  // A plugin install and Claude Desktop have no other channel for these, so the
+  // handshake has to carry them, resolved, exactly as configured.
+  check("handshake states the runs folder and the unset assets folder",
+    instructions.includes(`Runs folder: ${path.resolve(downloadDir)}.`) && instructions.includes("Assets folder: not set."));
+  const engineVersion = JSON.parse(await readFile(path.join(repoRoot, "package.json"), "utf8")).version;
+  check("serverInfo reports the engine version", init.result?.serverInfo?.version === engineVersion,
+    `got ${init.result?.serverInfo?.version}, package.json says ${engineVersion}`);
 
   console.log("\n== Tools ==");
   const tools = (await rpc("tools/list", {})).result?.tools ?? [];
@@ -227,7 +243,7 @@ try {
 
   console.log("\n== Prompts ==");
   const prompts = (await rpc("prompts/list", {})).result?.prompts ?? [];
-  check("seven format prompts plus brand intake and MST", prompts.length === 9, `${prompts.length} listed`);
+  check("seven format prompts plus brand intake, handoff and MST", prompts.length === 10, `${prompts.length} listed`);
   const rendered = await rpc("prompts/get", {
     name: "kie_render_static",
     arguments: { brief: '{"asset_type":"static"}' },
@@ -238,11 +254,15 @@ try {
 
   // Read the runtime prompt over MCP, not its source file. Installing a skill
   // without importing its review stage used to leave these checks invisible.
+  // Which formats carry the review is the format registry's call, not this script's.
+  const formatRows = JSON.parse(await readFile(path.join(repoRoot, "skills/metrix-ad-creative/references/formats.json"), "utf8")).formats;
   const productionMarker = "# Stage 6: Mandatory production review for UGC and video";
   for (const format of ["static", "carousel", "motion_graphic", "claymation", "ugc", "ai_ugc", "video"]) {
     const result = format === "static" ? rendered : await rpc("prompts/get", { name: `kie_render_${format}`, arguments: {} });
     const text = result.result?.messages?.[0]?.content?.text ?? "";
-    const requiresProductionReview = format === "ugc" || format === "ai_ugc" || format === "video";
+    const row = formatRows.find((r) => r.asset_type === format);
+    const requiresProductionReview = row.production_review;
+    const ugcDirection = row.ugc_direction;
     const description = prompts.find((prompt) => prompt.name === `kie_render_${format}`)?.description ?? "";
     check(
       `${format} advertises the additional presentation gates only when applicable`,
@@ -254,12 +274,12 @@ try {
     );
     check(
       `${format} loads the short creative-direction module only when applicable`,
-      creativeDirection.trim().length > 100 && text.includes(creativeDirection) === requiresProductionReview,
+      creativeDirection.trim().length > 100 && text.includes(creativeDirection) === ugcDirection,
     );
     check(`${format} does not inject the complete playbook`, !text.includes(expectedPlaybook));
     if (requiresProductionReview) {
       // ai_ugc shares the UGC format module; the rest of the assembly keeps its existing order.
-      const formatFile = format === "ai_ugc" ? "ugc" : format;
+      const formatFile = format === "ai_ugc" ? "ugc" : format.replace("_", "-");
       const previousSections = await Promise.all([
         "prompts/00-core.md", "prompts/02-render-bridge.md", `prompts/formats/${formatFile}.md`,
         "prompts/04-self-validation.md", "prompts/06-production-review.md",
@@ -267,10 +287,10 @@ try {
       const previousPrompt = previousSections.join("\n\n---\n\n");
       check(
         `${format} adds exactly the short module to the preserved baseline assembly`,
-        text === `${previousPrompt}\n\n---\n\n${creativeDirection}`,
+        text === (ugcDirection ? `${previousPrompt}\n\n---\n\n${creativeDirection}` : previousPrompt),
         `${previousPrompt.length} -> ${text.length} chars; delta +${text.length - previousPrompt.length}`,
       );
-      check(`${format} points to the on-demand creative playbook`, text.includes("kie://ugc-creative-playbook"));
+      if (ugcDirection) check(`${format} points to the on-demand creative playbook`, text.includes("kie://ugc-creative-playbook"));
       check(`${format} carries every mandatory gate`, productionGates.every((gate) => text.includes(gate)));
       check(`${format} requires an explicit background-music decision`, text.includes("Make an explicit background-music decision."));
       check(`${format} points to the detailed review resource`, text.includes("kie://production-review-standard"));
@@ -281,12 +301,17 @@ try {
     );
   }
 
-  for (const name of ["kie_brand_intake", "kie_mst_sprint"]) {
+  for (const name of ["kie_brand_intake", "kie_handoff", "kie_mst_sprint"]) {
     const result = await rpc("prompts/get", { name, arguments: {} });
     const text = result.result?.messages?.[0]?.content?.text ?? "";
     check(`${name} does not load UGC-specific creative direction`, !text.includes(creativeDirection));
     check(`${name} does not inject the complete playbook`, !text.includes(expectedPlaybook));
   }
+
+  const handoffPrompt = await rpc("prompts/get", { name: "kie_handoff", arguments: { audience: "media_buyer" } });
+  const handoffText = handoffPrompt.result?.messages?.[0]?.content?.text ?? "";
+  check("the handoff prompt serves Stage 3", handoffText.includes("# Stage 3: The Handoff"));
+  check("the handoff prompt carries its audience and asks for a receipt", handoffText.includes("audience: media_buyer") && handoffText.includes("write_receipt.py"));
 
   console.log("\n== Brief gate ==");
   // The gate that protects spend. Exercised through the JSON-string path,

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -109,6 +110,20 @@ describe.skipIf(!ffmpeg)("qa-video frame checks on real ffmpeg fixtures", () => 
     for (const c of ["black_frames", "freeze", "short_shot", "cuts.crosscheck", "transitions", "transitions.at_cuts"]) expect(get(r.report, c).verdict, c).toBe("PASS");
     expect(get(r.report, "freeze").detail).toMatch(/inside timeline holds \(app, card\)/);
     expect(get(r.report, "short_shot").detail).toMatch(/^3 shots from the timeline/);
+  });
+
+  it("--out writes the same report as an mce.qa/1 file bound to the master's sha256, which review reads", () => {
+    const out = path.join(dir, "qa.json");
+    const r = spawnSync(process.execPath, [qaVideo, good, "--silent", "--timeline", tl, "--out", out], { encoding: "utf8" });
+    expect(r.status, r.stderr).toBe(0);
+    const file = JSON.parse(fs.readFileSync(out, "utf8"));
+    expect(file).toEqual(JSON.parse(r.stdout));
+    expect(file.schema).toBe("mce.qa/1");
+    expect(file.sha256).toBe(createHash("sha256").update(fs.readFileSync(good)).digest("hex"));
+    expect(file.verdict).toBe("PASS");
+    const gate = fs.readFileSync(path.join(scripts, "..", "..", "ugc-creator-edit", "scripts", "validate_review_gates.py"), "utf8");
+    expect(gate).toMatch(/"qa_report"/);
+    expect(gate).toMatch(/report\.get\("schema"\) != "mce\.qa\/1"/);
   });
 
   it("fails the deliberate holds without a timeline, and never lowers the freeze threshold", () => {

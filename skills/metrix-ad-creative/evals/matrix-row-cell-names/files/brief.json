@@ -1,0 +1,6 @@
+{"brief_metadata":{"brief_id":"eval-hook-row","asset_type":"static","confidence":"medium","mode":"matrix"},
+ "creative_specifications":{"placement":"Feed","dimensions":"1:1"},
+ "visual_direction":{"composition":"Product centred on a plain surface","imagery":"Matte bottle, soft daylight"},
+ "brand_assets":[{"role":"product_front","url":"https://cdn.example/bottle.png"}],
+ "testing_framework":{"isolated_variable":"hook","matrix_naming_convention":"{MatrixPosition}-hook-{UniqueID}",
+  "cells":[{"matrix_position":"C1","unique_id":"a","hook":"Stop guessing."},{"matrix_position":"C1","unique_id":"b","hook":"Know by Friday."},{"matrix_position":"C1","unique_id":"c","hook":"One bottle, all week."}]}}

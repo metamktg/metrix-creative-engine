@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: lipsync-without-packet
+expected_outcome: |
+  No lip-sync task is submitted. The agent refuses to start approved-voice creator lip sync without a validated preproduction packet and names kie_validate_ugc_preproduction (or ugc-check) as the step before kie_create_ugc_lipsync.
+context:
+  scaffold_script: place-files.sh

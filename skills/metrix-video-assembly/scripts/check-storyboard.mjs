@@ -51,6 +51,10 @@ import { zoneFor } from "./placement-zones.mjs";
 import { floorFor, norm, ONSET_GUARD, onsetGuard, settled, voFloorFor, words } from "./timeline/rules.mjs";
 import { TIMELINE, tmSha256, validateDerivedFrom } from "./timeline/schema.mjs";
 
+// Storyboard kinds come from the format registry (references/formats.json, a byte copy of
+// metrix-ad-creative/references/formats.json), so a new format's kind is accepted in one place.
+const STORYBOARD_KINDS = JSON.parse(fs.readFileSync(new URL("../references/formats.json", import.meta.url), "utf8")).storyboard_kinds;
+
 const argv = process.argv.slice(2);
 const VALUED = ["--brief", "--kit", "--phrases", "--script", "--packet"];
 const flag = (k) => {
@@ -250,7 +254,7 @@ function checkVersion(sb) {
   const f = sb.format || {};
   if (sb.schema_version != null && sb.schema_version !== 2) add("schema_version", "FAIL", `schema_version ${JSON.stringify(sb.schema_version)}; only 2 is defined (omit it for the original format)`);
   if (sb.schema_version === 2 && !f.placement) add("format.placement", "FAIL", "schema_version 2 requires format.placement");
-  if (f.kind != null && !["video", "still", "carousel"].includes(f.kind)) add("format.kind", "FAIL", `format.kind ${JSON.stringify(f.kind)} is not video, still or carousel`);
+  if (f.kind != null && !STORYBOARD_KINDS.includes(f.kind)) add("format.kind", "FAIL", `format.kind ${JSON.stringify(f.kind)} is not ${STORYBOARD_KINDS.slice(0, -1).join(", ")} or ${STORYBOARD_KINDS.at(-1)}`);
   if (f.placement) {
     try {
       const z = zoneFor({ ratio: f.ratio, placement: f.placement });

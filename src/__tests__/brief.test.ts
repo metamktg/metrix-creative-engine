@@ -126,6 +126,53 @@ describe("matrix mode", () => {
   });
 });
 
+describe("a matrix row carried in the brief", () => {
+  const row = (tf: Record<string, unknown>) => ({
+    ...renderable,
+    brief_metadata: { ...renderable.brief_metadata, mode: "matrix" },
+    testing_framework: {
+      isolated_variable: "hook",
+      matrix_naming_convention: "cell-{UniqueID}",
+      cells: [{ unique_id: "a", hook: "Look closer" }, { unique_id: "b", hook: "Meet something" }],
+      ...tf,
+    },
+  });
+
+  it("keeps cells and the naming convention, which make-row.mjs reads, instead of stripping them", () => {
+    const verdict = validateBrief(row({}));
+    expect(verdict.errors).toEqual([]);
+    expect(verdict.brief?.testing_framework?.matrix_naming_convention).toBe("cell-{UniqueID}");
+    expect(verdict.brief?.testing_framework?.cells).toEqual([
+      { unique_id: "a", hook: "Look closer" },
+      { unique_id: "b", hook: "Meet something" },
+    ]);
+  });
+
+  it("blocks cells without a naming convention", () => {
+    expect(errorsOf(row({ matrix_naming_convention: undefined }))).toMatch(/matrix_naming_convention is absent/);
+  });
+
+  it("blocks a convention placeholder a cell cannot fill", () => {
+    expect(errorsOf(row({ matrix_naming_convention: "{MatrixPosition}_{UniqueID}" }))).toMatch(/cells\.0 has no matrix_position for \{MatrixPosition\}/);
+  });
+
+  it("blocks two cells that get the same name", () => {
+    expect(errorsOf(row({ matrix_naming_convention: "cell" }))).toMatch(/two cells the name "cell"/);
+  });
+
+  it("blocks cells that do not differ in the isolated variable", () => {
+    expect(errorsOf(row({ cells: [{ unique_id: "a", hook: "Same" }, { unique_id: "b", hook: "Same" }] }))).toMatch(/same "hook"/);
+  });
+
+  it("blocks a cell missing the isolated variable", () => {
+    expect(errorsOf(row({ cells: [{ unique_id: "a", hook: "One" }, { unique_id: "b" }] }))).toMatch(/carries no "hook"/);
+  });
+
+  it("blocks cells on a brief that is not a matrix", () => {
+    expect(errorsOf({ ...row({}), brief_metadata: renderable.brief_metadata })).toMatch(/cells is set on a brief whose mode is not "matrix"/);
+  });
+});
+
 describe("IAP vocabulary normalization", () => {
   const meta = renderable.brief_metadata;
 

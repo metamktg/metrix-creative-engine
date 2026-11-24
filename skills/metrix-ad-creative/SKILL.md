@@ -59,7 +59,8 @@ its concept is the point; `--name` on its own writes to `./out`). Exit 2 means t
 out and the task is still running: poll the same taskId, never re-create.
 
 On Windows the path is `scripts\kie.mjs`. Use the skill's own directory, which
-in an installed skill is under `.claude/skills/<skill>/`.
+Claude Code names when it loads the skill: under `.claude/skills/<skill>/` for a
+standalone install, inside the plugin's folder for a plugin install.
 
 **2. MCP tools, if `/mcp` lists `kie-ai`.** `kie_run_task`, `kie_create_task`,
 `kie_get_task`, `kie_wait_for_task`, `kie_get_credits`, `kie_ledger` and `kie_download_result`
@@ -175,7 +176,10 @@ cannot.
 1. **Read the brief.** Take `creative_briefs.json`, or a single brief object.
    Identify per brief: `brief_metadata.asset_type`, `brief_metadata.mode`
    (`standard` or `matrix`; a brief that says `general` is read as `standard`), `testing_framework.matrix_position`,
-   `testing_framework.isolated_variable`, `creative_specifications`,
+   `testing_framework.isolated_variable`, and for a whole row
+   `testing_framework.cells` with `testing_framework.matrix_naming_convention`
+   (the brief gate blocks cells it cannot name, duplicate names, and cells that
+   do not differ in the isolated variable), `creative_specifications`,
    `visual_direction`, and `brand_assets` where present (product references,
    logo method, style references). A product-led brief listing product
    references under `brand_assets.missing` is blocked until they are supplied.
