@@ -1,8 +1,10 @@
 # Creative workflow defaults
 
-Use `skills/metrix-ad-creative/SKILL.md` when producing assets from an approved
-Metrix brief. Preserve the brief's declared format, current user decisions,
-accepted components and existing authorization.
+Start production from an approved Metrix brief with `skills/metrix-produce/SKILL.md`.
+It reads the brief's declared format and hands each step to the skill that owns
+it, starting with `skills/metrix-ad-creative/SKILL.md`. Preserve the brief's
+declared format, current user decisions, accepted components and existing
+authorization.
 
 For UGC, AI-UGC and video production or revisions, read the short
 `prompts/07-ugc-creative-direction.md` before planning or spending. At planning
@@ -18,10 +20,13 @@ playbook references for use without this checkout or MCP. Send providers only
 shot-specific instructions and supported fields, never the entire playbook.
 
 Keep completed client profiles, copy, asset bindings and receipts in gitignored
-`out/` or `renders/`, or an external private run directory. Shared instructions,
-examples and fixtures stay anonymous; never populate the committed example
-with client records. These workflow instructions add no spend or publishing
-authority and do not change the raw generation API.
+`out/` or `renders/`, or an external private run directory: under the plugin,
+its runs folder (`KIE_AI_DOWNLOAD_DIR`) and assets folder (`METRIX_ASSETS_DIR`).
+Brand kits are client material and never enter this repository;
+`npm run check:plugin` fails if one is tracked. Shared instructions, examples
+and fixtures stay anonymous; never populate the committed example with client
+records. These workflow instructions add no spend or publishing authority and do
+not change the raw generation API.
 
 Before dependent approved-voice creator lip sync, validate the current private
 preproduction packet with `kie_validate_ugc_preproduction` and submit through
@@ -38,12 +43,24 @@ connector sync plan and verify readbacks, keeping source/review storage separate
 from approved-final delivery. This is not a background watcher.
 
 `npm run verify` is the gate. It runs, in order: `check:copies` (every byte copy
-equals its canonical file), `check:production-standard` (the generated standard
-equals its two sources), `typecheck`, `test` (vitest), `build`,
-`check:mcp-surface` (drives the built bundle and checks its advertised tools,
-resources and prompts), `test:production-review` (Python review-record tests),
-`test:retention` and `test:client-library`. Run all of it before calling a change done. Do not copy a test
-count or a tool count into prose; those scripts are the inventory.
+equals its canonical file), `check:plugin` (the plugin manifest, marketplace
+entry, MCP definitions, hook and skills agree with each other and with the files
+they name), `check:production-standard` (the generated standard equals its two
+sources), `typecheck`, `test` (vitest), `check:bundle` (the committed
+`server/` equals a fresh build of `src/`), `check:mcp-surface` (drives the
+committed bundle and checks its advertised tools, resources and prompts),
+`test:production-review` (Python review-record tests), `test:retention` and
+`test:client-library`. Run all of it before calling a change done. Do not copy a
+test count or a tool count into prose; those scripts are the inventory.
+
+The repository is also a Claude Code plugin (`.claude-plugin/plugin.json`, with
+`hooks/hooks.json` and the committed `server/index.js`). A plugin install runs no
+build, so the bundle is committed: after any change under `src/`, run
+`pnpm run build` and commit `server/` with it. In a plugin install the
+`kie-ai` server in `plugin.json` replaces the one in `.mcp.json`; keep the
+names equal, which `check:plugin` enforces. Release a change users should
+receive by raising `version` in `package.json`, `.claude-plugin/plugin.json`
+and `src/version.ts` together.
 
 A file that appears in more than one place has one canonical copy, listed first in
 `scripts/skill-copies.json`. Edit the canonical file, then run `npm run sync:copies`.

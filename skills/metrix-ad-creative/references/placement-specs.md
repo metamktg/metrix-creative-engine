@@ -44,9 +44,10 @@ At 1080 x 1920 the 9:16 band is 269 px top, 672 px bottom, 65 px each side
 (computed). The bottom band is the one that bites: a caption or CTA below 65%
 of the frame height sits under Meta's UI on Reels and Stories.
 
-`render.mjs --mode check` does not read the table yet. It still applies the
-legacy rows (9:16: 14% top, 20% foot, 6% sides; every other ratio 5%), which
-is looser at the bottom. Compose to the table, not to what the check accepts.
+`render.mjs --mode check` reads the same table through `format.placement`. A
+storyboard with no placement gets the legacy rows (9:16: 14% top, 20% foot, 6%
+sides; every other ratio 5%) with a warning, which is looser at the bottom:
+declare the placement so the check holds the composition to Meta's bands.
 
 Generation models do not respect safe zones and cannot be reliably told to.
 Compose for it instead: prompt the subject as centred, and treat the outer bands

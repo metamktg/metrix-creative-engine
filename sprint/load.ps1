@@ -1,7 +1,8 @@
 # Find the sprint files and put them where they belong. No dragging.
 #
 #   .\sprint\load.ps1                 looks in Downloads, Desktop, Documents
-#   .\sprint\load.ps1 C:\some\folder  looks there instead
+#   .\sprint\load.ps1 C:\some\folder  looks there first, then in those, and
+#                                     takes the images from there
 #
 # Briefs are identified by CONTENT, not by filename: a .json is a briefs file
 # only if it actually parses and carries brief_metadata. A file named
@@ -33,11 +34,19 @@ Get-ChildItem -LiteralPath $refsDir -File -ErrorAction SilentlyContinue | Remove
 # making with a credit balance attached.
 Get-ChildItem -LiteralPath $briefsDir -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
-if ($Source) {
-  $roots = @($Source)
-} else {
-  $roots = @("Downloads", "Desktop", "Documents") | ForEach-Object { Join-Path $env:USERPROFILE $_ }
-}
+# -Source is looked in first, then the usual folders, so a folder that holds
+# only the product images, which is what the start note advises, still finds
+# the briefs file in Downloads. A folder named twice (-Source is Downloads) is
+# looked in once, so no file is listed as another beside itself.
+$roots = @("Downloads", "Desktop", "Documents") | ForEach-Object { Join-Path $env:USERPROFILE $_ }
+if ($Source) { $roots = @($Source) + $roots }
+$seen = @{}
+$roots = @($roots | Where-Object {
+  $p = $_
+  try { $key = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($p) } catch { $key = $p }
+  $key = $key.TrimEnd('\')
+  if ($seen.ContainsKey($key)) { $false } else { $seen[$key] = $true; $true }
+})
 
 function Test-IsBriefs($path) {
   try {
@@ -61,7 +70,8 @@ if ($Briefs) {
 } else {
 $found = @()
 foreach ($root in $roots) {
-  if (-not (Test-Path $root)) { continue }
+  # -LiteralPath: to Test-Path, [ ] in a folder name are wildcards.
+  if (-not (Test-Path -LiteralPath $root)) { continue }
   Get-ChildItem -LiteralPath $root -Filter *.json -File -ErrorAction SilentlyContinue |
     Sort-Object LastWriteTime -Descending | ForEach-Object {
       if (Test-IsBriefs $_.FullName) { $found += $_ }
@@ -81,7 +91,7 @@ $brief = $found[0]
 Copy-Item -LiteralPath $brief.FullName -Destination $briefsDir -Force
 Write-Host ("  briefs: " + $brief.Name + "  (from " + $brief.DirectoryName + ")") -ForegroundColor Green
 if ($found.Count -gt 1) {
-  Write-Host ("  note: " + ($found.Count - 1) + " other briefs file(s) found. Took the newest. Others:") -ForegroundColor Yellow
+  Write-Host ("  note: " + ($found.Count - 1) + " other briefs file(s) found. Took the newest in the first folder looked in that had one. Others:") -ForegroundColor Yellow
   $found | Select-Object -Skip 1 | ForEach-Object { Write-Host ("        " + $_.FullName) }
   Write-Host '  To use a different one:  .\sprint\load.ps1 -Briefs "C:\path\to\that.json"' -ForegroundColor Yellow
 }
@@ -143,7 +153,7 @@ if ($images) {
       $skipped += ("        SKIPPED " + $img.Name.Substring(0, [Math]::Min(60, $img.Name.Length)) + "...  (" + $why + ")")
     }
   }
-  Write-Host ("  refs:   " + $copied.Count + " image(s) from " + $brief.DirectoryName) -ForegroundColor Green
+  Write-Host ("  refs:   " + $copied.Count + " image(s) from " + $imgSource) -ForegroundColor Green
   $copied | ForEach-Object { Write-Host ("        " + $_) }
   if ($skipped.Count -gt 0) {
     Write-Host ("  refs:   " + $skipped.Count + " skipped, named below. The rest loaded fine.") -ForegroundColor Yellow
@@ -161,7 +171,37 @@ if ($images) {
 # without references invents the product, which is the most common way a batch
 # is wasted.
 if ($copied.Count -eq 0) {
-  $kits = @(Get-ChildItem -Path (Join-Path (Split-Path -Parent $PSScriptRoot) "brand-kits") -Filter "brand-kit.json" -Recurse -ErrorAction SilentlyContinue)
+  # Kits live in the assets folder's brand-kits. The assets folder is the
+  # plugin's assets folder option when it is set, else METRIX_ASSETS_DIR: the
+  # order the session hook and the MCP server use, so the kit read here is the
+  # one the session names, whether setup.ps1 started this or you did. A kit
+  # kept in this checkout's own git-ignored brand-kits folder still counts. The
+  # first place that holds kits is the one used, and only when it holds exactly
+  # one: with several, which brand these briefs advertise is not this script's
+  # call.
+  $assetsDir = $env:METRIX_ASSETS_DIR
+  $claude = Get-Command claude.exe, claude.cmd -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($claude) {
+    # A native command's stderr is not a PowerShell error.
+    $ErrorActionPreference = "Continue"
+    $configured = (& $claude.Source plugin configure metrix-creative-engine@metrix-creative-engine --json 2>$null) -join "`n"
+    $ErrorActionPreference = "Stop"
+    try { $fromOption = ($configured | ConvertFrom-Json).inputs.assets_dir } catch { $fromOption = "" }
+    if ($fromOption) { $assetsDir = $fromOption }
+  }
+  $kitDirs = @()
+  if ($assetsDir) { $kitDirs += (Join-Path $assetsDir "brand-kits") }
+  $kitDirs += (Join-Path (Split-Path -Parent $PSScriptRoot) "brand-kits")
+  $kits = @()
+  foreach ($kitDir in $kitDirs) {
+    $kits = @(Get-ChildItem -LiteralPath $kitDir -Filter "brand-kit.json" -Recurse -ErrorAction SilentlyContinue)
+    if ($kits.Count -gt 0) { break }
+  }
+  if ($kits.Count -gt 1) {
+    Write-Host ("  refs:   " + $kits.Count + " brand kits in " + $kitDir + ", so none was used.") -ForegroundColor Yellow
+    Write-Host "          Put the product images in a folder of their own and run"
+    Write-Host '          GO.cmd -Source "C:\path\to\that folder"'
+  }
   if ($kits.Count -eq 1) {
     $kit = Get-Content -Raw -LiteralPath $kits[0].FullName | ConvertFrom-Json
     $assets = @($kit.brand_assets | Where-Object { $_.url })
@@ -178,11 +218,19 @@ if ($copied.Count -eq 0) {
         $j++
         $ext = [IO.Path]::GetExtension(($a.url -split '\?')[0]); if (-not $ext) { $ext = ".jpg" }
         $dest = Join-Path $refsDir ("ref-{0:d2}-{1}{2}" -f $j, ($a.role -replace '[^A-Za-z0-9_-]', ''), $ext)
+        # -OutFile reads [ ] in a path as wildcards, so a checkout in a folder
+        # named with brackets could not save here. The fetch goes to a temp
+        # file, which is then moved in by its literal name.
+        $tmp = $null
         try {
-          Invoke-WebRequest -Uri $a.url -OutFile $dest -UseBasicParsing -ErrorAction Stop
+          $tmp = [IO.Path]::GetTempFileName()
+          Invoke-WebRequest -Uri $a.url -OutFile $tmp -UseBasicParsing -ErrorAction Stop
+          Move-Item -LiteralPath $tmp -Destination $dest -Force -ErrorAction Stop
           Write-Host ("        " + (Split-Path -Leaf $dest) + "   " + $a.role)
         } catch {
-          Write-Host ("        COULD NOT FETCH " + $a.url + " (" + $_.Exception.Message + ")") -ForegroundColor Yellow
+          $why = $_.Exception.Message
+          if ($tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
+          Write-Host ("        COULD NOT FETCH " + $a.url + " (" + $why + ")") -ForegroundColor Yellow
         }
       }
     }

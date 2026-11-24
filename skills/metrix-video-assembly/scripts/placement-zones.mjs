@@ -15,7 +15,8 @@
  * An unknown placement, or a placement that does not run at the given ratio,
  * throws: guessing a zone is how a CTA ends up under the profile row.
  *
- * Not yet consumed by render.mjs (its check still hard-codes the legacy values).
+ * render.mjs --mode check reads its bands through zoneFor and checkBoxes, so the storyboard
+ * check and the render check hold a placement to the same row.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -70,8 +71,7 @@ export function zoneFor({ ratio, placement } = {}, table = loadTable()) {
 
 /*
  * items: [{ id, box: { x, y, w, h } normalised to the frame, kind?: text|logo|product|face|cta, font_px? }]
- * Same band arithmetic and wording as render.mjs --mode check, so the renderer can
- * switch to this function without changing its report. font_px is checked only on
+ * The band arithmetic and wording render.mjs --mode check reports. font_px is checked only on
  * text items that carry it.
  */
 export function checkBoxes(items, zone, minPx, { tolerance = 0.002 } = {}) {

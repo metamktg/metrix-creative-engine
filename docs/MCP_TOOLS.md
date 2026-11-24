@@ -259,8 +259,9 @@ is where that becomes visible after the fact.
 
 ### Where the file lives
 
-`<KIE_AI_DOWNLOAD_DIR or ./out>/kie-ledger.jsonl`, overridable with
-`KIE_AI_LEDGER_PATH`, or `off` to disable. JSONL rather than JSON so a process
+`kie-ledger.jsonl` in the runs folder (the plugin's runs folder option, else
+`KIE_AI_DOWNLOAD_DIR`, else `./out`), overridable with `KIE_AI_LEDGER_PATH`,
+or `off` to disable. JSONL rather than JSON so a process
 killed mid-append leaves every earlier line readable; append-only so a batch that
 dies does not take the record of its own successes with it.
 
@@ -326,6 +327,7 @@ The render workflow, assembled in the order it has to be applied.
 | `kie_render_static`, `_carousel`, `_video`, `_ugc`, `_ai_ugc`, `_motion_graphic`, `_claymation` | The core rules, the render bridge, that format's module and the final pass |
 | `kie_brand_intake` | Establishing and uploading the product references a render needs. Run it BEFORE generating |
 | `kie_mst_sprint` | Building a Matrix Sprint Test. Optional, and not a stage every run passes through |
+| `kie_handoff` | The handoff stage (`prompts/03-handoff.md`) for a READY candidate. Takes `audience` (strategist, media_buyer, client) and the `receipt` that `write_receipt.py` wrote from the review record |
 
 Each takes an optional `brief` argument, the brief as JSON, which is carried
 into the message.
@@ -361,11 +363,21 @@ selectable.
 
 | Variable | Required | Default | Meaning |
 | --- | --- | --- | --- |
-| `KIE_AI_API_KEY` | yes | – | Sent as a bearer token. Never logged, never in a URL |
+| `KIE_AI_API_KEY` | yes, unless `METRIX_OPTION_KIE_API_KEY` is set | – | Sent as a bearer token. Never logged, never in a URL |
 | `KIE_AI_DOWNLOAD_DIR` | no | unset | Enables `kie_download_result` and fixes its directory |
+| `METRIX_ASSETS_DIR` | no | unset | Where your brand kits, references, approved briefs and accepted media live. Stated in the handshake so the client knows where inputs live |
+| `METRIX_OPTION_KIE_API_KEY` | no | unset | Set by the plugin from its Kie.ai API key option. Wins over `KIE_AI_API_KEY` |
+| `METRIX_OPTION_RUNS_DIR` | no | unset | Set by the plugin from its runs folder option. Wins over `KIE_AI_DOWNLOAD_DIR` |
+| `METRIX_OPTION_ASSETS_DIR` | no | unset | Set by the plugin from its assets folder option. Wins over `METRIX_ASSETS_DIR` |
 | `KIE_AI_DEFAULT_WAIT_SECONDS` | no | 300 | Default timeout for waiting tools |
 | `KIE_AI_REQUEST_TIMEOUT_MS` | no | 60000 | Per-HTTP-request timeout |
 | `KIE_AI_BASE_URL` | no | `https://api.kie.ai` | Override for a proxy or test stub |
 | `KIE_AI_LEDGER_PATH` | no | `<download dir or ./out>/kie-ledger.jsonl` | Where the task ledger lives, or `off` to disable it |
+
+The plugin passes its options as the three `METRIX_OPTION_*` variables; do not set them
+yourself. They have names of their own because Claude Code passes an empty option as an
+empty string, which would otherwise overwrite your own variable. An empty value reads as
+unset, and nothing is printed for it. A `${...}` reference the client never expanded
+reads as unset too, and the server names each such variable on stderr at startup.
 
 The server does not upload files. The script's `upload` command tries `KIE_AI_UPLOAD_BASE_URL` first when it is set, then Kie's two default upload hosts.

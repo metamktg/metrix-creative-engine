@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Find the sprint files and put them where they belong. See load.ps1 for why
-# briefs are identified by content and images only come from the briefs' folder.
+# briefs are identified by content and images come only from the folder named
+# here or the briefs' own folder.
 #
 #   bash sprint/load.sh                 looks in ~/Downloads, ~/Desktop, ~/Documents
-#   bash sprint/load.sh /some/folder    looks there instead
+#   bash sprint/load.sh /some/folder    looks there first, then in those, and
+#                                       takes the images from there
 set -euo pipefail
 
 sprint="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,7 +19,11 @@ find "$sprint/briefs" -maxdepth 1 -type f -delete 2>/dev/null || true
 # --briefs <file> names one exactly, for when more than one is lying around.
 explicit=""
 if [ "${1:-}" = "--briefs" ]; then explicit="${2:-}"; shift 2 || true; fi
-if [ $# -gt 0 ]; then roots=("$1"); else roots=("$HOME/Downloads" "$HOME/Desktop" "$HOME/Documents"); fi
+# A folder named here is looked in first, then the usual ones, so a folder that
+# holds only the product images still finds the briefs file in Downloads.
+roots=("$HOME/Downloads" "$HOME/Desktop" "$HOME/Documents")
+src=""
+if [ $# -gt 0 ]; then src="$1"; roots=("$1" "${roots[@]}"); fi
 
 is_briefs() {
   node -e '
@@ -57,7 +63,7 @@ fi
 cp -f "$brief" "$sprint/briefs/"
 printf '  briefs: %s\n' "$(basename "$brief")"
 
-srcdir="${IMG_SOURCE:-$(dirname "$brief")}"
+srcdir="${IMG_SOURCE:-${src:-$(dirname "$brief")}}"
 
 # A general folder is never a reference set. Downloads held 1,381 images.
 # Skip the local sweep rather than exiting: the brand-kit fallback below is a
@@ -108,8 +114,35 @@ if [ "$n" -gt 0 ]; then printf '  refs:   %d image(s) from %s\n' "$n" "$srcdir";
 # Nothing local? Pull the brand kit's recorded asset URLs. A render without
 # references invents the product.
 if [ "$n" -eq 0 ]; then
-  kit="$(find "$sprint/../brand-kits" -name brand-kit.json 2>/dev/null | head -2)"
-  if [ "$(printf '%s\n' "$kit" | wc -l)" = "1" ] && [ -n "$kit" ]; then
+  # Kits live in the assets folder's brand-kits. The assets folder is the
+  # plugin's assets folder option when it is set, else METRIX_ASSETS_DIR: the
+  # order the session hook and the MCP server use, so the kit read here is the
+  # one the session names, whether setup.sh started this or you did. A kit kept
+  # in this checkout's own git-ignored brand-kits still counts. The first place
+  # that holds kits is used, and only when it holds exactly one.
+  assets=""
+  if command -v claude >/dev/null 2>&1; then
+    assets="$(claude plugin configure metrix-creative-engine@metrix-creative-engine --json 2>/dev/null | node -e 'let s="";process.stdin.on("data",(d)=>(s+=d)).on("end",()=>{try{process.stdout.write(JSON.parse(s).inputs?.assets_dir||"")}catch{}})' || true)"
+  fi
+  assets="${assets:-${METRIX_ASSETS_DIR:-}}"
+  kit=""
+  for kitdir in ${assets:+"$assets/brand-kits"} "$sprint/../brand-kits"; do
+    # find exits non-zero on a folder that is not there, and under pipefail and
+    # set -e that would end this script with no message.
+    [ -d "$kitdir" ] || continue
+    kit="$(find "$kitdir" -name brand-kit.json 2>/dev/null | head -2 || true)"
+    [ -n "$kit" ] && break
+  done
+  # Two lines mean two kits. Tested by the newline itself rather than wc -l,
+  # whose count macOS pads with spaces.
+  case "$kit" in
+    *$'\n'*)
+      printf '  refs:   several brand kits in %s, so none was used.\n' "$kitdir"
+      printf '          Put the product images in a folder of their own and pass it.\n'
+      kit=""
+      ;;
+  esac
+  if [ -n "$kit" ]; then
     node -e '
       const fs=require("fs"), {execFileSync}=require("child_process");
       const kit=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));

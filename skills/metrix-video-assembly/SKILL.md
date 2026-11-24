@@ -548,7 +548,7 @@ node scripts/media/eye-state.mjs <clip> (--scores <clip>.eyes.json | --out <clip
   `eye_state.py` (MediaPipe Face Landmarker blink blendshapes on every decoded
   frame, no fps filter; `mce.eyestate/1`). It runs in the Python 3.12 venv that
   holds MediaPipe: `MCE_PY312`, else the `venv312` entry of `INSTALLED.json`
-  (on this machine `X:/Metrix/venv312/Scripts/python.exe`). `--out` without
+  (its `Scripts/python.exe` on Windows, `bin/python` elsewhere). `--out` without
   `--scores` scores the clip itself when that venv is found; `--scores` refuses a
   record made from a different file. Then judge the kept source ranges
   (`--range`, the timeline shot's `src_in`-`src_out`) and any cut inside them
@@ -580,8 +580,9 @@ row that only warns; feed is a 5 % house margin. Names are matched loosely
 legacy row with a warning; an unknown placement, or one that does not run at the
 ratio, throws. `checkBoxes(items, zone, minPx)` checks normalised boxes against
 the bands and the type floor. `check-storyboard.mjs` resolves `format.placement`
-through it. At the time of writing the render check still uses its own legacy values;
-treat its zone verdict as legacy until the renderer reads this table.
+through it, and `render.mjs --mode check` takes its bands from the same row
+(`safe_zone` in its report names the row). A placement the ratio cannot run stops the
+render check with exit 2; a third-party row reports WARN, never FAIL.
 
 ## Timeline contracts
 
@@ -595,6 +596,17 @@ uses `validateDerivedFrom` and `tmSha256` to hold an emitted storyboard to its t
 it does not validate the timeline itself, which is `timeline.mjs check`'s job.
 `scripts/timeline.mjs` is the one writer of `timeline.json` and every file emitted
 from it (step 2).
+
+## Run manifest (`scripts/run.mjs`)
+
+One `run.json` (`mce.run/1`) per run directory records what each stage read and wrote, by
+path and sha256: `init <run> --brief brief.json`, then `record <run> --stage <stage>` with
+`--in role=path` (a file an earlier stage wrote, or the brief), `--out role=path` (what this
+stage wrote) and, on `generate` and `ingest` only, `--source role=path` (a Kie download, a
+direct Gemini or Veo result, a desktop edit). A changed or unknown `--in` is refused (exit 2),
+so no stage runs on a stale file. A stage already passed with the same inputs is skipped
+(exit 0), so a resumed run does not spend twice. `handoff` needs a PASS `review` record
+earlier in the run (exit 3). `status` prints the chain; `verify` re-hashes every recorded file.
 
 ## What this skill will not do
 

@@ -1,0 +1,144 @@
+# Format routing
+
+**The brief's `asset_type` decides the render. It is not a suggestion and not a
+preference to be weighed against what a model is good at.**
+
+Brief and asset are separate functions: the brief declares what medium the idea
+was designed for, and the render must execute in that medium. A brief written
+for a carousel is not satisfied by a beautiful static, because the idea was
+built to unfold across cards. This table is the handoff contract between them.
+
+Model facts below are a **2026-09-14** snapshot from docs.kie.ai plus dated
+production observations, not a live eligibility catalog. Verify the selected model's current fields,
+ratio, duration, reference roles, availability and cost before submission.
+Do not infer that no current model supports a ratio or capability because an
+older table omitted it. Craft for each format lives in
+`prompts/formats/<asset_type>.md`; this file is a routing baseline only.
+
+## The routing table
+
+| `asset_type` | Format module | Eligible models | Required parameters |
+| --- | --- | --- | --- |
+| `static` | `static.md` | `google/nano-banana`, `nano-banana-2`, `nano-banana-pro`, `bytedance/seedream-v4-text-to-image`, `seedream/5-pro-text-to-image`, `flux-2/pro-text-to-image`, `google/imagen4-ultra`, `gpt-image-2-text-to-image`, `z-image` | ratio; resolution where offered |
+| `static` with on-image text | `static.md` | `ideogram/v3-text-to-image`, `nano-banana-2`, `gpt-image-2-text-to-image` | ratio; `negative_prompt` where offered |
+| `carousel` | `carousel.md` | one model from `static`, locked across every card | ratio `1:1`; seed where offered |
+| `video` | `video.md` | `veo-3-1`, `kling-3.0/video`, `kling/v2-5-turbo-text-to-video-pro`, `bytedance/seedance-2-5`, `bytedance/v1-pro-text-to-video`, `bytedance/v1-lite-text-to-video`, `minimax-h3/text-to-video`, `wan/2-7-text-to-video`, `hailuo/02-text-to-video-pro`, `runway` | ratio; `duration` |
+| `video` from an approved still | `video.md` | `kling/v2-1-master-image-to-video`, `kling-3.0-omni/image-to-video`, `bytedance/v1-pro-image-to-video`, `hailuo/2-3-image-to-video-pro`, `minimax-h3/image-to-video`, `wan/2-7-image-to-video`, `veo-3-1` (`image_urls`) | image input; `duration` |
+| `ugc` | `ugc.md` | any `video` model, prompted for phone-camera characteristics | ratio `9:16`; `duration` |
+| `ai_ugc` (talking head) | `ugc.md` | one-take avatar: `kling/ai-avatar-standard`, `kling/ai-avatar-pro`, `omnihuman-1-5`, `infinitalk/from-audio`; two-step: `kling/v2-1-standard` (silent base) then `volcengine/video-to-video-lip-sync`; native audio for short beats: `veo-3-1`, `bytedance/seedance-2-5`, `kling-3.0-omni/image-to-video` | identity still as the image input; accepted dry voice as the audio input; route, live price and fallback recorded in the render spec. Routes and dated observations: `skills/ugc-creator-edit/references/lip-sync-routing.md`. **Fetch the model page and the live charge before every dependent submission** |
+| `motion_graphic` | `motion-graphic.md` | `wan/2-7-text-to-video`, `bytedance/seedance-2-5`, `kling-3.0/video`, plus a static model for designed frames | ratio; `duration` |
+| `claymation` | `claymation.md` | any `static` or `video` model; the look is prompted, not a separate model | ratio; `duration` for motion |
+| anything else | **none** | **stop** | – |
+
+## Unmapped asset types
+
+The brief came from IAP already validated, so an unfamiliar `asset_type` is more
+often this engine's vocabulary gap than a bad brief. Two cases, and the line
+between them is the **medium**.
+
+**A dialect difference normalizes.** A ratio suffix (`static_4x5`) is that type
+at that ratio: route on the stem, set the ratio as a parameter.
+`validateBrief` does this and reports it as a warning, never silently.
+
+**Same medium, unlisted type: render the nearest and name it.** Say in the
+handoff what you substituted and why. Do not stop over a naming difference.
+
+**Across the still / motion boundary: stop.** Rendering a static for a brief
+that asked for motion produces an asset that looks finished, passes a casual
+review, and fails the thing the brief was testing. That is the one substitution
+no later step can correct, because the idea was built to move. A visible stop
+costs a message; this silent substitution costs a test cycle and the spend
+behind it.
+
+Say which type the brief asked for, that there is no route for it, and propose
+the nearest mapped type as a **question**, not a default.
+
+## Choosing within the eligible set
+
+The set is eligible; the choice is yours to make and to state.
+
+1. **Hard constraints first.** Use the selected live model's actual ratio,
+   input and duration constraints. Where the required final ratio is not
+   supported, generate a suitable source composition and assemble the final
+   placement deliberately; do not merely crop away text or proof. Image
+   inputs eliminate text-only routes, and duration limits govern source shots.
+2. **Then the brief's demand.** On-image text pushes toward `nano-banana-2`, which sets type and holds 4:5, or toward Ideogram when 4:5 is not needed. Product
+   fidelity from references pushes toward models taking many reference images
+   (`nano-banana-2` at 14, `seedream/4.5-edit` at 14). Native audio pushes
+   toward `veo-3-1` or the Seedance family.
+3. **Then cost**, once quality is satisfied, not before.
+
+Record the choice and the reason in the render spec's `model.why`. In matrix
+mode the model is locked for the whole matrix: switching mid-matrix is the
+largest uncontrolled variable available to you.
+
+## Ratio by placement
+
+| Placement | Ratio |
+| --- | --- |
+| Feed | `4:5` |
+| Feed, one asset also serving carousel or right column | `1:1` |
+| Stories, Reels | `9:16` |
+| In-stream video | `16:9` |
+
+Ratio is always a parameter, never prompt text. The field name varies: most
+models use `aspect_ratio`; Seedream v3/v4 use `image_size` with named sizes
+(`portrait_4_3`); `wan/2-7-text-to-video` uses `ratio`; Ideogram and Qwen use
+`image_size`. The wrong key is silently ignored and you get the default, which
+is how a whole matrix renders at the wrong ratio without anyone noticing.
+
+## Unavailable in the dated snapshot
+
+The snapshot listed `sora`, `sora-2`, `midjourney` and `mmaudio` as unavailable.
+Check current provider documentation before treating that list as a present
+constraint. If a requested route is still unavailable, state a valid
+substitution within the user's scope; preserve the requested medium.
+
+## Brand kit to generation
+
+The brief's `brand_assets` block is only worth carrying if it reaches the model.
+Every reference-capable Kie model takes an image **URL**, never a local path, so
+a client's product photo has to be uploaded first. Without this step the model
+invents a generic product: right category, wrong label, wrong brand, unusable
+for anything performance-led.
+
+```
+node scripts/kie.mjs upload ./bottle_front.png
+```
+
+Prints a URL on stdout. Pass it into the model's image-input field.
+
+**The field name varies by model, and the wrong key is silently ignored:**
+
+| Model family | Field |
+| --- | --- |
+| `google/nano-banana-edit`, `nano-banana-2-lite` | `image_urls` |
+| `nano-banana-2`, `nano-banana-pro` | `image_input` |
+| `flux-2/*-image-to-image` | `input_urls` |
+| `bytedance/seedream-v4-edit`, `seedream/*-image-to-image` | `image_urls` |
+| `ideogram/v3-remix`, `qwen/image-edit` | `image_url` (singular) |
+| `kling/*-image-to-video`, `bytedance/v1-*-image-to-video` | `image_url` |
+| `bytedance/seedance-2*`, `minimax-h3/*` | `first_frame_url`, `reference_image_urls` |
+| `veo-3-1` | `image_urls` |
+
+**Upload late.** Kie deletes an uploaded file after 3 days. Upload immediately
+before the generation that consumes it, never at the start of a long batch, or
+the last cells of a matrix will fail on dead URLs. A *result* URL is shorter
+still, about 24 hours, so a still you plan to animate is re-uploaded rather than
+reused the next day.
+
+**Reference count caps matter when choosing a model.** `nano-banana-2` takes 14,
+`seedream/4.5-edit` 14, `google/nano-banana-edit` 10, `nano-banana-pro` 8,
+`flux-2` 8. A brief with a product plus a set of style references can exceed
+the smaller models.
+
+**Blocked, not improvised.** A product-led brief listing product references
+under `brand_assets.missing` is blocked until they are supplied. Do not generate
+a stand-in product and present it as the client's. Say what is missing and stop.
+
+## Full parameter detail
+
+`references/model-routing.md` for per-model parameters, and
+`docs/MODEL_CATALOG.md` in this repo for the complete catalog with the known
+docs bugs. When a call fails validation, read the model's live page: append
+`.md` to its docs.kie.ai URL for the raw spec.

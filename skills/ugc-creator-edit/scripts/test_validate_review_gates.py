@@ -46,9 +46,12 @@ def make_valid_record(root: Path) -> dict:
             }}
         elif role == "registry":
             content = {"approved_codes": ["CODE_A", "CODE_B"]}
+        elif role == "qa_report":
+            content = {"schema": "mce.qa/1", "sha256": artifacts["master"]["sha256"], "verdict": "PASS",
+                       "results": [{"check": "format", "verdict": "PASS"}]}
         artifacts[role] = write_artifact(root, "artifacts/" + role + ".bin", content)
     record = {
-        "schema_version": 1,
+        "schema_version": 2,
         "artifacts": artifacts,
         "contributors": {"producer_ids": ["producer-01"], "editor_ids": ["editor-01"]},
         "iap": {
@@ -204,6 +207,41 @@ class ReviewGateTests(unittest.TestCase):
     def test_missing_context_descriptor_is_not_checked(self):
         del self.record["artifacts"]["script"]
         self.verdict("NOT_CHECKED")
+
+    def rewrite_qa(self, **fields):
+        report = {"schema": "mce.qa/1", "sha256": self.record["artifacts"]["master"]["sha256"], "verdict": "PASS",
+                  "results": [{"check": "format", "verdict": "PASS"}]}
+        report.update(fields)
+        self.record["artifacts"]["qa_report"] = write_artifact(self.root, "artifacts/qa_report.bin", report)
+        rebind(self.record)
+
+    def issue_reasons(self, result):
+        return " ".join(i.get("reason", "") for i in result.get("issues", []))
+
+    def test_missing_qa_report_is_not_checked(self):
+        # like any other missing descriptor (see test_missing_context_descriptor_is_not_checked)
+        del self.record["artifacts"]["qa_report"]
+        self.verdict("NOT_CHECKED")
+
+    def test_qa_report_for_another_file_fails(self):
+        self.rewrite_qa(sha256="0" * 64)
+        self.assertIn("different file than the master", json.dumps(self.verdict("FAIL")))
+
+    def test_failed_qa_fails_review_and_names_the_checks(self):
+        self.rewrite_qa(verdict="FAIL", results=[{"check": "loudness", "verdict": "FAIL"}, {"check": "format", "verdict": "PASS"}])
+        self.assertIn("did not pass this master: loudness", json.dumps(self.verdict("FAIL")))
+
+    def test_exempt_qa_is_accepted(self):
+        self.rewrite_qa(verdict="EXEMPT")
+        self.verdict("READY")
+
+    def test_non_qa_file_in_the_qa_role_fails(self):
+        self.rewrite_qa(schema="mce.timeline/1")
+        self.assertIn("not an mce.qa/1 file", json.dumps(self.verdict("FAIL")))
+
+    def test_schema_1_is_refused_because_it_binds_no_qa(self):
+        self.record["schema_version"] = 1
+        self.assertIn("Schema 1 binds no QA report", json.dumps(self.verdict("FAIL")))
 
     def test_tampered_master_fails(self):
         (self.root / self.record["artifacts"]["master"]["path"]).write_bytes(b"changed")

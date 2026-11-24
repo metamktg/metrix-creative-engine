@@ -1,0 +1,43 @@
+{
+  "name": "metrix-creative-engine",
+  "version": "0.2.0",
+  "description": "Turn an approved Metrix creative brief into finished ad assets through Kie.ai. The brief's declared format picks the route; the engine's skills render, assemble and review in order, and an MCP server gives them typed generation tools and a free brief check.",
+  "author": {
+    "name": "Meta Marketing Agency",
+    "url": "https://github.com/metamktg"
+  },
+  "homepage": "https://github.com/metamktg/metrix-creative-engine",
+  "repository": "https://github.com/metamktg/metrix-creative-engine",
+  "keywords": ["kie-ai", "ad-creative", "meta-ads", "ugc", "video", "mcp"],
+  "skills": "./skills/",
+  "userConfig": {
+    "kie_api_key": {
+      "type": "string",
+      "title": "Kie.ai API key",
+      "description": "Your own key from https://kie.ai/api-key. Leave empty to use KIE_AI_API_KEY from your environment instead.",
+      "sensitive": true
+    },
+    "runs_dir": {
+      "type": "directory",
+      "title": "Runs folder",
+      "description": "Where generated assets, receipts and the task ledger are written. Leave empty to use KIE_AI_DOWNLOAD_DIR, or ./out in the folder Claude Code was started in."
+    },
+    "assets_dir": {
+      "type": "directory",
+      "title": "Assets folder",
+      "description": "Where your brand kits, product references, approved briefs and accepted media live. The skills read inputs from here. Leave empty to use METRIX_ASSETS_DIR from your environment, or the current folder."
+    }
+  },
+  "mcpServers": {
+    "kie-ai": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.js"],
+      "env": {
+        "METRIX_OPTION_KIE_API_KEY": "${user_config.kie_api_key}",
+        "METRIX_OPTION_RUNS_DIR": "${user_config.runs_dir}",
+        "METRIX_OPTION_ASSETS_DIR": "${user_config.assets_dir}",
+        "KIE_AI_DOWNLOAD_DIR": "${KIE_AI_DOWNLOAD_DIR:-./out}"
+      }
+    }
+  }
+}

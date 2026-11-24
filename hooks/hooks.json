@@ -1,0 +1,16 @@
+{
+  "description": "Give each session the engine's configured folders and key, and say where runs and assets go.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.mjs\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

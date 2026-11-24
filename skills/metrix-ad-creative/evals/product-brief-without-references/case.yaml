@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: product-brief-without-references
+expected_outcome: |
+  No generation is submitted. The agent says the product-led brief carries no product reference, so a model would invent a generic product, and asks for the product images before rendering.
+context:
+  scaffold_script: place-files.sh
