@@ -1,12 +1,12 @@
 ---
 name: metrix-ad-creative
-description: Render Metrix IAP creative briefs into actual ad assets through Kie.ai. Use when turning creative_briefs.json, a strategic map, or an MST matrix plan into generated images or video ready for Meta Ads Manager, including matrix-mode variable isolation, MST naming, and pre-upload QA. Trigger on "generate the creative", "render this brief", "build the matrix assets", "make the ads from the brief", or when a brief exists and the next step is producing the asset.
+description: Render creative briefs into actual ad assets through Kie.ai. Use when turning a brief file (creative_briefs.json) or an MST matrix plan into generated images or video ready for Meta Ads Manager, including matrix-mode variable isolation, MST naming, and pre-upload QA. Trigger on "generate the creative", "render this brief", "build the matrix assets", "make the ads from the brief", or when a brief exists and the next step is producing the asset.
 ---
 
 # metrix-ad-creative
 
-Bridges `metrix-brief-builder` (which produces briefs) and Kie.ai (which
-produces pixels). The brief is the specification; this skill is the execution.
+Bridges a creative brief and Kie.ai (which produces pixels). The brief is the
+specification; this skill is the execution.
 
 ## UGC and video direction
 
@@ -73,8 +73,8 @@ missing the script says so and names where to get one.
 
 ## Prerequisite
 
-A brief must exist. If one does not, run `metrix-brief-builder` first. Do not
-invent a brief in order to have something to render.
+A brief must exist. If one does not, stop and ask for one. Do not invent a brief
+in order to have something to render.
 
 ## The rule that governs everything here
 
@@ -126,8 +126,8 @@ If the isolated variable cannot be expressed as a single substitutable clause,
 say so and stop. That is a brief problem, not a prompting problem.
 
 Inside a live MST, and only there, assets also carry the MST naming convention,
-because `metrix-mst-creative-scan` parses it to attribute results. Everywhere
-else, descriptive names.
+because results are attributed by parsing it. Everywhere else, descriptive
+names.
 
 ## Render the hook and the CTA into the image
 
@@ -243,14 +243,14 @@ cannot.
    Only inside a live Matrix Sprint Test, use the MST convention instead,
    exactly as `testing_framework.matrix_naming_convention` states
    (`{MatrixPosition}_{ConceptCodes}_{AngleCodes}_{UniqueID}`), because
-   `metrix-mst-creative-scan` parses that form to attribute results and an asset
-   it cannot parse cannot be attributed.
+   results are attributed by parsing that form and an asset whose name does not
+   parse cannot be attributed.
 
 10. **QA before handing over.** Walk `qa_requirements` and the avoid list against
    what was actually generated, look at the image, do not assume the prompt was
-   obeyed. If an MST is running, then hand to `metrix-mst-creative-scan` for the
-   matrix-level check and flag any cell where the model ignored a locked
-   element, since that cell is not usable as a test. Outside an MST there is no
+   obeyed. If an MST is running, then check the row as a whole and flag any
+   cell where the model ignored a locked element, since that cell is not usable
+   as a test. Outside an MST there is no
    matrix to scan and this step is judging the asset against the brief.
 
 11. **Run the confidence gate, then finish.** After the last render, and without
@@ -304,9 +304,9 @@ For creator-led UGC, apply `ugc-creator-edit` and its production/review standard
 
 ## What this skill will not do
 
-- Invent a brief, an ICP, a pillar or a variable stack. Those come from
-  `metrix-strategy-map` and `metrix-brief-builder`.
-- Write ad copy. That is `copywriting-meta-ads`.
+- Invent a brief, an ICP, a pillar or a variable stack. Those come with the
+  brief, from its owner.
+- Write ad copy. Copy comes with the brief.
 - Claim a generation succeeded without reading back the result state. A
   `taskId` is not an asset.
 

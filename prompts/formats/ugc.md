@@ -65,7 +65,7 @@ are `ugc-check` and `ugc-start`. Raw generation success is not acceptance.
 
 - A generated person must not be presented as a real customer describing real
   results. Frame AI-UGC as demonstration or scenario, not testimonial.
-- Any testimonial wording belongs to `copywriting-meta-ads` and must come from
+- Testimonial wording is never written here. It comes with the brief, from
   real customer evidence.
 - Check the current Meta disclosure requirements for AI-generated people, and
   the client's own policy, before launch. Flag this in the handoff every time

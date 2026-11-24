@@ -109,7 +109,7 @@ is likely still good; an id from last month is likely not.
 `kie_download_result` exists only when `KIE_AI_DOWNLOAD_DIR` is set. Without it,
 report the URLs and say they expire in about 24 hours.
 
-Pass a meaningful `filename`. For Metrix work that is the descriptive concept name from the brief id; the MST name only inside a live matrix, so the asset lands ready for `metrix-mst-creative-scan`. The directory is fixed by
+Pass a meaningful `filename`. For Metrix work that is the descriptive concept name from the brief id; the MST name only inside a live matrix, so the asset lands ready for attribution. The directory is fixed by
 configuration and the filename is sanitized to a single path segment, so a name
 cannot redirect the write.
 

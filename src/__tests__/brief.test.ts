@@ -173,7 +173,7 @@ describe("a matrix row carried in the brief", () => {
   });
 });
 
-describe("IAP vocabulary normalization", () => {
+describe("accepted spellings", () => {
   const meta = renderable.brief_metadata;
 
   it("reads static_4x5 as a static at 4:5 rather than rejecting it", () => {
@@ -183,14 +183,21 @@ describe("IAP vocabulary normalization", () => {
     expect(v.warnings.join(" ")).toMatch(/4:5/);
   });
 
-  it("reads MST_matrix_cell as matrix mode", () => {
+  it("reads MST as matrix mode", () => {
     const v = validateBrief({
       ...renderable,
-      brief_metadata: { ...meta, mode: "MST_matrix_cell" },
+      brief_metadata: { ...meta, mode: "MST" },
       testing_framework: { isolated_variable: "HK_Problem" },
     });
     expect(v.ok).toBe(true);
     expect(v.brief?.brief_metadata.mode).toBe("matrix");
+    expect(v.warnings.join(" ")).toMatch(/mode "MST" read as "matrix"/);
+  });
+
+  it.each(["general", "matrix_cell", "MST_matrix_cell"])("refuses the mode %s and names the modes it accepts", (mode) => {
+    const v = validateBrief({ ...renderable, brief_metadata: { ...meta, mode } });
+    expect(v.ok).toBe(false);
+    expect(v.errors.join(" ")).toContain(`brief_metadata.mode: "${mode}" is not a mode. Modes are standard, matrix, and MST reads as matrix.`);
   });
 
   it("still stops on a type that genuinely has no route", () => {

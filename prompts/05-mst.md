@@ -29,8 +29,8 @@ on busy parents" is a finding. "C1A won" is a lookup someone else has to
 perform.
 
 The one place the coordinate belongs is the filename of an asset in a live MST,
-because `metrix-mst-creative-scan` parses it to attribute results. That is
-machine addressing, not how you talk about the work.
+because results are attributed by parsing it. That is machine addressing, not
+how you talk about the work.
 
 ## When to run one
 
@@ -109,15 +109,15 @@ a bet. An observed avatar is a fact. The report says which it is.
 
 The test produces results; the results are not yet knowledge.
 
-1. **Analyse against the hypothesis.** `metrix-mst-test-engine`: universal
-   winners, avatar-specific winners, variable isolation. The question is what
-   the test answered, including the case where it answered nothing, which is a
-   real outcome and worth saying plainly.
-2. **Convert to strategy.** `metrix-optimization-loop`: re-weight variables,
-   classify Retire, Scale, Optimize, Validate, update the golden formula.
-3. **Feed the next cycle.** The updated weights change the briefs the builder
-   writes next, so the following round starts from what this one proved rather
-   than from where the last one started.
+1. **Analyse against the hypothesis.** Universal winners, avatar-specific
+   winners, variable isolation. The question is what the test answered,
+   including the case where it answered nothing, which is a real outcome and
+   worth saying plainly.
+2. **Convert to strategy.** Re-weight variables, classify Retire, Scale,
+   Optimize, Validate, update the golden formula.
+3. **Feed the next cycle.** The updated weights change the next briefs, so the
+   following round starts from what this one proved rather than from where the
+   last one started.
 
 That last step is the compounding one. A sprint whose findings never reach the
 next brief was an expensive way to generate a chart.

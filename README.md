@@ -2,8 +2,8 @@
 
 Generate ad creative through [Kie.ai](https://kie.ai) from inside Claude Code.
 
-**Skills** that know how to prompt each model family, turn a Metrix IAP creative
-brief into launch-ready Meta ad assets across static, carousel, video and UGC
+**Skills** that know how to prompt each model family, turn a creative brief
+into launch-ready Meta ad assets across static, carousel, video and UGC
 without breaking the test the brief was designed around, and finish and review
 creator-led video.
 
@@ -77,7 +77,7 @@ session on this repository.
 | `metrix-produce` | The entry point. An approved brief in, finished and reviewed assets out: it checks the brief, reads its declared format and runs the skills below in order. |
 | `kie-generate` | Any one-off generation: image, image edit, video, music, speech, upscale. Picks the model, writes the prompt, returns the asset. |
 | `kie-tasks` | Long or batched work: fire many generations, poll them, resume after a timeout, download results, check credits. |
-| `metrix-ad-creative` | A Metrix IAP brief in, Meta-ready assets out. Matrix-mode variable isolation, MST naming, pre-upload QA. |
+| `metrix-ad-creative` | A brief in, Meta-ready assets out. Matrix-mode variable isolation, MST naming, pre-upload QA. |
 | `ugc-creator-edit` | Creator-led UGC edits from an approved brief: script and delivery map, casting, hooks, lip-sync routing, spend control and the five presentation gates. |
 | `metrix-video-assembly` | Finished video from approved clips: storyboard, exact type, captions, sound mix, poster frame, placement ratio and the finished-file QA. |
 | `brand-kit-builder` | A brand kit from public sources when no client assets were supplied, before the first brief lands. |
@@ -138,27 +138,28 @@ gitignored `out/` and `renders/` folders or a private run directory.
 | [`docs/draft-retention.md`](docs/draft-retention.md) | The draft retention policy and the reviewed-plan cleanup utility |
 | [`prompts/README.md`](prompts/README.md) | How the MCP prompts are assembled from the files in `prompts/` |
 
-## How it fits with Metrix IAP
+## Where it starts: the brief
 
-`metrix-iap` analyses performance and produces strategy and briefs. It stops at
-the brief. This repo starts there.
+The engine starts at the brief and does not write one. A brief is a JSON object
+in the engine's own input format, and a brief file such as
+`creative_briefs.json` holds one or more. `kie_validate_brief` checks each brief
+before any spend: the schema is `briefSchema` in [`src/brief.ts`](src/brief.ts),
+and [`docs/MCP_TOOLS.md`](docs/MCP_TOOLS.md) lists the checks. The brief's owner
+decides its strategy; the engine renders what it specifies.
 
 ```
-metrix-strategy-map  ->  metrix-brief-builder  ->  creative_briefs.json
-                                                          |
-                                                          v
-                                                metrix-produce  (here)
-                                   routes each brief by its declared format to
-                       metrix-ad-creative, metrix-video-assembly, ugc-creator-edit
-                                                          |
-                                                          v
-                                            generated assets, MST-named
-                                                          |
-                                                          v
-                                            metrix-mst-creative-scan
-                                                          |
-                                                          v
-                                                       launch
+creative_briefs.json
+        |
+        v
+metrix-produce
+  routes each brief by its declared format to
+  metrix-ad-creative, metrix-video-assembly, ugc-creator-edit
+        |
+        v
+generated assets, MST-named inside a Matrix Sprint Test
+        |
+        v
+launch
 ```
 
 The one rule that makes this work: **a matrix row varies exactly one clause of

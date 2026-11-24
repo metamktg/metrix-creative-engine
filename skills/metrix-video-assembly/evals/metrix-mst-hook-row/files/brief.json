@@ -24,7 +24,7 @@
     "headlines": [],
     "primary_text": "Stop Guessing Which Ads Actually Work."
   },
-  "copy_sources": "every copy_architecture line is verbatim from artifacts/marketing/src/content.ts",
+  "copy_sources": "every copy_architecture line is verbatim from the brand's marketing site copy",
   "visual_direction": {
     "composition": "The real Metrix product in use, from the screens or recordings supplied. Type above the product, never over it.",
     "style_guide": "Command-deck dark, calm, precise. The product carries the frame.",

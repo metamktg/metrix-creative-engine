@@ -1,12 +1,12 @@
 {
   "identity": {
     "canonical_name": "Metrix",
-    "product_name": "Metrix IAP",
+    "product_name": "Metrix",
     "positioning_line": "Performance intelligence for marketers who need to move faster.",
-    "positioning_evidence": "sign-in page of the app (artifacts/metrix-iap), seen 2026-10-23"
+    "positioning_evidence": "the product's sign-in page, seen 2026-10-23"
   },
   "palette": {
-    "source": "artifacts/marketing/src/index.css :root",
+    "source": "the brand's marketing site stylesheet, :root",
     "bg_deep": "#020711",
     "bg_main": "#050b18",
     "cyan": "#16d9ff",
@@ -17,11 +17,11 @@
   },
   "typography": {
     "family": "Inter",
-    "source": "artifacts/marketing/index.html Google Fonts link"
+    "source": "the brand's marketing site, Google Fonts link"
   },
   "logo": {
     "file": "metrix-logo.png",
-    "construction": "icon plus lowercase 'metrix' in Inter extrabold, letter-spacing -0.02em (components/BrandMark.tsx)"
+    "construction": "icon plus lowercase 'metrix' in Inter extrabold, letter-spacing -0.02em"
   },
   "claims": {
     "approved": [

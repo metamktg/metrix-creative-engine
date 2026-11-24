@@ -1,7 +1,7 @@
 {
   "brief_metadata": {
     "brief_id": "MTX-VID-004",
-    "mode": "general",
+    "mode": "standard",
     "asset_type": "video",
     "confidence": "directional",
     "voice": "confident, plain, operator-to-operator",
@@ -26,7 +26,7 @@
     "headlines": [],
     "primary_text": "Know exactly why hooks, angles, and creatives drive revenue."
   },
-  "copy_sources": "every copy_architecture line is verbatim from artifacts/marketing/src/content.ts",
+  "copy_sources": "every copy_architecture line is verbatim from the brand's marketing site copy",
   "visual_direction": {
     "composition": "The real Metrix product in use, from the screens or recordings supplied. Type above the product, never over it.",
     "style_guide": "Command-deck dark, calm, precise. The product carries the frame.",

@@ -32,11 +32,11 @@ older table omitted it. Craft for each format lives in
 
 ## Unmapped asset types
 
-The brief came from IAP already validated, so an unfamiliar `asset_type` is more
-often this engine's vocabulary gap than a bad brief. Two cases, and the line
-between them is the **medium**.
+The brief's owner chose its medium, so an unfamiliar `asset_type` is more often
+this engine's vocabulary gap than a bad brief. Two cases, and the line between
+them is the **medium**.
 
-**A dialect difference normalizes.** A ratio suffix (`static_4x5`) is that type
+**A spelling difference normalizes.** A ratio suffix (`static_4x5`) is that type
 at that ratio: route on the stem, set the ratio as a parameter.
 `validateBrief` does this and reports it as a warning, never silently.
 

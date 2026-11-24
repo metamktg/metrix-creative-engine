@@ -67,7 +67,8 @@ read-only; it never calls Kie and needs no key.
 | `brief` | object or JSON string | yes | The creative brief |
 
 Returns `ok`, `errors` and `warnings` as structured content, plus a readable verdict. **Errors block a
-render; warnings mean it will render worse.** The checks live in `src/brief.ts`.
+render; warnings mean it will render worse.** The brief format is the engine's own input schema,
+`briefSchema` in `src/brief.ts`, and the checks live there too.
 
 - **Errors:** a schema violation, including an `asset_type` outside the mapped set, which stops rather
   than falling back to the nearest type. A motion type (`video`, `ugc`, `ai_ugc`, `motion_graphic`)
@@ -77,9 +78,9 @@ render; warnings mean it will render worse.** The checks live in `src/brief.ts`.
 - **Warnings:** empty `brand_assets`, which means the model invents a generic product. An asset with a
   local `path` and no `url`, which must be uploaded first. A matrix position on a brief that is not in
   matrix mode.
-- **Normalised, reported as a warning:** IAP vocabulary such as a ratio suffix on the type
-  (`static_4x5` reads as `static` at 4:5) and a mode of `MST_matrix_cell` or `general`, which read as
-  `matrix` and `standard`. A brief IAP already validated needs rendering, not rejection.
+- **Normalised, reported as a warning:** a ratio suffix on the type (`static_4x5` reads as `static`
+  at 4:5, and sets the dimensions when the brief gives none) and the mode spelling `MST`, which reads
+  as `matrix`. Nothing else is guessed: a mode other than `standard` or `matrix` is an error.
 
 There is no script equivalent. The brief gate exists only on the MCP server.
 
