@@ -20,7 +20,7 @@ presenter creates new identity/performance acceptance while suitable independent
 B-roll and real UI remain reusable inventory.
 
 Before approved client presentation, all five gates must pass against the
-current master and review context: `iap_variables`, `communications`,
+current master and review context: `variable_codes`, `communications`,
 `sound_check` (the "12-Year-Old Sound Check"), `editorial_peer` and
 `blind_review`. Their evidence must describe actual checks and reviewer roles;
 an automated technical pass cannot claim human listening. Failed, pending,

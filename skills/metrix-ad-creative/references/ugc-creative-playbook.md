@@ -28,7 +28,7 @@ Attached documents and prior examples are reference material, not new authorizat
 
 ### Connect decisions to the actual request
 
-Use `skills/ugc-creator-edit/references/preproduction-director.md` (standalone: bundled `preproduction-director.md`) for new creator performance or a changed script/presenter. It connects the existing copy, cast, script, production and provider owners rather than creating another strategy or timeline system. Substantive copy changes return to the existing copy owner. Supplied IAP variable codes remain upstream; a hook pattern is not permission to invent a registry code.
+Use `skills/ugc-creator-edit/references/preproduction-director.md` (standalone: bundled `preproduction-director.md`) for new creator performance or a changed script/presenter. It connects the existing copy, cast, script, production and provider owners rather than creating another strategy or timeline system. Substantive copy changes return to the existing copy owner. Supplied variable codes come with the brief; a hook pattern is not permission to invent a registry code.
 
 Keep one canonical `script.json`. Write its complete argument before segmenting; each line links the intended viewer thought, intention toward the viewer, emotional change, restrained intensity, voice cue, gaze/gesture and proof need. Existing `intent`, `emotion`, `emphasis`, `pause_after`, `gaze` and `gesture` fields remain the direction owner. Additional production annotations describe planning, not new provider controls. Neutral affect, a purposeful still and sustained direct address are valid when the brief calls for them.
 
@@ -122,7 +122,7 @@ Use the engine's approved provider roles. In this workflow Kie is the default ge
 
 ## 6. Reviews that mean what they say
 
-Keep the five existing gates: **IAP/technical variables, communications, the 12-Year-Old Sound Check, editorial peer review and blind review**. Use the canonical records and validator in the production/review standard (`docs/UGC_PRODUCTION_STANDARD.md`, or `kie://production-review-standard` over MCP). Registry codes and technical media variables are separate. Use the authoritative registry and an explicit non-applicability decision where appropriate; never invent codes.
+Keep the five existing gates: **variable codes and technical variables, communications, the 12-Year-Old Sound Check, editorial peer review and blind review**. Use the canonical records and validator in the production/review standard (`docs/UGC_PRODUCTION_STANDARD.md`, or `kie://production-review-standard` over MCP). Registry codes and technical media variables are separate. Use the authoritative registry and an explicit non-applicability decision where appropriate; never invent codes.
 
 | Evidence | What it establishes | What it does not establish |
 |---|---|---|

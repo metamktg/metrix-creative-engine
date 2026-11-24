@@ -225,7 +225,7 @@ try {
   );
   const productionStandard = await rpc("resources/read", { uri: "kie://production-review-standard" });
   const standardText = productionStandard.result?.contents?.[0]?.text ?? "";
-  const productionGates = ["iap_variables", "communications", "sound_check", "editorial_peer", "blind_review"];
+  const productionGates = ["variable_codes", "communications", "sound_check", "editorial_peer", "blind_review"];
   check(
     "the production standard resource serves the complete five-gate contract",
     standardText.length > 500 && productionGates.every((gate) => standardText.includes(gate)),

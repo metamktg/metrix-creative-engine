@@ -2,7 +2,7 @@
 
 This is the implemented agent-side bridge from approved creative decisions to the existing generation and assembly workflow. It consumes the current brief, canonical script, casting/scene evidence and accepted sources. It does not create another strategy, copywriting system, timeline or final-review gate.
 
-Use this reference for new creator performance, changed spoken copy or presenter replacement. Existing copy owners handle authorized drafting and substantive rewriting. The brief owns audience, argument, claims, exact copy permissions and IAP codes. The current project reference owns its UI arrangement, cast and numerical mix choices.
+Use this reference for new creator performance, changed spoken copy or presenter replacement. Existing copy owners handle authorized drafting and substantive rewriting. The brief owns audience, argument, claims, exact copy permissions and variable codes. The current project reference owns its UI arrangement, cast and numerical mix choices.
 
 ## 1. Direct the whole argument
 

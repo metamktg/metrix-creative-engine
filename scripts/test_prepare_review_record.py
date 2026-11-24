@@ -11,7 +11,7 @@ class PrepareTests(unittest.TestCase):
   self.root=self.base/("prepare-test-"+uuid.uuid4().hex);self.root.mkdir(mode=0o777)
   self.record=make_valid_record(self.root)
   self.manifest={"artifacts":{k:v["path"] for k,v in self.record["artifacts"].items()},
-      "contributors":self.record["contributors"],"iap":self.record["iap"],"production":self.record["production"]}
+      "contributors":self.record["contributors"],"variables":self.record["variables"],"production":self.record["production"]}
   self.source=self.root/"review-manifest.json";self.write()
  def write(self):self.source.write_text(json.dumps(self.manifest),encoding="utf-8")
  def tearDown(self):
@@ -23,6 +23,7 @@ class PrepareTests(unittest.TestCase):
   before={k:gates.file_hash(self.root/v["path"]) for k,v in self.record["artifacts"].items()}
   self.assertEqual(self.call(),0)
   pending=json.loads((self.root/"production-review.json").read_text())
+  self.assertEqual((pending["schema_version"],sorted(pending["gates"])),(3,sorted(gates.GATE_CHECKS)))
   self.assertTrue(all(v["status"]=="PENDING" and v["reviewer"] is None for v in pending["gates"].values()))
   self.assertNotEqual(gates.validate_record(pending,self.root)["status"],"READY")
   self.assertEqual(before,{k:gates.file_hash(self.root/v["path"]) for k,v in self.record["artifacts"].items()})

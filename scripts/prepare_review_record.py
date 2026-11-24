@@ -3,7 +3,7 @@
 
 Usage: prepare_review_record.py manifest.json --root RUN --out production-review.json
 The manifest contains artifacts:{required role:relative path, including qa_report,
-the mce.qa/1 file qa-video.mjs --out wrote for the master}, contributors, iap,
+the mce.qa/1 file qa-video.mjs --out wrote for the master}, contributors, variables,
 production, and optional neutral asset_id. All context must be deliberately
 specified. Input/output paths and source files must stay within RUN without links.
 Existing output is preserved. Change a candidate by preparing a new version.
@@ -28,7 +28,7 @@ def main(argv=None):
         print(json.dumps({"status":"NOT_CHECKED","reason":"Manifest is unavailable or invalid JSON."}));return 2
     if not isinstance(manifest,dict) or not isinstance(manifest.get("artifacts"),dict):
         print(json.dumps({"status":"FAIL","reason":"Manifest needs an artifacts mapping."}));return 1
-    for key in ("contributors","iap","production"):
+    for key in ("contributors","variables","production"):
         if not isinstance(manifest.get(key),dict):
             print(json.dumps({"status":"FAIL","reason":"Manifest must explicitly specify "+key+"."}));return 1
     artifacts={}
@@ -55,8 +55,8 @@ def main(argv=None):
         print(json.dumps({"status":"FAIL","reason":"Output escapes the review root."}));return 1
     if output.exists():
         print(json.dumps({"status":"FAIL","reason":"Output exists; preserve it and choose a new version."}));return 1
-    record={"schema_version":2,"asset_id":manifest.get("asset_id") or "candidate-"+uuid.uuid4().hex[:12],
-            "artifacts":artifacts,"contributors":manifest["contributors"],"iap":manifest["iap"],
+    record={"schema_version":3,"asset_id":manifest.get("asset_id") or "candidate-"+uuid.uuid4().hex[:12],
+            "artifacts":artifacts,"contributors":manifest["contributors"],"variables":manifest["variables"],
             "production":manifest["production"],"gates":{}}
     try: digest=bundle_hash(record)
     except (TypeError,ValueError,KeyError):

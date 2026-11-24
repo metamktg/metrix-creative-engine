@@ -26,8 +26,8 @@ opening permits visual and delivery treatment, not substitute words.
 ## 2. Twelve patterns
 
 Formats, not scripts. The nearest codes below are historical references, not
-authority to assign one. Use only a supplied code confirmed by the current IAP
-registry; the upstream brief owns code selection. A pattern can be described in
+authority to assign one. Use only a supplied code confirmed by the run's approved
+code registry; the brief owns code selection. A pattern can be described in
 plain words when no canonical code was provided.
 
 | Pattern | Opening | Why it works | Nearest `HK_` code |
