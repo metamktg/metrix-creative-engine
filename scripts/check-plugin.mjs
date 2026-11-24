@@ -1403,6 +1403,45 @@ for (const f of fixtureKits) {
   check(`${f} carries the engine's own brand`, tracked.includes(f) && name === "Metrix", `tracked ${tracked.includes(f)}, brand ${name}`);
 }
 
+console.log("\n== The engine stands on its own ==");
+// The engine is a product of its own. No tracked file names another
+// product's repository, site, build folders, packages or skills, or a folder
+// on one machine, so nothing here points a user at a checkout, a page or a
+// disk they do not have. The council's session records are history and are
+// not scanned. A line that has to carry one of these patterns is listed
+// below with its reason, and an entry that matches no line fails, so the
+// list stays true.
+const otherProduct = [
+  /metrix-iap|metrix iap|\bIAP\b|app\.metrix\.ad|artifacts\/(?:metrix-iap|marketing)|@workspace\/|brief-contract|X:[\/\\]Metrix/i, // separation pattern
+  /metrix-(?:brief-builder|strategy-map|mst-creative-scan|mst-test-engine|optimization-loop)/i, // separation pattern
+];
+const keptOnPurpose = [
+  { file: "scripts/check-plugin.mjs", text: "// separation pattern", why: "the patterns of this check" },
+  { file: "skills/ugc-creator-edit/scripts/validate_review_gates.py", text: "SCHEMA_2_NAMES = {", why: "a schema 2 review record names two fields this way, and it still validates" },
+  { file: "scripts/validate_review_gates.py", text: "SCHEMA_2_NAMES = {", why: "the synced copy of the schema 2 names" },
+  { file: "skills/ugc-creator-edit/scripts/test_validate_review_gates.py", text: "gate.SCHEMA_2_NAMES, {", why: "the test that pins the schema 2 names" },
+  { file: "scripts/test_validate_review_gates.py", text: "gate.SCHEMA_2_NAMES, {", why: "the synced copy of that test" },
+];
+const keptSeen = new Set();
+const otherProductLines = [];
+for (const rel of tracked) {
+  if (rel.startsWith(".claude/council/sessions/")) continue;
+  const abs = path.join(root, rel);
+  if (!existsSync(abs)) continue;
+  const bytes = readFileSync(abs);
+  if (bytes.includes(0)) continue;
+  bytes.toString("utf8").split(/\r?\n/).forEach((line, i) => {
+    if (!otherProduct.some((p) => p.test(line))) return;
+    const kept = keptOnPurpose.findIndex((k) => k.file === rel && line.includes(k.text));
+    if (kept >= 0) keptSeen.add(kept);
+    else otherProductLines.push(`${rel}:${i + 1}`);
+  });
+}
+check("no tracked file names another product, its skills or a folder on one machine",
+  tracked.length > 0 && otherProductLines.length === 0, otherProductLines.slice(0, 25).join(", "));
+const keptStale = keptOnPurpose.filter((_, i) => !keptSeen.has(i)).map((k) => `${k.file} (${k.text})`);
+check("every line kept on purpose is still there", keptStale.length === 0, keptStale.join(", "));
+
 console.log("\n== GO.cmd updates itself safely ==");
 // cmd.exe reads a batch file a line at a time from a byte offset, so a pull
 // that replaces GO.cmd mid-run leaves cmd.exe reading the new file from the old
