@@ -548,7 +548,9 @@ node scripts/media/eye-state.mjs <clip> (--scores <clip>.eyes.json | --out <clip
   `eye_state.py` (MediaPipe Face Landmarker blink blendshapes on every decoded
   frame, no fps filter; `mce.eyestate/1`). It runs in the Python 3.12 venv that
   holds MediaPipe: `MCE_PY312`, else the `venv312` entry of `INSTALLED.json`
-  (its `Scripts/python.exe` on Windows, `bin/python` elsewhere). `--out` without
+  (`MCE_INSTALLED`, else `INSTALLED.json` in `MCE_TOOLS_DIR`; its
+  `Scripts/python.exe` on Windows, `bin/python` elsewhere). The face model is
+  `MCE_FACE_MODEL`, else `face_landmarker.task` in `MCE_MODELS_DIR`. `--out` without
   `--scores` scores the clip itself when that venv is found; `--scores` refuses a
   record made from a different file. Then judge the kept source ranges
   (`--range`, the timeline shot's `src_in`-`src_out`) and any cut inside them

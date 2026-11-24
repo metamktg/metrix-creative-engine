@@ -30,8 +30,8 @@
       "paths": ["0f31afe27b3d", "0f31afe27b3d"]
     },
     "src/__tests__/tools-check.test.ts": {
-      "why": "test fixtures for the tools root rules; one is the default root in tools/manifest.json and goes with it",
-      "paths": ["f66247bee909", "14c3b7ef96b5", "59a0fc6d635a", "f9d19aa704d4", "f9d19aa704d4"]
+      "why": "test fixtures for the tools root rules",
+      "paths": ["f66247bee909", "14c3b7ef96b5", "f9d19aa704d4", "f9d19aa704d4"]
     },
     "scripts/tools-check.mjs": {
       "why": "regex text, not a path: the pattern that refuses a C: drive root",
@@ -52,26 +52,6 @@
     "skills/metrix-video-assembly/scripts/render.mjs": {
       "why": "regex text, not a path: it parses ffmpeg's loudnorm output",
       "paths": ["e993681e3a80"]
-    },
-    "tools/manifest.json": {
-      "why": "OPEN: an author's local tool, model, cache and venv folders as the defaults. Replacing them with one configurable root is open work",
-      "paths": ["af4ea4658f9c", "59a0fc6d635a", "94d3aaa07f2b", "23043609611f", "f95f407e1ec6"]
-    },
-    "tools/yt-dlp.conf": {
-      "why": "OPEN: an author's local tool folder; goes with tools/manifest.json",
-      "paths": ["70d815074e5f"]
-    },
-    "skills/metrix-video-assembly/scripts/asr-check.mjs": {
-      "why": "OPEN: the INSTALLED.json default from tools/manifest.json; goes with it",
-      "paths": ["af4ea4658f9c", "af4ea4658f9c"]
-    },
-    "skills/metrix-video-assembly/scripts/media/eye-state.mjs": {
-      "why": "OPEN: the INSTALLED.json default from tools/manifest.json; goes with it",
-      "paths": ["af4ea4658f9c", "af4ea4658f9c"]
-    },
-    "skills/metrix-video-assembly/scripts/media/eye_state.py": {
-      "why": "OPEN: the venv and model defaults from tools/manifest.json; go with it",
-      "paths": ["f95f407e1ec6", "dfd3fd3e8381"]
     },
     ".claude/council/sessions/mce-end-to-end-reconciliation-20261122-1558/deliberation/round1/Architect.md": {
       "why": "council session record from PR 21, on main since 129cbe8, kept as recorded: a drive path on the machine it ran on",

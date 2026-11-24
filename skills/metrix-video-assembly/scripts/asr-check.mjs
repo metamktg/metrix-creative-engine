@@ -16,8 +16,8 @@
  *      starts the final silence; recognisers hallucinate words there, so any word that STARTS
  *      inside it is dropped (and listed).
  *   2. Words: whisper-cli (whisper.cpp) with DTW word timing and token probabilities when it is
- *      installed (X:/Metrix/tools/INSTALLED.json, or MCE_WHISPER_CLI), run as
- *      -ojf -ml 1 -sow --dtw <model> -nfa --vad -vm <silero> -sns -nf -l en. -nfa is required:
+ *      installed (MCE_WHISPER_CLI, or INSTALLED.json at MCE_TOOLS_INSTALLED or in MCE_TOOLS_DIR),
+ *      run as -ojf -ml 1 -sow --dtw <model> -nfa --vad -vm <silero> -sns -nf -l en. -nfa is required:
  *      flash attention silently disables DTW. Otherwise the ffmpeg whisper filter (asr.mjs).
  *      --words <stage>=<file> supplies a saved whisper-cli JSON or ffmpeg JSON-lines file instead.
  *   3. Junk: more than 20 % of the remaining tokens that are not words ([BLANK_AUDIO], (music),
@@ -51,7 +51,9 @@ export const ALIAS_SCHEMA = "mce.asraliases/1";
 export const FINAL_SILENCE = Object.freeze({ noise: "-35dB", minGap: 0.6 });
 export const JUNK_LIMIT = 0.2;
 export const LOW_P = 0.5;
-export const DEFAULT_INSTALLED = "X:/Metrix/tools/INSTALLED.json";
+/** The tool install record: MCE_TOOLS_INSTALLED, else INSTALLED.json in MCE_TOOLS_DIR, else none. */
+export const installedPath = (env = process.env) =>
+  env.MCE_TOOLS_INSTALLED || (env.MCE_TOOLS_DIR ? path.join(env.MCE_TOOLS_DIR, "INSTALLED.json") : null);
 const EPS = 1e-6;
 const r3 = (x) => Math.round(x * 1000) / 1000;
 const sha256 = (buf) => crypto.createHash("sha256").update(buf).digest("hex");
@@ -179,7 +181,8 @@ export function chainSummary(stages) {
 
 // ---------------------------------------------------------------- tools
 
-export function readInstalled(file = process.env.MCE_TOOLS_INSTALLED || DEFAULT_INSTALLED) {
+export function readInstalled(file = installedPath()) {
+  if (!file) return null;
   try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return null; }
 }
 const installedTool = (inst, re) => (inst?.tools || []).find((t) => re.test(t.name) && t.file_path && fs.existsSync(t.file_path));

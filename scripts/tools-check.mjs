@@ -6,8 +6,10 @@
  * It reads files and hashes them. It never downloads anything and never runs a
  * tool. Paths come from the manifest roots: each root's env var wins, then the
  * roots{} of a JSON config (--config <file> or MCE_TOOLS_CONFIG), then the
- * manifest default. File paths in the manifest are relative to a root;
- * absolute or escaping paths are refused as an invalid manifest.
+ * root's default when the manifest names one. The engine's own manifest names
+ * none, so a root left unset on a machine reports every file under it missing.
+ * File paths in the manifest are relative to a root; absolute or escaping
+ * paths are refused as an invalid manifest.
  *
  * Not part of `npm run verify`: CI has none of these tools. Run locally with
  * `npm run tools:check`.
@@ -43,7 +45,8 @@ export function validateManifest(m) {
   if (!m.roots || typeof m.roots !== "object") bad("roots missing");
   for (const [name, r] of Object.entries(m.roots)) {
     if (!r || typeof r.env !== "string" || !r.env) bad(`root ${name}: env missing`);
-    if (typeof r.default !== "string" || !r.default) bad(`root ${name}: default missing`);
+    if (r.default === undefined) continue;
+    if (typeof r.default !== "string" || !r.default) bad(`root ${name}: default, when given, must be a nonempty string`);
     if (/^c:/i.test(r.default)) bad(`root ${name}: default on C: is not allowed (${r.default})`);
   }
   if (!Array.isArray(m.tools) || m.tools.length === 0) bad("tools[] missing or empty");
@@ -84,14 +87,16 @@ export function loadManifest(file = DEFAULT_MANIFEST) {
   return validateManifest(m);
 }
 
-/** Resolve each root: env var, then config.roots, then manifest default. */
+/** Resolve each root: env var, then config.roots, then the manifest default if it names one; else unset. */
 export function resolveRoots(manifest, { env = process.env, config = null } = {}) {
   const out = {};
   for (const [name, r] of Object.entries(manifest.roots)) {
     const fromEnv = env[r.env];
     const fromConfig = config && config.roots && config.roots[name];
     const value = fromEnv || fromConfig || r.default;
-    out[name] = { dir: path.resolve(value), source: fromEnv ? `env ${r.env}` : fromConfig ? "config" : "manifest default" };
+    out[name] = value
+      ? { dir: path.resolve(value), source: fromEnv ? `env ${r.env}` : fromConfig ? "config" : "manifest default" }
+      : { dir: null, source: "unset", env: r.env };
   }
   return out;
 }
@@ -110,10 +115,16 @@ export function sha256File(file) {
 
 /**
  * Check one file. Status: PASS, PRESENT (presence-only), MISMATCH (sha256 or
- * size), MISSING (required), WARN_MISSING (optional archive absent).
+ * size), MISSING (required), WARN_MISSING (optional archive absent). A file
+ * under an unset root is MISSING (WARN_MISSING for an archive).
  */
 export async function checkFile(tool, f, roots) {
-  const abs = path.join(roots[f.root].dir, f.path);
+  const root = roots[f.root];
+  if (!root.dir) {
+    const detail = `root ${f.root} is unset: set ${root.env} or roots.${f.root} in --config`;
+    return { tool: tool.id, root: f.root, path: f.path, abs: null, role: f.role, status: f.role === "archive" ? "WARN_MISSING" : "MISSING", detail };
+  }
+  const abs = path.join(root.dir, f.path);
   const base = { tool: tool.id, root: f.root, path: f.path, abs, role: f.role };
   let st;
   try { st = fs.statSync(abs); } catch {
@@ -202,7 +213,7 @@ export async function main(argv = process.argv.slice(2), { env = process.env, ou
     if (o.json) {
       out(JSON.stringify({ schema: "mce.tools-check/1", roots, results, exitCode }, null, 2));
     } else {
-      for (const [n, r] of Object.entries(roots)) out(`root ${n} = ${r.dir} (${r.source})`);
+      for (const [n, r] of Object.entries(roots)) out(r.dir ? `root ${n} = ${r.dir} (${r.source})` : `root ${n} unset (set ${r.env} or roots.${n} in --config)`);
       for (const r of results) out(`${r.status.padEnd(12)} ${r.tool}${r.path ? ` ${r.root}/${r.path}` : ""} · ${r.detail}`);
       const n = (s) => results.filter((r) => r.status === s).length;
       out(`tools-check: ${n("PASS")} pass, ${n("PRESENT")} present, ${n("MISMATCH")} mismatch, ${n("MISSING")} missing, ${n("WARN_MISSING")} optional missing, ${n("SKIP")} skipped · exit ${exitCode}`);

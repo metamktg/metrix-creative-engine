@@ -147,7 +147,7 @@ describe("scores sources", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it("finds the interpreter from MCE_PY312 or INSTALLED.json, and says so when there is none", () => {
+  it("finds the interpreter from MCE_PY312 or INSTALLED.json (MCE_INSTALLED or MCE_TOOLS_DIR), with no machine default", () => {
     const dir = fs.mkdtempSync(path.join(base, "eye-py-"));
     const venv = path.join(dir, "venv312");
     fs.mkdirSync(path.join(venv, "Scripts"), { recursive: true });
@@ -157,6 +157,8 @@ describe("scores sources", () => {
     expect(resolvePython({ MCE_INSTALLED: installed })).toBe(path.join(venv, "Scripts", "python.exe"));
     expect(resolvePython({ MCE_PY312: path.join(dir, "missing.exe") })).toBeNull();
     expect(resolvePython({ MCE_INSTALLED: path.join(dir, "none.json") })).toBeNull();
+    expect(resolvePython({ MCE_TOOLS_DIR: dir })).toBe(path.join(venv, "Scripts", "python.exe"));
+    expect(resolvePython({})).toBeNull();
     expect(() => scoreClip("x.mp4", { out: path.join(dir, "s.json"), python: null })).toThrow(/no Python 3.12/);
     fs.rmSync(dir, { recursive: true, force: true });
   });

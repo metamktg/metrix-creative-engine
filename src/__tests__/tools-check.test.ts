@@ -19,7 +19,7 @@ const dirs: string[] = [];
 afterEach(() => dirs.splice(0).forEach((d) => fs.rmSync(d, { recursive: true, force: true })));
 
 type Tool = { id: string; status: string; check: string; files: { root: string; path: string; sha256?: string | null; bytes?: number | null; role: string }[]; [k: string]: unknown };
-const realManifest = () => JSON.parse(fs.readFileSync(manifestPath, "utf8")) as { tools: Tool[]; roots: Record<string, { env: string; default: string }>; [k: string]: unknown };
+const realManifest = () => JSON.parse(fs.readFileSync(manifestPath, "utf8")) as { tools: Tool[]; roots: Record<string, { env: string; default?: string }>; [k: string]: unknown };
 
 // Env with every manifest root var removed, so the host's settings never leak in.
 function cleanEnv(extra: Record<string, string> = {}) {
@@ -232,6 +232,12 @@ describe("manifest validation", () => {
     reject((m) => { m.tools[0].files[0].path = "../outside.exe"; }, /relative to its root/);
   });
   it("refuses a C: root default", () => { reject((m) => { m.roots.tools.default = "C:/Metrix/tools"; }, /C: is not allowed/); });
+  it("accepts a root with no default and refuses an empty one", () => {
+    const m = good();
+    delete m.roots.tools.default;
+    expect(validateManifest(m).schema).toBe("mce.tools/1");
+    reject((m) => { m.roots.tools.default = ""; }, /default, when given, must be a nonempty string/);
+  });
   it("refuses a bad sha256, an unknown root, a duplicate id and a wrong schema", () => {
     reject((m) => { m.tools[0].files[0].sha256 = "ABC"; }, /sha256 must be 64/);
     reject((m) => { m.tools[0].files[0].root = "elsewhere"; }, /unknown root/);
@@ -249,11 +255,19 @@ describe("manifest validation", () => {
 });
 
 describe("resolveRoots", () => {
-  it("uses the manifest default when neither env nor config names a root", () => {
+  it("names no default root in the engine's manifest, so a root nobody set stays unset", () => {
     const m = realManifest();
+    for (const [name, root] of Object.entries(m.roots)) expect(root.default, name).toBeUndefined();
     const r = resolveRoots(m, { env: {}, config: null });
-    expect(r.tools.source).toBe("manifest default");
-    expect(r.tools.dir).toBe(path.resolve("X:/Metrix/tools"));
+    expect(r.tools).toEqual({ dir: null, source: "unset", env: "MCE_TOOLS_DIR" });
+    expect(resolveRoots(m, { env: { MCE_TOOLS_DIR: base }, config: null }).tools).toEqual({ dir: path.resolve(base), source: "env MCE_TOOLS_DIR" });
+  });
+
+  it("reports every file under an unset root missing, and names what to set", () => {
+    const r = spawnSync(process.execPath, [cli, "--id", "yt-dlp.conf"], { encoding: "utf8", env: cleanEnv() });
+    expect(r.status).toBe(2);
+    expect(r.stdout).toMatch(/^root tools unset \(set MCE_TOOLS_DIR or roots\.tools in --config\)$/m);
+    expect(r.stdout).toMatch(/^MISSING\s+yt-dlp\.conf tools\/yt-dlp\/yt-dlp\.conf . root tools is unset: set MCE_TOOLS_DIR or roots\.tools in --config$/m);
   });
 });
 
