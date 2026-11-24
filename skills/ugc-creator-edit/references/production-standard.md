@@ -40,6 +40,20 @@ At any UI/composite handoff, inspect the actual transition frames for two offset
 
 Match gaze, expression and body action to the spoken thought. Check the transition from addressing camera to working, not only the first and last pose. Trim an awkward look, use a clean action range or a relevant cutaway before paying for regeneration. Do not introduce a fixed glance duration or a universal smile requirement. Any reaction, gesture or angle change must feel plausible at the original normal speech rate.
 
+## Presenter motion: plan, handles, review and cleanup
+
+**Plan every appearance before generating.** For each presenter appearance record: the spoken phrase, its intention, the expression, the permitted gesture (none is valid), framing, required duration, a clean entry and exit, and the alternative cutaway (retained B-roll, genuine product UI or a clean graphic) that can carry the narration if the performance fails. Choose distinct source windows per appearance. A different crop of the same take is not a new performance: do not restart the same recognizable movement cycle (a nod, a hand lift, a head drop) on each return to the presenter.
+
+**Generate usable handles.** Aim for about 0.5 to 1 s of settled, natural movement before and after the intended action where the route supports it, and pick a supported duration that holds the phrase plus those handles. Never manufacture handles by looping, freezing or reversing visible speech.
+
+**Review motion before dependent spend.** Watch the complete motion source at 1x before paying for lip sync. Record usable and rejected intervals in clip seconds, checking head, shoulders, eyes (closures longer than a normal blink, squints), eyebrows, hands, breathing and expression. Review the returned lip-sync output again before assembly for natural movement, sync, expression and clean phrase endings. Carry the rejected intervals into the edit builder as a check that fails when any shown frame falls inside one, and prove that check by moving a cut into a rejected interval and watching it fail.
+
+**Clean up performance before effects.** Remove redundant gesture lead-ins, repeated nods, posture resets, held facial expressions and movement after a thought ends. Where a defect overlaps speech, keep the narration continuous and cut to relevant B-roll, genuine UI or a clean graphic; return to the presenter only on a clean, synchronized source frame. At the end, keep the complete final word and its natural decay; when no clean natural ending exists, finish on a purposeful CTA card rather than an avatar tail (a blurred or dimmed avatar under the card is still a tail). Do not speed up visible speech, reverse footage, interpolate facial movement or add a transition only to hide a defect. Then plan SFX, graphics and transitions with timecode, viewer benefit, duration, source and rights. A rising noise swell (whoosh, card slide) placed in a speech gap can read as a breath; start such effects at their transient or keep them out of gaps.
+
+**Reserve finishing.** Hold explicit finishing time and budget inside the existing authorization so a narrow repair never needs new spend.
+
+**Release.** A capable reviewer watches the complete encoded export at 1x with sound and again muted, then inspects flagged moments frame by frame, records timecoded defects and confirms each is closed on the revised file. Contact sheets, a successful render and codec or loudness checks do not substitute for continuous motion review. Any unresolved movement, sync or continuity defect blocks finished or client-ready status.
+
 ## Accept B-roll before it reaches the timeline
 
 Choose footage for relevance and believable usable action before resolution or model prestige. For each selected range, record its purpose, source hash, rights, trim handles and acceptance evidence. Check:
