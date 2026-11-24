@@ -185,15 +185,20 @@ describe("CLI", () => {
   });
 });
 
-// Runs only where the MediaPipe venv exists (not on CI): scores a generated clip with no face.
+// Runs only where the MediaPipe venv and its face model are declared (not on CI):
+// scores a generated clip with no face. The model is looked up as eye_state.py
+// looks it up, so an install that declares one without the other skips here
+// instead of failing on NOMODEL.
 const py = resolvePython();
-describe.skipIf(!py)("eye_state.py with MediaPipe (local only)", () => {
+const faceModel = process.env.MCE_FACE_MODEL
+  || (process.env.MCE_MODELS_DIR ? path.join(process.env.MCE_MODELS_DIR, "face_landmarker.task") : null);
+describe.skipIf(!py || !faceModel)("eye_state.py with MediaPipe (local only)", () => {
   it("scores every decoded frame and reports no face on a test pattern", () => {
     const dir = fs.mkdtempSync(path.join(base, "eye-mp-"));
     const clip = path.join(dir, "pattern.mp4");
     const r = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc2=s=160x120:r=25:d=1", "-c:v", "libx264", "-pix_fmt", "yuv420p", clip], { encoding: "utf8" });
     expect(r.status, r.stderr).toBe(0);
-    const rec = scoreClip(clip, { out: path.join(dir, "s.json"), python: py });
+    const rec = scoreClip(clip, { out: path.join(dir, "s.json"), python: py, model: faceModel });
     expect(rec.frame_count).toBe(25);
     expect(rec.frames.map((f: { t: number }) => f.t)).toEqual(Array.from({ length: 25 }, (_, i) => i * 0.04).map((t) => Math.round(t * 1e6) / 1e6));
     expect(rec.faces_found).toBe(0);
