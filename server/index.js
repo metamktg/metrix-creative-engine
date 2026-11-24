@@ -23119,7 +23119,7 @@ The task is queued, not finished. Poll it with kie_get_task or kie_wait_for_task
 }
 
 // src/version.ts
-var ENGINE_VERSION = "0.2.1";
+var ENGINE_VERSION = "0.3.0";
 
 // src/index.ts
 async function main() {
