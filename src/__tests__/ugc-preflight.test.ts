@@ -8,7 +8,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { KieClient } from "../client.js";
 import { registerKieTools } from "../tools.js";
-import { ACCEPTANCE_CRITERIA, V1_ALLOWED_RUN_IDS, canonicalJson, inspectUgcPacket, sha256, submitUgcPacket } from "../../skills/metrix-ad-creative/scripts/ugc-preflight.mjs";
+import { ACCEPTANCE_CRITERIA, V1_ALLOWED_RUN_ID_SHA256, isV1AllowedRunId, canonicalJson, inspectUgcPacket, sha256, submitUgcPacket } from "../../skills/metrix-ad-creative/scripts/ugc-preflight.mjs";
 
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(p => rm(p, { recursive: true, force: true }))); });
@@ -143,25 +143,35 @@ describe("UGC preproduction dependency guard", () => {
     const f = await fixture(); f.packet.schema_version = 2; delete f.packet.request; await f.save();
     expect((await inspectUgcPacket(f.packetPath)).ok).toBe(false);
   });
+  const V1_TEST_RUN = "fixture-v1-run";
+  const v1Options = { v1AllowedRunIdSha256: [sha256(V1_TEST_RUN)] };
   it("valid v1 packet with schema_version 3 rejected for its version alone", async () => {
-    const f = await fixture({ version: 1, runId: V1_ALLOWED_RUN_IDS[0] });
-    expect((await inspectUgcPacket(f.packetPath)).errors).toEqual([]);
+    const f = await fixture({ version: 1, runId: V1_TEST_RUN });
+    expect((await inspectUgcPacket(f.packetPath, v1Options)).errors).toEqual([]);
     f.packet.schema_version = 3; await f.save();
-    const result = await inspectUgcPacket(f.packetPath);
+    const result = await inspectUgcPacket(f.packetPath, v1Options);
     expect(result.ok).toBe(false); expect(result.errors).toEqual(["schema_version: only version 2 (or version 1 for an allowlisted run_id) is supported"]);
   });
   it("accepts a v1 packet only for a frozen allowlisted run_id", async () => {
-    expect(Object.isFrozen(V1_ALLOWED_RUN_IDS)).toBe(true);
-    const allowed = await fixture({ version: 1, runId: V1_ALLOWED_RUN_IDS[0] });
-    const ok = await inspectUgcPacket(allowed.packetPath);
+    expect(Object.isFrozen(V1_ALLOWED_RUN_ID_SHA256)).toBe(true);
+    const allowed = await fixture({ version: 1, runId: V1_TEST_RUN });
+    const ok = await inspectUgcPacket(allowed.packetPath, v1Options);
     expect(ok.errors).toEqual([]); expect(ok.ok).toBe(true); expect(ok.schema_version).toBe(1);
     const other = await fixture({ version: 1, runId: "test-only" });
-    const blocked = await inspectUgcPacket(other.packetPath);
+    const blocked = await inspectUgcPacket(other.packetPath, v1Options);
     expect(blocked.ok).toBe(false); expect(blocked.errors).toEqual([expect.stringContaining("not on the frozen v1 allowlist")]);
   });
+  it("ships the v1 allowlist as SHA-256 only, matching the exact run_id", () => {
+    expect(V1_ALLOWED_RUN_ID_SHA256.length).toBeGreaterThan(0);
+    for (const h of V1_ALLOWED_RUN_ID_SHA256) expect(h).toMatch(/^[a-f0-9]{64}$/);
+    expect(isV1AllowedRunId(V1_TEST_RUN, [sha256(V1_TEST_RUN)])).toBe(true);
+    expect(isV1AllowedRunId(V1_TEST_RUN.toUpperCase(), [sha256(V1_TEST_RUN)])).toBe(false);
+    expect(isV1AllowedRunId("", [sha256("")])).toBe(false);
+    expect(isV1AllowedRunId(V1_TEST_RUN)).toBe(false);
+  });
   it("v1 cannot carry a motion route even when allowlisted", async () => {
-    const f = await fixture({ version: 1, runId: V1_ALLOWED_RUN_IDS[0] }); f.packet.route.operation = "motion"; f.packet.route.audio_mode = "none"; await f.save();
-    expect((await inspectUgcPacket(f.packetPath)).errors.join(" ")).toContain("motion requires packet version 2");
+    const f = await fixture({ version: 1, runId: V1_TEST_RUN }); f.packet.route.operation = "motion"; f.packet.route.audio_mode = "none"; await f.save();
+    expect((await inspectUgcPacket(f.packetPath, v1Options)).errors.join(" ")).toContain("motion requires packet version 2");
   });
   it("v2 without presenter acceptance or prepared_by is blocked", async () => {
     const f = await fixture(); delete f.packet.presenter.acceptance; delete f.packet.prepared_by; await f.save();

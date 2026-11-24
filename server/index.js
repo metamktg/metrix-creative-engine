@@ -22527,7 +22527,8 @@ var hash = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
 var finite = (v) => typeof v === "number" && Number.isFinite(v);
 var speechText = (v) => typeof v === "string" ? v.trim().replace(/\s+/g, " ") : "";
 var dateValue = (v) => filled(v) ? Date.parse(v) : NaN;
-var V1_ALLOWED_RUN_IDS = Object.freeze(["LP-AI-04-run-2026-11-05-01"]);
+var V1_ALLOWED_RUN_ID_SHA256 = Object.freeze(["15232e999894f705f6ba4995fbb7e04bbbf6bcc344cecdb0bf0d0cb49a536b3e"]);
+var isV1AllowedRunId = (runId, allowlist = V1_ALLOWED_RUN_ID_SHA256) => filled(runId) && allowlist.includes(sha256(runId));
 var ACCEPTANCE_CRITERIA = Object.freeze(["mood", "look", "eyes_open_on_lens", "expression"]);
 var ROUTE_OPERATIONS = Object.freeze(["lip_sync", "motion"]);
 var sameId = (a, b) => filled(a) && filled(b) && a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -22587,7 +22588,7 @@ async function inspectUgcPacket(packetPath, options = {}) {
   const version2 = packet.schema_version;
   const v2 = version2 === 2;
   need(version2 === 1 || v2, "schema_version: only version 2 (or version 1 for an allowlisted run_id) is supported");
-  if (version2 === 1) need(V1_ALLOWED_RUN_IDS.includes(packet.run_id), "schema_version 1: run_id is not on the frozen v1 allowlist; prepare a version 2 packet with presenter.acceptance");
+  if (version2 === 1) need(isV1AllowedRunId(packet.run_id, options.v1AllowedRunIdSha256), "schema_version 1: run_id is not on the frozen v1 allowlist; prepare a version 2 packet with presenter.acceptance");
   need(filled(packet.run_id) && filled(packet.brief_id), "run_id and brief_id required");
   if (v2) need(filled(packet.prepared_by), "prepared_by: packet v2 names who prepared it");
   const brief = await json(packet.brief, "brief");

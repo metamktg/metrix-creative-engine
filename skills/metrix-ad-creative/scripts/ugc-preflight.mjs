@@ -25,10 +25,13 @@ const speechText = v => typeof v === 'string' ? v.trim().replace(/\s+/g, ' ') : 
 const dateValue = v => filled(v) ? Date.parse(v) : NaN;
 
 /** Frozen v1 allowlist: in-flight runs whose preparation predates packet v2 (2026-11-06).
+ * Held as SHA-256 of the exact run_id so no client run code ships in shared code.
  * Inline rather than a sidecar file so the byte copies (kie-generate, kie-tasks) and the
  * bundled MCP server carry the same list. Never add a run started after that date.
  */
-export const V1_ALLOWED_RUN_IDS = Object.freeze(['LP-AI-04-run-2026-11-05-01']);
+export const V1_ALLOWED_RUN_ID_SHA256 = Object.freeze(['15232e999894f705f6ba4995fbb7e04bbbf6bcc344cecdb0bf0d0cb49a536b3e']);
+/** True when run_id is on the frozen v1 allowlist. allowlist is for tests only. */
+export const isV1AllowedRunId = (runId, allowlist = V1_ALLOWED_RUN_ID_SHA256) => filled(runId) && allowlist.includes(sha256(runId));
 /** Every criterion is the reviewer's explicit true, never a default. */
 export const ACCEPTANCE_CRITERIA = Object.freeze(['mood', 'look', 'eyes_open_on_lens', 'expression']);
 export const ROUTE_OPERATIONS = Object.freeze(['lip_sync', 'motion']);
@@ -75,7 +78,7 @@ export async function inspectUgcPacket(packetPath, options = {}) {
   const version = packet.schema_version;
   const v2 = version === 2;
   need(version === 1 || v2, 'schema_version: only version 2 (or version 1 for an allowlisted run_id) is supported');
-  if (version === 1) need(V1_ALLOWED_RUN_IDS.includes(packet.run_id), 'schema_version 1: run_id is not on the frozen v1 allowlist; prepare a version 2 packet with presenter.acceptance');
+  if (version === 1) need(isV1AllowedRunId(packet.run_id, options.v1AllowedRunIdSha256), 'schema_version 1: run_id is not on the frozen v1 allowlist; prepare a version 2 packet with presenter.acceptance');
   need(filled(packet.run_id) && filled(packet.brief_id), 'run_id and brief_id required');
   if (v2) need(filled(packet.prepared_by), 'prepared_by: packet v2 names who prepared it');
   const brief = await json(packet.brief, 'brief');
